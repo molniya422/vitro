@@ -99,12 +99,13 @@ fn main() -> Result<()> {
         let white = rt.CreateSolidColorBrush(cptr(&D2D1_COLOR_F { r: 1.0, g: 1.0, b: 1.0, a: 0.72 }), None)?;
         let accent = rt.CreateSolidColorBrush(cptr(&D2D1_COLOR_F { r: theme.accent[0], g: theme.accent[1], b: theme.accent[2], a: 1.0 }), None)?;
         let halo = rt.CreateSolidColorBrush(cptr(&D2D1_COLOR_F { r: theme.accent[0], g: theme.accent[1], b: theme.accent[2], a: 0.30 }), None)?;
-        let hi = rt.CreateSolidColorBrush(cptr(&D2D1_COLOR_F { r: 1.0, g: 1.0, b: 1.0, a: 0.32 }), None)?;
-        let lo = rt.CreateSolidColorBrush(cptr(&D2D1_COLOR_F { r: 0.0, g: 0.0, b: 0.0, a: 0.20 }), None)?;
-        let border = rt.CreateSolidColorBrush(cptr(&D2D1_COLOR_F { r: 1.0, g: 1.0, b: 1.0, a: 0.18 }), None)?;
+        let hi = rt.CreateSolidColorBrush(cptr(&D2D1_COLOR_F { r: 1.0, g: 1.0, b: 1.0, a: 0.16 }), None)?; // Sonoma 深色:顶内高光 white 15%±
+        let lo = rt.CreateSolidColorBrush(cptr(&D2D1_COLOR_F { r: 0.0, g: 0.0, b: 0.0, a: 0.12 }), None)?; // 底内影 black 12%
+        let border = rt.CreateSolidColorBrush(cptr(&D2D1_COLOR_F { r: 1.0, g: 1.0, b: 1.0, a: 0.10 }), None)?; // HTML 基准 inset 描边 .09-.10
         let soft = rt.CreateSolidColorBrush(cptr(&D2D1_COLOR_F { r: 1.0, g: 1.0, b: 1.0, a: 0.05 }), None)?;
         let pill = rt.CreateSolidColorBrush(cptr(&D2D1_COLOR_F { r: 0.04, g: 0.06, b: 0.11, a: 0.68 }), None)?;
         let palette = dockwin::palette_brushes(rt);
+        let noise = dockwin::build_noise(&gpu.dc)?;
 
         // 倒影渐变遮罩 + 图层
         let stops = [
@@ -161,7 +162,7 @@ fn main() -> Result<()> {
             hwnd, tip_hwnd, gpu,
             tiles,
             glass, white, accent, halo, hi, lo, border, soft, pill, palette,
-            sq, grad_refl, grad_lin, layer,
+            sq, grad_refl, grad_lin, layer, noise: Some(noise),
             cursor: (-9999.0, -9999.0),
             hover_idx: None, hover_since: 0, tip_shown_for: None,
             hook: HHOOK::default(), was_near_flag: false, last_post_tick: 0,

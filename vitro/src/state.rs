@@ -53,6 +53,7 @@ pub(crate) struct State {
     pub grad_refl: ID2D1Brush,
     pub grad_lin: ID2D1LinearGradientBrush,
     pub layer: ID2D1Layer,
+    pub noise: Option<ID2D1Brush>, // Sonoma 四层材质·颗粒纹理层(0.3% 均匀噪点,消塑料感/抗色带)
     // 输入
     pub cursor: (f32, f32), // 屏幕坐标
     pub hover_idx: Option<usize>,

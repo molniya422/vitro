@@ -25,7 +25,7 @@ pub(crate) unsafe extern "system" fn ll_hook(_code: i32, wp: WPARAM, lp: LPARAM)
         }
         if near && st.hide_armed {
             st.hide_armed = false;
-            KillTimer(st.hwnd, TIMER_HIDE as usize);
+            let _ = KillTimer(st.hwnd, TIMER_HIDE as usize);
         } else if !near && st.was_near_flag && st.autohide && st.slide_target == 0.0 {
             st.hide_armed = true;
             SetTimer(st.hwnd, TIMER_HIDE as usize, 700, None);
@@ -49,7 +49,7 @@ pub(crate) unsafe extern "system" fn ll_hook(_code: i32, wp: WPARAM, lp: LPARAM)
 pub(crate) unsafe fn on_hide_timer() {
     let st = s();
     st.hide_armed = false;
-    KillTimer(st.hwnd, TIMER_HIDE as usize);
+    let _ = KillTimer(st.hwnd, TIMER_HIDE as usize);
     if st.autohide && st.slide_target == 0.0 && st.slide < 0.5 {
         st.slide_target = 1.0;
         st.hover_idx = None;
@@ -68,7 +68,7 @@ pub(crate) unsafe fn update_power() {
         let was = st.low_power;
         st.low_power = stt.ACLineStatus == 0;
         if was != st.low_power {
-            if st.low_power { KillTimer(st.hwnd, TIMER_ANIM as usize); st.anim_on = false; }
+            if st.low_power { let _ = KillTimer(st.hwnd, TIMER_ANIM as usize); st.anim_on = false; }
             println!("[vitro] power: {}", if st.low_power { "电池 → 动效降级" } else { "交流 → 恢复" });
             render_frame();
         }

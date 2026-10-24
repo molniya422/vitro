@@ -100,7 +100,7 @@ unsafe fn on_mouse() {
         st.hover_idx = h;
         st.hover_since = GetTickCount();
         if h.is_some() { SetTimer(st.hwnd, TIMER_DWELL as usize, 120, None); }
-        else { KillTimer(st.hwnd, TIMER_DWELL as usize); hide_tip(); }
+        else { let _ = KillTimer(st.hwnd, TIMER_DWELL as usize); hide_tip(); }
     }
     render_frame();
 }
@@ -237,11 +237,38 @@ pub(crate) unsafe fn reload_theme() -> Result<()> {
 
 pub(crate) unsafe fn rebuild_theme_brushes(st: &mut State, t: &config::Theme) -> Result<()> {
     let rt = &st.gpu.rt;
-    
+
     st.glass = rt.CreateSolidColorBrush(some_ptr(&D2D1_COLOR_F { r: t.tint[0], g: t.tint[1], b: t.tint[2], a: t.alpha }), None)?;
     st.accent = rt.CreateSolidColorBrush(some_ptr(&D2D1_COLOR_F { r: t.accent[0], g: t.accent[1], b: t.accent[2], a: 1.0 }), None)?;
     st.halo = rt.CreateSolidColorBrush(some_ptr(&D2D1_COLOR_F { r: t.accent[0], g: t.accent[1], b: t.accent[2], a: 0.30 }), None)?;
     Ok(())
+}
+
+// Sonoma 四层材质·第三层:颗粒纹理(单色噪点,alpha 0-6/255 ≈ 0.3% 均匀噪点)
+// 以 bitmap-brush WRAP 平铺,FillRoundedRectangle 天然被圆角矩形路径裁剪,零图层成本
+pub(crate) unsafe fn build_noise(rt: &ID2D1DeviceContext) -> Result<ID2D1Brush> {
+    const N: u32 = 128;
+    let mut px = vec![0u8; (N * N * 4) as usize];
+    let mut seed: u32 = 0x20261024; // 固定种子:每次启动纹理一致
+    for i in 0..(N * N) as usize {
+        seed = seed.wrapping_mul(1664525).wrapping_add(1013904223);
+        let a = ((seed >> 24) % 7) as u8; // 0..6
+        px[i * 4] = 255; px[i * 4 + 1] = 255; px[i * 4 + 2] = 255; px[i * 4 + 3] = a;
+    }
+    let bmp = rt.CreateBitmap(D2D_SIZE_U { width: N, height: N },
+        Some(px.as_ptr() as *const core::ffi::c_void), N * 4,
+        &D2D1_BITMAP_PROPERTIES1 {
+            pixelFormat: D2D1_PIXEL_FORMAT { format: DXGI_FORMAT_B8G8R8A8_UNORM, alphaMode: D2D1_ALPHA_MODE_PREMULTIPLIED },
+            dpiX: 96.0, dpiY: 96.0,
+            bitmapOptions: D2D1_BITMAP_OPTIONS(0),
+            colorContext: core::mem::ManuallyDrop::new(None),
+        })?;
+    let brush = rt.CreateBitmapBrush(&bmp, Some(&D2D1_BITMAP_BRUSH_PROPERTIES1 {
+        extendModeX: D2D1_EXTEND_MODE_WRAP, extendModeY: D2D1_EXTEND_MODE_WRAP,
+        interpolationMode: D2D1_INTERPOLATION_MODE_NEAREST_NEIGHBOR,
+    }), None)?;
+    let brush: ID2D1Brush = brush.into(); // 升型到基类,渲染侧直接当画刷用
+    Ok(brush)
 }
 
 pub(crate) unsafe fn shutdown(hwnd: HWND) {
@@ -295,6 +322,18 @@ pub(crate) unsafe fn render_frame() {
         rect: D2D_RECT_F { left: px, top: 0.0, right: px + pw, bottom: PANEL_H },
         radiusX: 24.0, radiusY: 24.0,
     }), &st.glass);
+    // 颗粒纹理层(Sonoma 第三层;WRAP 平铺,路径即裁剪)
+    if let Some(nb) = &st.noise {
+        let _ = rt.FillRoundedRectangle(some_ptr(&D2D1_ROUNDED_RECT {
+            rect: D2D_RECT_F { left: px, top: 0.0, right: px + pw, bottom: PANEL_H },
+            radiusX: 24.0, radiusY: 24.0,
+        }), nb);
+    }
+    // Tahoe 0.5px 内折射边(高光内侧再走一圈极淡白,造玻璃厚度感)
+    let _ = rt.DrawRoundedRectangle(some_ptr(&D2D1_ROUNDED_RECT {
+        rect: D2D_RECT_F { left: px + 1.5, top: 1.5, right: px + pw - 1.5, bottom: PANEL_H - 1.5 },
+        radiusX: 22.5, radiusY: 22.5,
+    }), &st.soft, 0.5, None);
     let _ = rt.DrawRoundedRectangle(some_ptr(&D2D1_ROUNDED_RECT {
         rect: D2D_RECT_F { left: px + 0.5, top: 0.5, right: px + pw - 0.5, bottom: PANEL_H - 0.5 },
         radiusX: 24.0, radiusY: 24.0,
@@ -392,7 +431,7 @@ pub(crate) unsafe fn render_frame() {
     let settling = st.scale_anim.iter().take(n).any(|v| (*v - 1.0).abs() > 0.004);
     let should = (st.cursor_inside_pill() && !st.low_power) || settling || st.slide != st.slide_target;
     if should && !st.anim_on { st.anim_on = true; SetTimer(st.hwnd, TIMER_ANIM as usize, 33, None); }
-    else if !should && st.anim_on { st.anim_on = false; KillTimer(st.hwnd, TIMER_ANIM as usize); }
+    else if !should && st.anim_on { st.anim_on = false; let _ = KillTimer(st.hwnd, TIMER_ANIM as usize); }
 
     let hr_end = rt.EndDraw(None, None);
     if hr_end.is_err() { println!("[vitro] EndDraw FAILED: {:?}", hr_end); }
