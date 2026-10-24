@@ -1,0 +1,19 @@
+# Rust
+/vitro/target/
+**/*.rs.bk
+
+# 第三方参考资料(许可证独立,不入库:Glassboard=AGPL-3.0)
+/Glassboard-main/
+/transitions.dev-main/
+*.zip
+
+# 调试/临时产物
+*.log
+/vitro-*.png
+/sqgrid.png
+/vitro/tools/_sqgrid.*
+__pycache__/
+
+# 编辑器
+.vscode/
+.idea/

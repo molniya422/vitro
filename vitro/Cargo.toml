@@ -1,0 +1,46 @@
+[package]
+name = "vitro"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+toml = "0.8"
+png = "0.17"
+
+# boa: 纯 Rust JS 引擎(零 C 依赖,无需 libclang;内存 ~1MB 字节码缓存)
+boa_engine = "0.17"
+
+[dependencies.windows]
+version = "0.58"
+features = [
+  "Foundation_Numerics",
+  "Win32_Foundation",
+  "Win32_Storage_FileSystem",
+  "Win32_UI_HiDpi",
+  "Win32_UI_Input_KeyboardAndMouse",
+  "Win32_UI_Shell",
+  "Win32_UI_WindowsAndMessaging",
+  "Win32_Graphics_Gdi",
+  "Win32_Graphics_Direct2D",
+  "Win32_Graphics_Direct2D_Common",
+  "Win32_Graphics_Direct3D",
+  "Win32_Graphics_Direct3D11",
+  "Win32_Graphics_Dxgi",
+  "Win32_Graphics_Dxgi_Common",
+  "Win32_Graphics_Dwm",
+  "Win32_Graphics_DirectComposition",
+  "Win32_Graphics_DirectWrite",
+  "Win32_Security",
+  "Win32_System_Com",
+  "Win32_System_LibraryLoader",
+  "Win32_System_SystemInformation",
+  "Win32_System_ProcessStatus",
+  "Win32_System_Registry",
+  "Win32_System_Power",
+  "Win32_System_Threading",
+]
+
+[profile.release]
+lto = true
+strip = true

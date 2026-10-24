@@ -1,0 +1,61 @@
+# Vitro — macOS Sonoma Dock 对标参数表(macos-dock-spec.md 的机器可读映射)
+# 用途:动效档案(motion profile)「macOS(克制)」的数据源;与 motion-tokens.toml(vitro/弹性档案)并立,
+#       设置面板一键切换,原生引擎按档案驱动。
+# 差异决策原则:材质/几何/状态照搬 macOS;动效曲线双档案并存(macOS=克制无回弹,Vitro=transitions.dev 弹性)。
+
+[material]            # 四层液态玻璃(照搬)
+blur_radius  = { light = 20, dark = 22 }   # pt
+saturate     = { light = 1.10, dark = 1.08 }
+fill         = { light = "white@18%", dark = "black@25%" }
+grain_alpha  = { light = 0.003, dark = 0.0025 }   # 单色噪点
+inner_hair   = { top = { light = "white@30%", dark = "white@15%" }, bottom = { light = "black@10%", dark = "black@15%" } }  # 1px 内高光/内阴影
+outer        = "无外描边、无外投影(层级全靠材质)"
+
+[geometry]
+icon_size_default = 48        # pt,可调 16~128
+padding_h  = 16
+padding_v  = 10
+icon_gap   = 8
+radius_rule = "总高度/2(两端半圆,连续曲率)"
+separators = 2               # 常驻区|最近区|堆叠系统区,1pt @20%
+icon_corner = 0.20           # 边长×20%(SF Symbols 系)
+
+[profile.macos]        # 动效档案:克制
+ease        = "cubic-bezier(0.25, 0.46, 0.45, 0.94)"  # 自定义 ease-out,无弹性
+magnify     = { in = 200, out = 250, peak_default = 1.2, peak_range = [1.0, 2.0], cap = 128, lift = "高度增量/2(底对齐)" }
+bounce      = { hops = [12, 6], total = 800, damping = 0.7, stiffness = 100, off = "仅亮度+10%" }
+minimize    = { genie = 600, scale = 500, suck = 400, restore = "完全逆放" }
+autohide    = { show_delay = 300, hide_delay = 500, slide = 200, fade = true }
+tooltip     = { delay = 200, rise = 6, in = 150, out = 100, radius = 8, pad = "8x4", font = "13pt medium", gap = 10 }
+stack       = { fan_cascade = 30, grid_cascade = 20, list = 250 }
+drag_removal = { hint_after = 500, anim = 300 }
+
+[profile.vitro]        # 动效档案:弹性(transitions.dev,已冻结 motion-tokens v0)
+magnify    = { follow = 160, settle = 480, ease_out = "cubic-bezier(0.34,3.85,0.64,1)" }
+tooltip    = { delay = 80 }
+autohide   = { hide_delay = 700 }
+
+[states]
+running_dot   = { size = 4, gap = 6, light = "black@40%", dark = "white@60%" }
+hover         = { brightness = 1.05, label = true }
+launching    = { brightness = 1.10 }
+badge         = { bg = "系统红(P3)", text = "SF Pro Bold 12 白", min = 16, inner_hair = "1px 白高光" }
+drag_receive  = { scale = 1.1, sink = true }
+disabled      = { saturate = 0, opacity = 0.70 }
+
+[hidden_params]        # 终端等效项(进「高级参数」标签页,全部实装)
+autohide_delay         = { key = "autohide-delay", default = 0.3 }
+autohide_time_modifier = { key = "autohide-time-modifier", default = 1.0 }
+mineffect              = { key = "mineffect", values = ["genie", "scale", "suck"] }
+show_recents_count     = { key = "show-recents-count", default = 3, range = [0, 5] }
+spacer_tile            = { key = "persistent-apps spacer-tile" }
+
+[a11y]
+reduce_motion = "弹跳/变形/缩放 → 0.2s 淡入淡出"
+contrast      = "背景不透明度→80%,分隔线加粗,指示器增强"
+keyboard      = "Tab 切图标 / 回车打开 / 方向键移动"
+
+[parity_notes]
+adopted  = ["四层材质", "几何与分隔系统", "运行指示/角标/禁用状态", "最近应用区", "扇形堆叠", "隐藏参数面板", "无障碍"]
+profiled = ["放大/弹跳/自动隐藏/Tooltip 时序 → 双档案可切"]
+native_deferred = ["Genie 16×12 网格顶点变形(原生 D2D 网格)", "Force Touch/接力(硬件层)", "Metal/WindowServer 合成"]

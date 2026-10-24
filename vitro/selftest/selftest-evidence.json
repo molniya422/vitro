@@ -1,0 +1,40 @@
+{
+ "target": "vitro.exe (M5 build)",
+ "method": "frida attach, same hooks as nexus selftest",
+ "armed": true,
+ "idle_seconds": 10,
+ "idle_delta": {
+  "GetCursorPos": 0,
+  "SetTimer": 0,
+  "EnumWindows": 0,
+  "GetAsyncKeyState": 0,
+  "GetKeyState": 0,
+  "PostMessageW": 133,
+  "GetMessageW": 1211,
+  "GetProcessTimes": 1,
+  "CreateSolidColorBrush": 0,
+  "SHGetFileInfoW": 0,
+  "ShellExecuteExW": 0
+ },
+ "theme_reload": {
+  "fired": "no hwnd",
+  "brush_recreations": 0
+ },
+ "verdicts": {
+  "zero_polling_cursorpos": "PASS",
+  "zero_timers_idle": "PASS",
+  "zero_enumwindows": "PASS",
+  "zero_hotkey_polling": "PASS",
+  "theme_hot_reload": "INCONCLUSIVE"
+ },
+ "nexus_comparison": {
+  "GetCursorPos": {
+   "nexus": "40-68 / sec (poll)",
+   "vitro": "0 in 10s (zero)"
+  },
+  "SetTimer": {
+   "nexus": "40+ timers at startup (module heartbeats)",
+   "vitro": "0 while idle"
+  }
+ }
+}

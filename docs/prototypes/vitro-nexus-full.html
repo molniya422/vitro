@@ -1,0 +1,1162 @@
+<div id="vitro-nx" data-pos="bottom">
+<style>
+#vitro-nx{
+  --sig:cubic-bezier(0.22,1,0.36,1); --spring:cubic-bezier(0.34,3.85,0.64,1);
+  --txt:#e9edf7; --mut:#98a1b6; --acc:#7fa4ff; --line:rgba(255,255,255,.09);
+  --glass:rgba(22,26,38,.62); --anim:1; --blur:20;
+  font-family:system-ui,"Segoe UI","Microsoft YaHei",sans-serif; color:var(--txt); font-size:14px; line-height:1.45;
+}
+#vitro-nx *{box-sizing:border-box; margin:0}
+#vitro-nx button{font:inherit; color:inherit}
+#vitro-nx .app{border:1px solid var(--line); border-radius:18px; overflow:hidden; background:#0b0e17; box-shadow:0 24px 70px rgba(0,0,0,.5)}
+#vitro-nx .head{display:flex; align-items:center; gap:14px; padding:11px 16px; border-bottom:1px solid var(--line); background:linear-gradient(rgba(255,255,255,.03),transparent); flex-wrap:wrap}
+#vitro-nx .dots{display:flex; gap:6px} #vitro-nx .dots i{width:11px;height:11px;border-radius:50%}
+#vitro-nx .dots i:first-child{background:#ff5f57}#vitro-nx .dots i:nth-child(2){background:#febc2e}#vitro-nx .dots i:nth-child(3){background:#28c840}
+#vitro-nx .ttl{font-weight:500} #vitro-nx .ttl small{color:var(--mut); font-weight:400; margin-left:8px}
+#vitro-nx .head .sp{flex:1}
+#vitro-nx .sw{display:flex; align-items:center; gap:6px; font-size:12px; color:var(--mut); cursor:pointer; user-select:none}
+#vitro-nx .sw input{appearance:none; width:32px; height:18px; border-radius:9px; background:rgba(255,255,255,.14); position:relative; cursor:pointer; transition:background .2s var(--sig); margin:0}
+#vitro-nx .sw input::after{content:""; position:absolute; top:2.5px; left:3px; width:13px; height:13px; border-radius:50%; background:#fff; transition:transform .2s var(--sig)}
+#vitro-nx .sw input:checked{background:#e8b84b} #vitro-nx .sw input:checked::after{transform:translateX(13px)}
+#vitro-nx .hbtn{border:1px solid var(--line); background:rgba(255,255,255,.06); border-radius:8px; padding:4px 10px; font-size:12px; cursor:pointer; transition:all .15s var(--sig)}
+#vitro-nx .hbtn:hover{background:rgba(255,255,255,.12)}
+/* ── 舞台 ── */
+#vitro-nx .stage{position:relative; min-height:600px; overflow:hidden;
+  background:radial-gradient(60% 45% at 18% 8%, rgba(63,81,180,.4), transparent 70%),
+    radial-gradient(55% 50% at 85% 90%, rgba(122,59,143,.32), transparent 70%),
+    radial-gradient(40% 35% at 70% 15%, rgba(34,120,160,.18), transparent 70%), linear-gradient(#0d1322,#080a12)}
+#vitro-nx .win{position:absolute; left:50%; top:34px; transform:translateX(-50%); width:min(58%,400px); height:42%;
+  border:1px solid var(--line); border-radius:12px; background:rgba(16,20,31,.55); backdrop-filter:blur(4px); box-shadow:0 16px 44px rgba(0,0,0,.36); z-index:8}
+#vitro-nx .win::before{content:""; position:absolute; inset:0 0 auto 0; height:28px; border-bottom:1px solid var(--line); background:linear-gradient(rgba(255,255,255,.045),transparent)}
+#vitro-nx .wbtns{position:absolute; top:7px; left:12px; z-index:2}
+#vitro-nx .wbtns button{border:0; background:none; padding:0; cursor:pointer}
+#vitro-nx .wbtns i{width:12px; height:12px; border-radius:50%; display:block; background:#febc2e}
+#vitro-nx .wcap{position:absolute; top:8px; left:50px; font-size:11px; color:var(--mut)}
+#vitro-nx .win.minning{transition:transform calc(.5s*var(--anim)) var(--sig), opacity calc(.5s*var(--anim)) var(--sig); transform:translate(calc(-50% + var(--dx)),var(--dy)) scale(.05)!important; opacity:.1}
+#vitro-nx .win.minned{display:none}
+/* 应用库 */
+#vitro-nx .tray{position:absolute; left:14px; top:14px; z-index:15; width:150px; padding:10px; border-radius:14px;
+  background:var(--glass); backdrop-filter:blur(14px); border:1px solid var(--line); box-shadow:0 12px 34px rgba(0,0,0,.4)}
+#vitro-nx .tray b{font-size:11px; color:var(--mut); font-weight:500; display:block; margin-bottom:6px}
+#vitro-nx .tray em{font-size:10.5px; color:var(--mut); font-style:normal; display:block; margin-bottom:6px}
+#vitro-nx .t-chip{display:flex; align-items:center; gap:7px; width:100%; border:0; border-radius:9px; background:rgba(255,255,255,.05); padding:3px 7px 3px 3px; cursor:grab; transition:background .15s; text-align:left}
+#vitro-nx .t-chip:hover{background:rgba(255,255,255,.12)}
+#vitro-nx .t-chip svg{width:24px; height:24px; flex:0 0 24px; filter:drop-shadow(0 2px 4px rgba(0,0,0,.4))}
+#vitro-nx .t-chip span{font-size:12px}
+#vitro-nx .tray.pulse{animation:nxPulse 1s var(--sig) 2}
+@keyframes nxPulse{50%{box-shadow:0 0 0 4px rgba(127,164,255,.55)}}
+/* 状态条 */
+#vitro-nx .hint{position:absolute; right:14px; top:14px; z-index:15; max-width:300px; padding:7px 11px; border-radius:11px; font-size:12px; color:#cfe0ff;
+  background:var(--glass); backdrop-filter:blur(14px); border:1px solid var(--line)}
+#vitro-nx .hint b{display:block; font-size:10.5px; color:var(--mut); font-weight:500}
+/* 边缘/角落触发区 */
+#vitro-nx .ez{position:absolute; z-index:24; opacity:0}
+#vitro-nx .ez[data-side="bottom"]{left:0; right:0; bottom:0; height:14px}
+#vitro-nx .ez[data-side="top"]{left:0; right:0; top:0; height:14px}
+#vitro-nx .ez[data-side="left"]{left:0; top:0; bottom:0; width:14px}
+#vitro-nx .ez[data-side="right"]{right:0; top:0; bottom:0; width:14px}
+#vitro-nx .cz{position:absolute; z-index:25; width:26px; height:26px; opacity:0}
+#vitro-nx .cz[data-corner="tl"]{left:0; top:0} #vitro-nx .cz[data-corner="tr"]{right:0; top:0}
+#vitro-nx .cz[data-corner="bl"]{left:0; bottom:0} #vitro-nx .cz[data-corner="br"]{right:0; bottom:0}
+/* 热点按钮 */
+#vitro-nx .hotspot{position:absolute; right:18px; bottom:18px; z-index:26; width:30px; height:30px; border-radius:50%;
+  border:1px solid rgba(255,255,255,.35); background:radial-gradient(circle at 50% 35%, rgba(127,164,255,.5), rgba(30,50,120,.55));
+  box-shadow:0 0 14px rgba(127,164,255,.5); cursor:pointer}
+#vitro-nx .hotspot::after{content:""; position:absolute; inset:9px; border-radius:50%; background:#dbe7ff}
+/* ── Dock ── */
+#vitro-nx .dockwrap{position:absolute; z-index:20; display:flex; transition:transform calc(.4s*var(--anim)) var(--sig)}
+#vitro-nx[data-pos="bottom"] .dockwrap{left:0; right:0; bottom:26px; justify-content:center}
+#vitro-nx[data-pos="top"] .dockwrap{left:0; right:0; top:26px; justify-content:center}
+#vitro-nx[data-pos="left"] .dockwrap{top:0; bottom:0; left:22px; align-items:center}
+#vitro-nx[data-pos="right"] .dockwrap{top:0; bottom:0; right:22px; align-items:center}
+#vitro-nx.ah[data-pos="bottom"] .dockwrap{transform:translateY(150%)}
+#vitro-nx.ah[data-pos="top"] .dockwrap{transform:translateY(-150%)}
+#vitro-nx.ah[data-pos="left"] .dockwrap{transform:translateX(-150%)}
+#vitro-nx.ah[data-pos="right"] .dockwrap{transform:translateX(150%)}
+#vitro-nx .dock{display:flex; align-items:flex-end; gap:9px; padding:9px 12px; border-radius:22px; position:relative;
+  background:var(--glass); border:1px solid var(--line);
+  backdrop-filter:blur(calc(var(--blur)*1px)) saturate(1.5);
+  box-shadow:0 18px 46px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.14);
+  transition:border-radius .3s var(--sig)}
+#vitro-nx.noblur .dock{backdrop-filter:saturate(1.2)}
+#vitro-nx[data-pos="left"] .dock,#vitro-nx[data-pos="right"] .dock{flex-direction:column; align-items:center; padding:12px 9px}
+#vitro-nx .v-ic{appearance:none; border:0; background:none; padding:0; position:relative; width:var(--isz,56px); height:var(--isz,56px); cursor:pointer; transition:transform calc(.16s*var(--anim)) var(--sig)}
+#vitro-nx .dock.settle .v-ic{transition:transform calc(.5s*var(--anim)) var(--spring)}
+#vitro-nx .v-ico{display:block; width:100%; height:100%}
+#vitro-nx .v-ico svg{width:100%; height:100%; display:block}
+#vitro-nx .shadows-on .v-ico svg{filter:drop-shadow(0 6px 10px rgba(0,0,0,.5))}
+#vitro-nx .v-ico.fx-boing{animation:nxBoing calc(.6s*var(--anim)) var(--spring)}
+#vitro-nx .attn .v-ico{animation:nxBounce 1.05s var(--sig) 2}
+#vitro-nx .v-dot{position:absolute; left:50%; bottom:-8px; transform:translateX(-50%); width:4px; height:4px; border-radius:50%; background:#fff; opacity:0; box-shadow:0 0 5px rgba(255,255,255,.85); transition:opacity .3s}
+#vitro-nx[data-pos="left"] .v-dot,#vitro-nx[data-pos="right"] .v-dot{left:auto; right:-8px; top:50%; bottom:auto; transform:translateY(-50%)}
+#vitro-nx .v-ic.has-run .v-dot{opacity:.95}
+#vitro-nx .v-badge{position:absolute; top:-5px; right:-5px; min-width:16px; height:16px; padding:0 4px; border-radius:8px; background:#ff5f6d; color:#fff; font-size:10px; line-height:16px; font-weight:500; opacity:0; transform:scale(.4); transition:all .4s}
+#vitro-nx .v-ic.badge-on .v-badge{opacity:1; transform:scale(1)}
+#vitro-nx .v-pin{position:absolute; top:-3px; left:-3px; width:0; height:0; border-left:6px solid transparent; border-right:6px solid transparent; border-bottom:9px solid var(--acc); opacity:0; transition:opacity .3s; filter:drop-shadow(0 1px 2px rgba(0,0,0,.6))}
+#vitro-nx .v-ic.pinned .v-pin{opacity:1}
+#vitro-nx .v-refl{position:absolute; top:calc(100% + 12px); left:0; width:100%; height:70%; opacity:.2; pointer-events:none;
+  -webkit-mask-image:linear-gradient(to bottom, rgba(0,0,0,.65), transparent 58%); mask-image:linear-gradient(to bottom, rgba(0,0,0,.65), transparent 58%)}
+#vitro-nx .v-refl svg{width:100%; height:100%; transform:scaleY(-1); display:block}
+#vitro-nx[data-refl="off"] .v-refl,#vitro-nx.lp .v-refl,#vitro-nx[data-pos="left"] .v-refl,#vitro-nx[data-pos="right"] .v-refl{display:none}
+#vitro-nx[data-fluid="on"] .v-refl svg{animation:nxRip calc(3s*var(--anim)) ease-in-out infinite}
+@keyframes nxRip{0%,100%{transform:scaleY(-1) skewX(0); opacity:1}35%{transform:scaleY(-1) skewX(1.8deg); opacity:1.15}65%{transform:scaleY(-1) skewX(-1.4deg); opacity:.85}}
+#vitro-nx .v-sep{background:rgba(255,255,255,.22); border-radius:1px}
+#vitro-nx[data-pos="bottom"] .v-sep,#vitro-nx[data-pos="top"] .v-sep{width:2px; height:calc(var(--isz,48px)*.78); align-self:center; margin:0 3px}
+#vitro-nx[data-pos="left"] .v-sep,#vitro-nx[data-pos="right"] .v-sep{height:2px; width:calc(var(--isz,48px)*.78); align-self:center; margin:3px 0}
+#vitro-nx .v-ic.ins::before{content:""; position:absolute; background:var(--acc)}
+#vitro-nx[data-pos="bottom"] .v-ic.ins::before,#vitro-nx[data-pos="top"] .v-ic.ins::before{left:-7px; top:4px; bottom:4px; width:3px; border-radius:2px}
+#vitro-nx[data-pos="left"] .v-ic.ins::before,#vitro-nx[data-pos="right"] .v-ic.ins::before{top:-7px; left:4px; right:4px; height:3px; border-radius:2px}
+#vitro-nx .trash-hot svg{filter:drop-shadow(0 0 10px rgba(255,120,110,.9))}
+#vitro-nx .dock .ripple{position:absolute; border-radius:50%; border:2px solid rgba(190,215,255,.5); pointer-events:none; animation:nxRip2 .8s var(--sig) forwards}
+@keyframes nxRip2{from{opacity:.8; transform:scale(.2)}to{opacity:0; transform:scale(1)}}
+#vitro-nx .v-ic.e-in{animation:nxRise calc(.45s*var(--anim)) var(--sig) both}
+@keyframes nxRise{from{opacity:0; transform:translateY(14px) scale(.7)}}
+/* 抽屉启动器(Launchpad 式,GNOME 抽屉) */
+#vitro-nx .lpad{position:absolute; inset:0; z-index:58; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:20px;
+  background:rgba(8,11,20,.55); backdrop-filter:blur(28px); opacity:0; visibility:hidden; transition:opacity .25s var(--sig), visibility 0s .25s}
+#vitro-nx .lpad.open{opacity:1; visibility:visible; transition:opacity .25s var(--sig)}
+#vitro-nx .lpad input{font:inherit; font-size:13px; width:min(260px,70%); padding:8px 14px; border-radius:11px; text-align:center;
+  border:1px solid var(--line); background:rgba(255,255,255,.1); color:var(--txt); outline:none}
+#vitro-nx .lpad input::placeholder{color:var(--mut)}
+#vitro-nx .lpgrid{display:grid; grid-template-columns:repeat(4,minmax(84px,110px)); gap:16px; padding:0 20px; justify-content:center}
+#vitro-nx .lp-it{border:0; background:none; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:7px; padding:6px}
+#vitro-nx .lp-it svg{width:56px; height:56px; filter:drop-shadow(0 6px 12px rgba(0,0,0,.45)); transition:transform .18s var(--sig)}
+#vitro-nx .lp-it:hover svg{transform:scale(1.1)}
+#vitro-nx .lp-it span{font-size:12px; color:var(--txt)}
+@media (max-width:640px){#vitro-nx .lpgrid{grid-template-columns:repeat(3,minmax(80px,100px))}}
+/* 复刻中心:向导/导入导出/粘贴插件 */
+#vitro-nx textarea{font-family:ui-monospace,Consolas,monospace; font-size:11px; line-height:1.5; color:#cfe0ff;
+  background:rgba(0,0,0,.32); border:1px solid var(--line); border-radius:10px; padding:9px; width:100%; min-height:130px; resize:vertical; outline:none}
+#vitro-nx textarea:focus{border-color:var(--acc)}
+#vitro-nx .wz{display:flex; gap:10px; align-items:flex-start}
+#vitro-nx .wz-n{flex:0 0 22px; width:22px; height:22px; border-radius:50%; background:rgba(127,164,255,.2); color:var(--acc);
+  display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:500}
+#vitro-nx .wz-b{flex:1; padding-bottom:10px; border-bottom:1px dashed var(--line); margin-bottom:10px}
+#vitro-nx .wz-b b{font-size:12.5px; font-weight:500; display:block; margin-bottom:3px}
+#vitro-nx .wz-b p{font-size:11.5px; color:var(--mut); margin-bottom:6px}
+#vitro-nx .shotprev{max-width:230px; max-height:130px; border-radius:9px; border:1px solid var(--line); display:block; margin-top:6px}
+#vitro-nx .upl{position:absolute; inset:7px; display:flex; align-items:center; justify-content:center; text-align:center;
+  font-size:12px; line-height:1.3; color:#e8f2ff; word-break:break-all; overflow:hidden}
+#vitro-nx .upl.err{color:#ff9d9d; font-size:10.5px}
+#vitro-nx .okmsg{font-size:12px; color:#7ce3a5; min-height:16px}
+#vitro-nx .errmsg{font-size:12px; color:#ff9d9d; min-height:16px}
+@keyframes nxBoing{0%{transform:none}28%{transform:translateY(-30px) scale(1.08)}52%{transform:translateY(1px) scale(.94)}74%{transform:translateY(-9px)}100%{transform:none}}
+@keyframes nxBounce{0%,100%{transform:none}20%{transform:translateY(-14px)}40%{transform:none}60%{transform:translateY(-10px)}80%{transform:none}}
+#vitro-nx .renaming{position:absolute; inset:0; z-index:5; border:0; border-radius:12px; background:rgba(10,14,24,.92); color:#fff; font-size:12px; padding:4px 8px; outline:2px solid var(--acc)}
+/* 时钟 */
+#vitro-nx .clk-d{position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1px}
+#vitro-nx .clk-d b{font-size:15px; font-weight:500; letter-spacing:.02em; font-variant-numeric:tabular-nums}
+#vitro-nx .clk-d span{font-size:8.5px; color:#c9d6ee}
+#vitro-nx[data-pos="left"] .clk-d,#vitro-nx[data-pos="right"] .clk-d{transform:rotate(90deg)}
+/* RAM 直方图 */
+#vitro-nx .ram{position:absolute; left:8px; right:8px; bottom:9px; top:auto; height:16px; display:flex; align-items:flex-end; gap:2px}
+#vitro-nx .ram i{flex:1; background:linear-gradient(#9fe8ff,#4aa8e8); border-radius:1px; min-height:2px}
+/* 电池 */
+#vitro-nx .bat{position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center}
+#vitro-nx .bat b{font-size:14px; font-weight:500; font-variant-numeric:tabular-nums}
+/* 任务/托盘 docklet 徽点 */
+#vitro-nx .mini{position:absolute; bottom:4px; left:0; right:0; display:flex; justify-content:center; gap:2px}
+#vitro-nx .mini i{width:5px; height:5px; border-radius:50%; background:#bfe0ff}
+/* Shelf 搁架 */
+#vitro-nx .shelf{position:absolute; right:0; top:16%; z-index:18; width:150px; max-height:66%; display:flex;
+  transform:translateX(calc(100% - 34px)); transition:transform calc(.35s*var(--anim)) var(--sig)}
+#vitro-nx .shelf:hover,#vitro-nx .shelf.open{transform:none}
+#vitro-nx .shelf-tab{flex:0 0 34px; border:0; background:linear-gradient(180deg, rgba(90,120,200,.6), rgba(40,55,110,.6)); border-left:1px solid var(--line);
+  border-radius:12px 0 0 12px; cursor:pointer; color:#dfe8ff; font-size:11px; writing-mode:vertical-rl; letter-spacing:.35em; padding:10px 0}
+#vitro-nx .shelf-body{flex:1; overflow:hidden; background:var(--glass); backdrop-filter:blur(18px); border:1px solid var(--line); border-right:0; border-radius:14px 0 0 14px; padding:10px 8px; display:flex; flex-direction:column; gap:6px}
+#vitro-nx .shelf-body b{font-size:10.5px; color:var(--mut); font-weight:500}
+#vitro-nx .shelf.hot .shelf-body{outline:2px solid var(--acc); outline-offset:-2px}
+#vitro-nx .sh-item{display:flex; align-items:center; gap:6px; border:0; background:rgba(255,255,255,.05); border-radius:9px; padding:3px 6px 3px 3px; cursor:grab; text-align:left}
+#vitro-nx .sh-item:hover{background:rgba(255,255,255,.12)}
+#vitro-nx .sh-item svg{width:22px; height:22px; flex:0 0 22px}
+#vitro-nx .sh-item span{font-size:11.5px}
+#vitro-nx .sh-empty{font-size:10.5px; color:var(--mut)}
+/* 浮动子码头(Detach) */
+#vitro-nx .floatdock{position:absolute; z-index:30; display:flex; gap:7px; padding:8px 10px; border-radius:16px;
+  background:var(--glass); backdrop-filter:blur(18px); border:1px solid var(--line); box-shadow:0 14px 40px rgba(0,0,0,.5)}
+#vitro-nx .floatdock .v-ic{width:44px; height:44px}
+/* ── 菜单/弹出 ── */
+#vitro-nx .menu{position:absolute; z-index:60; min-width:172px; padding:5px; border-radius:13px;
+  background:var(--glass); backdrop-filter:blur(calc(var(--blur)*1px)) saturate(1.5); border:1px solid var(--line);
+  box-shadow:0 18px 48px rgba(0,0,0,.5); opacity:0; visibility:hidden; pointer-events:none; transform-origin:bottom left;
+  transform:scale(.94) translateY(5px); transition:opacity calc(.25s*var(--anim)) var(--sig), transform calc(.25s*var(--anim)) var(--sig), visibility 0s calc(.25s*var(--anim))}
+#vitro-nx .menu.open{opacity:1; visibility:visible; pointer-events:auto; transform:none; transition:opacity calc(.25s*var(--anim)) var(--sig), transform calc(.25s*var(--anim)) var(--sig), visibility 0s 0s}
+#vitro-nx .mi{display:flex; align-items:center; gap:7px; width:100%; text-align:left; border:0; background:none; border-radius:8px; padding:6px 10px; cursor:pointer; font-size:12.5px; transition:background .13s}
+#vitro-nx .mi:hover{background:rgba(255,255,255,.09)}
+#vitro-nx .mi[aria-disabled="true"]{opacity:.45; cursor:default}
+#vitro-nx .mi .chk{width:14px; flex:0 0 14px; font-size:11px; color:var(--acc)}
+#vitro-nx .mi .sub-a{margin-left:auto; color:var(--mut); font-size:10px}
+#vitro-nx .msep{height:1px; background:var(--line); margin:4px 8px}
+#vitro-nx .fly{position:absolute; z-index:62; padding:12px; border-radius:14px; min-width:180px;
+  background:var(--glass); backdrop-filter:blur(18px) saturate(1.5); border:1px solid var(--line); box-shadow:0 18px 48px rgba(0,0,0,.5);
+  opacity:0; visibility:hidden; pointer-events:none; transform:translateY(8px) scale(.97); transition:all calc(.25s*var(--anim)) var(--sig)}
+#vitro-nx .fly.open{opacity:1; visibility:visible; pointer-events:auto; transform:none}
+#vitro-nx .fly h5{font-size:11px; color:var(--mut); font-weight:500; margin-bottom:7px}
+#vitro-nx .mailrow{display:flex; gap:8px; align-items:baseline; padding:5px 0; border-bottom:1px solid var(--line); font-size:12px}
+#vitro-nx .mailrow:last-child{border-bottom:0}
+#vitro-nx .mailrow b{font-weight:500; flex:1}
+#vitro-nx .mailrow span{color:var(--mut); font-size:10.5px}
+#vitro-nx .fc-day{display:flex; align-items:center; gap:8px; padding:4px 0; font-size:12px}
+#vitro-nx .fc-day em{font-style:normal; color:var(--mut); width:34px; font-size:11px}
+#vitro-nx .trayico{display:flex; gap:12px; align-items:center; padding:4px}
+#vitro-nx .trayico svg{width:22px; height:22px}
+/* ── 对话框 ── */
+#vitro-nx .ovl{position:absolute; inset:0; z-index:70; display:flex; align-items:center; justify-content:center;
+  background:rgba(5,8,15,.45); opacity:0; visibility:hidden; transition:all .25s var(--sig)}
+#vitro-nx .ovl.open{opacity:1; visibility:visible}
+#vitro-nx .dlg{width:min(88%,460px); max-height:82%; overflow:auto; border-radius:16px; background:rgba(16,20,32,.92); backdrop-filter:blur(24px); border:1px solid var(--line); box-shadow:0 30px 80px rgba(0,0,0,.6)}
+#vitro-nx .dlg-h{display:flex; align-items:center; padding:12px 16px; border-bottom:1px solid var(--line)}
+#vitro-nx .dlg-h b{font-weight:500; font-size:14px}
+#vitro-nx .dlg-h .x{margin-left:auto; border:0; background:none; cursor:pointer; font-size:15px; color:var(--mut); padding:2px 6px}
+#vitro-nx .tabs{display:flex; gap:4px; padding:8px 12px 0; flex-wrap:wrap}
+#vitro-nx .tab{border:0; background:none; padding:6px 11px; border-radius:8px 8px 0 0; cursor:pointer; font-size:12.5px; color:var(--mut); border-bottom:2px solid transparent}
+#vitro-nx .tab.on{color:var(--txt); border-bottom-color:var(--acc)}
+#vitro-nx .dlg-b{padding:12px 16px 16px}
+#vitro-nx .row{display:flex; align-items:center; gap:10px; margin-bottom:10px; flex-wrap:wrap}
+#vitro-nx .row label{font-size:12.5px; min-width:118px; color:#c8d2e6}
+#vitro-nx .row output{font-size:12px; color:var(--mut); min-width:44px; font-variant-numeric:tabular-nums}
+#vitro-nx input[type=range]{appearance:none; width:170px; height:4px; border-radius:2px; background:rgba(255,255,255,.18); cursor:pointer}
+#vitro-nx input[type=range]::-webkit-slider-thumb{appearance:none; width:14px; height:14px; border-radius:50%; background:var(--acc)}
+#vitro-nx select{font:inherit; font-size:12.5px; color:var(--txt); background:rgba(255,255,255,.08); border:1px solid var(--line); border-radius:7px; padding:4px 8px}
+#vitro-nx .ro{flex:1; font-size:12.5px; color:#c8d2e6; background:rgba(255,255,255,.05); border:1px solid var(--line); border-radius:7px; padding:5px 9px}
+#vitro-nx .lockbox{display:flex; flex-direction:column; gap:10px; align-items:center; padding:26px 30px}
+#vitro-nx .lockbox input{font:inherit; background:rgba(255,255,255,.08); border:1px solid var(--acc); border-radius:8px; padding:7px 11px; color:#fff; outline:none; width:200px}
+#vitro-nx pre.ini{font-family:ui-monospace,Consolas,monospace; font-size:11px; line-height:1.55; color:#a8b6d8; white-space:pre-wrap; word-break:break-all; background:rgba(0,0,0,.3); border:1px solid var(--line); border-radius:10px; padding:10px}
+/* 审计表 */
+#vitro-nx .audit{padding:12px 16px 16px; border-top:1px solid var(--line); background:#0a0d15}
+#vitro-nx .audit h3{font-size:13px; font-weight:500; margin-bottom:8px}
+#vitro-nx .agrid{display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:8px 18px}
+#vitro-nx .arow{display:flex; align-items:baseline; gap:8px; font-size:12px; padding:3px 0; border-bottom:1px dashed rgba(255,255,255,.06)}
+#vitro-nx .arow .st{flex:0 0 96px; font-size:10.5px; border-radius:6px; padding:1px 6px; text-align:center}
+#vitro-nx .st.ok{background:rgba(47,189,95,.18); color:#7ce3a5} #vitro-nx .st.web{background:rgba(232,184,75,.15); color:#ecc76a} #vitro-nx .st.na{background:rgba(127,164,255,.12); color:#a7beff}
+#vitro-nx .arow .tx{color:#c6d0e4} #vitro-nx .arow .tx small{color:var(--mut)}
+#vitro-nx.lp .stage *{transition-duration:0s!important; animation:none!important}
+@media (prefers-reduced-motion:reduce){#vitro-nx *{animation:none!important; transition:none!important}}
+</style>
+<div class="app">
+  <div class="head">
+    <div class="dots" aria-hidden="true"><i></i><i></i><i></i></div>
+    <div class="ttl">Vitro — NeXuS 全功能对标<small>规格 R1-R12 · 二次字符串挖掘</small></div>
+    <div class="sp"></div>
+    <label class="sw"><input type="checkbox" id="swAh">自动隐藏</label>
+    <label class="sw"><input type="checkbox" id="swMag" checked>放大</label>
+    <button type="button" class="hbtn" id="btnProps">Dock 属性…</button>
+    <button type="button" class="hbtn" id="btnClone">📤 复刻 / 插件</button>
+    <label class="sw"><input type="checkbox" id="swLp">省电</label>
+  </div>
+  <div class="stage" id="stage">
+    <div class="win" id="win">
+      <div class="wbtns"><button type="button" id="wmin" aria-label="最小化窗口"><i></i></button></div>
+      <div class="wcap">预览窗口 — 可最小化进 dock</div>
+    </div>
+    <div class="tray" id="tray"><b>应用库</b><em>拖到 dock = 自身图标插入;拖到右侧 Shelf = 驻留搁架</em></div>
+    <div class="hint" id="hint"><b>最近动作</b>右键 dock 空白处 = 完整菜单(规格 R7)</div>
+    <div class="lpad" id="lpad">
+      <input type="text" id="lpsrch" placeholder="搜索应用…" aria-label="搜索应用">
+      <div class="lpgrid" id="lpgrid"></div>
+    </div>
+    <div class="ez" data-side="top"></div><div class="ez" data-side="bottom"></div><div class="ez" data-side="left"></div><div class="ez" data-side="right"></div>
+    <div class="cz" data-corner="tl"></div><div class="cz" data-corner="tr"></div><div class="cz" data-corner="bl"></div><div class="cz" data-corner="br"></div>
+    <button type="button" class="hotspot" id="hotspot" data-tooltip="桌面热点按钮(证据:Hotspot Button on the Desktop)"></button>
+    <div class="shelf" id="shelf">
+      <div class="shelf-tab">SHELF</div>
+      <div class="shelf-body" id="shelfBody"><b>搁架(证据:Insert New Shelf Item)</b><span class="sh-empty">拖入条目驻留</span></div>
+    </div>
+    <div class="dockwrap"><div class="dock" id="dock"></div></div>
+    <div class="menu" id="menu" role="menu"></div>
+    <div class="menu" id="submenu" role="menu"></div>
+    <div class="fly" id="fly"></div>
+    <div class="floatdock" id="floatdock" hidden></div>
+    <div class="ovl" id="ovl"><div class="dlg" id="dlg"></div></div>
+  </div>
+  <div class="audit">
+    <h3>NeXuS 功能实现审计(对照规格 v0.3)</h3>
+    <div class="agrid" id="audit"></div>
+  </div>
+</div>
+<script>
+(function(){
+  var $=function(i){return document.getElementById(i)};
+  var root=$('vitro-nx'), stage=$('stage'), dock=$('dock'), hintEl=$('hint');
+  var menu=$('menu'), submenu=$('submenu'), fly=$('fly'), ovl=$('ovl'), dlg=$('dlg');
+  var RM=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var S={pos:'bottom', autohide:false, magnify:true, peak:1.6, iconSize:48, anim:1, blur:20, noblur:false,
+    refl:'static', fluid:false, shadows:true, ripple:true, attention:true, boing:true,
+    onTop:true, collapseLaunch:false, hotspotBtn:'left', clockMode:'analog', locked:false,
+    docklets:{clock:true,weather:true,mail:true,cpu:true,ram:false,battery:false,tasks:false,tray:false,net:false,cal:false,clip:false},
+    customPlugins:[], dlStack:false};
+  var ID={seq:1};
+  try{var ws=window.zcode&&window.zcode.widgetState; if(ws&&ws.privateContent){var p=ws.privateContent; Object.keys(S).forEach(function(k){if(typeof S[k]==='object'?p[k]:p[k]!==undefined)S[k]=p[k];});}}catch(e){}
+  var saveT=0; function persist(){ if(!(window.zcode&&window.zcode.setWidgetState))return; clearTimeout(saveT);
+    saveT=setTimeout(function(){window.zcode.setWidgetState({privateContent:S}).catch(function(){});},300); }
+  document.addEventListener('zcode:set_globals',function(ev){try{var p=ev.detail.globals.widgetState.privateContent;
+    if(p){Object.keys(S).forEach(function(k){if(typeof S[k]==='object'?p[k]:p[k]!==undefined)S[k]=p[k];});applyAll();}}catch(e){}});
+
+  /* ── 写实图标库 ── */
+  function sq(g,body){return '<defs><linearGradient id="'+g.id+'" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="'+g.a+'"/><stop offset="1" stop-color="'+g.b+'"/></linearGradient></defs>'
+    +'<rect x="2" y="2" width="60" height="60" rx="15" fill="url(#'+g.id+')"/>'
+    +'<path d="M2 21 C2 9 9 2 21 2 H43 C55 2 62 9 62 21 V31 H2 Z" fill="#fff" opacity=".15"/>'
+    +'<rect x="2.5" y="2.5" width="59" height="59" rx="14.5" fill="none" stroke="rgba(255,255,255,.30)"/>'+body}
+  var SQ={
+    browser:{g:{id:'gBr',a:'#41d0f5',b:'#1f6df2'},b:'<circle cx="32" cy="32" r="15" fill="#eef7ff"/><ellipse cx="32" cy="32" rx="6.5" ry="15" fill="none" stroke="#2a7de1" stroke-width="1.6"/><path d="M17.5 28 H46.5 M17.5 36 H46.5 M32 17 V47" stroke="#2a7de1" stroke-width="1.6" fill="none"/>'},
+    mail:{g:{id:'gMa',a:'#54b4ff',b:'#1e63ea'},b:'<rect x="15" y="21" width="34" height="23" rx="4" fill="#f4faff"/><path d="M16.5 24 L32 35.5 L47.5 24" fill="none" stroke="#1e63ea" stroke-width="2.4" stroke-linecap="round"/>'},
+    music:{g:{id:'gMu',a:'#ff6f9d',b:'#e02f68'},b:'<circle cx="23.5" cy="42" r="5.2" fill="#fff"/><circle cx="40.5" cy="38" r="5.2" fill="#fff"/><path d="M28.7 42 V21.5 L45.7 17.5 V38" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round"/>'},
+    terminal:{g:{id:'gTe',a:'#454e63',b:'#141926'},b:'<path d="M17 24 L27 32 L17 40" fill="none" stroke="#7ef0b0" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/><rect x="31" y="38.4" width="15" height="3.6" rx="1.8" fill="#7ef0b0"/>'},
+    gamepad:{g:{id:'gGa',a:'#8f66ff',b:'#5628d8'},b:'<rect x="13" y="23" width="38" height="19" rx="9.5" fill="#fff"/><circle cx="23" cy="32.5" r="2.4" fill="#5628d8"/><circle cx="41" cy="33.5" r="2.4" fill="#5628d8"/><circle cx="45.5" cy="29" r="2" fill="#ff8a5c"/><circle cx="36.5" cy="36" r="2" fill="#38d17c"/>'},
+    settings:{g:{id:'gSe',a:'#a3aec2',b:'#5b6a82'},b:'<circle cx="32" cy="32" r="12.5" fill="none" stroke="#fff" stroke-width="6" stroke-dasharray="5.4 4.5"/><circle cx="32" cy="32" r="5.6" fill="#fff"/>'},
+    control:{g:{id:'gCo',a:'#b8c2d4',b:'#6d7c96'},b:'<circle cx="32" cy="32" r="12.5" fill="none" stroke="#fff" stroke-width="6" stroke-dasharray="5.4 4.5"/><circle cx="32" cy="32" r="5.6" fill="#fff"/>'},
+    drawer:{g:{id:'gDr',a:'#aab6c8',b:'#5f6d84'},b:'<g fill="#fff"><circle cx="22" cy="22" r="3.2"/><circle cx="32" cy="22" r="3.2"/><circle cx="42" cy="22" r="3.2"/><circle cx="22" cy="32" r="3.2"/><circle cx="32" cy="32" r="3.2"/><circle cx="42" cy="32" r="3.2"/><circle cx="22" cy="42" r="3.2"/><circle cx="32" cy="42" r="3.2"/><circle cx="42" cy="42" r="3.2"/></g>'},
+    folder:{g:{id:'gFo',a:'#7cc4ff',b:'#3d8bf5'},b:'<path d="M9 21 C9 18 11 16 14 16 H24 C26.5 16 27.5 17 29 19 L30.5 21 H50 C53 21 55 23 55 26 V44 C55 47 53 49 50 49 H14 C11 49 9 47 9 44 Z" fill="#eaf4ff"/><path d="M9 27 H55 V44 C55 47 53 49 50 49 H14 C11 49 9 47 9 44 Z" fill="url(#gFo)"/>'},
+    code:{g:{id:'gCd',a:'#3c4353',b:'#12151d'},b:'<path d="M20 22 L12 32 L20 42 M44 22 L52 32 L44 42" fill="none" stroke="#9fe8ff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M35 20 L29 44" stroke="#9fe8ff" stroke-width="3.2" stroke-linecap="round"/>'},
+    calendar:{g:{id:'gCa',a:'#fdfdff',b:'#e4e9f2'},b:'<path d="M2 17 C2 9 9 2 17 2 H47 C55 2 62 9 62 17 V20 H2 Z" fill="#ff5f6d"/><rect x="20" y="8" width="4" height="10" rx="2" fill="#c23b48"/><rect x="40" y="8" width="4" height="10" rx="2" fill="#c23b48"/><text x="32" y="48" text-anchor="middle" font-size="22" font-weight="500" fill="#3c4353" font-family="Segoe UI,sans-serif">24</text>'},
+    weather:{g:{id:'gWe',a:'#63bcff',b:'#2f7fe0'},b:'<circle cx="24" cy="24" r="8.5" fill="#ffd76e"/><g fill="#fff"><circle cx="29" cy="39" r="7"/><circle cx="38" cy="36" r="8.5"/><circle cx="46" cy="40" r="6"/><rect x="23" y="39" width="29" height="8" rx="4"/></g>'},
+    notes:{g:{id:'gNo',a:'#fdd968',b:'#f0b73e'},b:'<rect x="12" y="12" width="40" height="40" rx="6" fill="#fffdf4"/><path d="M12 18 C12 14.5 14.5 12 18 12 H46 C49.5 12 52 14.5 52 18 V24 H12 Z" fill="#f7c948"/><rect x="18" y="31" width="28" height="3" rx="1.5" fill="#d8cfa8"/><rect x="18" y="38" width="28" height="3" rx="1.5" fill="#d8cfa8"/><rect x="18" y="45" width="19" height="3" rx="1.5" fill="#d8cfa8"/>'},
+    doc:{g:{id:'gDc',a:'#f4f7fc',b:'#ccd6e6'},b:'<path d="M18 8 H38 L48 18 V52 C48 54.2 46.2 56 44 56 H18 C15.8 56 14 54.2 14 52 V12 C14 9.8 15.8 8 18 8 Z" fill="url(#gDc)" stroke="#9aa8c0" stroke-width="1.6"/><path d="M38 8 V18 H48" fill="none" stroke="#9aa8c0" stroke-width="1.6"/><rect x="20" y="27" width="22" height="2.6" rx="1.3" fill="#8fa0bd"/><rect x="20" y="33" width="22" height="2.6" rx="1.3" fill="#8fa0bd"/><rect x="20" y="39" width="14" height="2.6" rx="1.3" fill="#8fa0bd"/>'},
+    trash:{raw:'<defs><linearGradient id="gTr" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#c4ccd9"/><stop offset=".5" stop-color="#eef2f8"/><stop offset="1" stop-color="#b4bfce"/></linearGradient></defs><rect x="29" y="9" width="6" height="4" rx="2" fill="#aab4c4"/><rect x="19" y="12" width="26" height="5" rx="2.5" fill="url(#gTr)" stroke="#8b96a8"/><path d="M21.5 19 H42.5 L40.6 54 C40.5 56 38.7 57.5 36.6 57.5 H27.4 C25.3 57.5 23.5 56 23.4 54 Z" fill="url(#gTr)" stroke="#8b96a8"/><path d="M28 23 V52 M32 23 V52 M36 23 V52" stroke="#93a0b2" stroke-width="1.6" fill="none"/>'},
+    clock:{raw:'<defs><linearGradient id="gCk" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f4f7fc"/><stop offset="1" stop-color="#c9d3e4"/></linearGradient></defs><circle cx="32" cy="32" r="28" fill="url(#gCk)" stroke="#8f9cb2" stroke-width="2"/><g stroke="#5a6577" stroke-width="2" stroke-linecap="round"><path d="M32 10 V15 M32 49 V54 M10 32 H15 M49 32 H54"/></g><g id="clkHands" stroke-linecap="round"><path d="M32 32 L32 18" stroke="#2c3444" stroke-width="3.4"/><path d="M32 32 L43 38" stroke="#2c3444" stroke-width="2.8"/><path d="M32 32 L26 20" stroke="#ff5f6d" stroke-width="1.6"/></g><circle cx="32" cy="32" r="2.6" fill="#2c3444"/>'},
+    cpu:{g:{id:'gCp',a:'#2c3550',b:'#10141f'},b:'<polyline id="vSpark" points="14,38 20,32 26,36 32,26 38,31 44,22 50,28" fill="none" stroke="#5eead4" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><text id="vCpuT" x="32" y="52" text-anchor="middle" font-size="11" fill="#e8f6ff" font-family="ui-monospace,Consolas,monospace">12</text>'},
+    ram:{g:{id:'gRm',a:'#1f2a44',b:'#0d1220'},b:'<g class="rambars"><rect x="14" y="34" width="6" height="16" rx="2" fill="#9fe8ff"/><rect x="23" y="26" width="6" height="24" rx="2" fill="#9fe8ff"/><rect x="32" y="38" width="6" height="12" rx="2" fill="#9fe8ff"/><rect x="41" y="22" width="6" height="28" rx="2" fill="#9fe8ff"/></g><rect x="12" y="52" width="40" height="2" rx="1" fill="#3b4a6b"/>'},
+    battery:{g:{id:'gBt',a:'#3f8f5f',b:'#1e5c3a'},b:'<rect x="13" y="24" width="34" height="17" rx="4" fill="#eafaf0" stroke="#1e5c3a" stroke-width="2"/><rect x="47" y="29" width="5" height="7" rx="2" fill="#1e5c3a"/><rect class="batfill" x="16" y="27" width="24" height="11" rx="2" fill="#35c26e"/><text class="batt" x="30" y="36.5" text-anchor="middle" font-size="9" font-weight="500" fill="#14522f" font-family="Segoe UI,sans-serif">78</text>'},
+    tasks:{g:{id:'gTk',a:'#7b8cff',b:'#3d49c9'},b:'<rect x="13" y="15" width="38" height="12" rx="3" fill="#fff" opacity=".95"/><rect x="13" y="30" width="38" height="12" rx="3" fill="#fff" opacity=".7"/><rect x="13" y="45" width="26" height="10" rx="3" fill="#fff" opacity=".45"/><circle cx="19" cy="21" r="2.2" fill="#3d49c9"/><circle cx="19" cy="36" r="2.2" fill="#3d49c9"/>'},
+    tray:{g:{id:'gTy',a:'#8d99ad',b:'#4a5568'},b:'<path d="M18 40 L18 32 C18 25 22 21 27 21 V17 H23 V13 H41 V17 H37 V21 C42 21 46 25 46 32 V40 C46 42 44.7 43.5 42.5 43.5 C40.3 43.5 39 42 39 40 V34 H25 V40 C25 42 23.7 43.5 21.5 43.5 C19.3 43.5 18 42 18 40 Z" fill="#eef3fa"/>'},
+    menulist:{g:{id:'gMl',a:'#ff9d5c',b:'#e8611f'},b:'<g stroke="#fff" stroke-width="3.4" stroke-linecap="round"><path d="M17 21 H47"/><path d="M17 32 H43"/><path d="M17 43 H39"/></g>'},
+    shelfico:{g:{id:'gSh',a:'#9db4e8',b:'#4c63a8'},b:'<rect x="16" y="13" width="32" height="38" rx="5" fill="#eaf0fc"/><path d="M16 19 C16 15.7 18.7 13 22 13 H42 C45.3 13 48 15.7 48 19 V24 H16 Z" fill="url(#gSh)"/><g stroke="#7a8dbd" stroke-width="2.4" stroke-linecap="round"><path d="M23 32 H41"/><path d="M23 39 H37"/></g>'},
+    net:{g:{id:'gNt',a:'#2ea88a',b:'#136c56'},b:'<path d="M20 30 H44 M20 30 L26 24 M20 30 L26 36" fill="none" stroke="#c9f5e4" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><path d="M44 40 H20 M44 40 L38 34 M44 40 L38 46" fill="none" stroke="#8fe0c2" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>'},
+    clip:{g:{id:'gCb',a:'#c8d2de',b:'#7e8ba0'},b:'<rect x="18" y="16" width="28" height="36" rx="4" fill="#f2f6fb" stroke="#6d7a90" stroke-width="1.8"/><rect x="25" y="11" width="14" height="9" rx="3" fill="#8d99ad"/><g stroke="#93a3ba" stroke-width="2.4" stroke-linecap="round"><path d="M24 30 H40"/><path d="M24 37 H36"/><path d="M24 44 H32"/></g>'},
+    stackic:{g:{id:'gSt',a:'#ffb35c',b:'#e8801f'},b:'<rect x="14" y="26" width="36" height="24" rx="5" fill="#eaf4ff" transform="rotate(-8 32 38)"/><rect x="14" y="26" width="36" height="24" rx="5" fill="#eaf4ff" transform="rotate(4 32 38)"/><rect x="14" y="24" width="36" height="24" rx="5" fill="#fff" stroke="#d89a4a" stroke-width="1.6"/><text x="32" y="41" text-anchor="middle" font-size="13" font-weight="500" fill="#b06a1e" font-family="Segoe UI,sans-serif" id="vStkN">8</text>'}
+  };
+  function icn(id){var s=SQ[id]||SQ.doc; return '<svg viewBox="0 0 64 64" aria-hidden="true">'+(s.raw||sq(s.g,s.b))+'</svg>'}
+  var NAMES={control:'控制磁贴',drawer:'抽屉',browser:'浏览器',mail:'邮件',music:'音乐',terminal:'终端',gamepad:'游戏',settings:'设置',
+    folder:'文件夹',menulist:'菜单',trash:'回收站',clock:'时钟',weather:'天气',cpu:'CPU',ram:'内存',battery:'电池',tasks:'运行任务',tray:'系统托盘',code:'代码',calendar:'日历',notes:'笔记',shelfico:'搁架',net:'网速表',clip:'剪贴板历史',stackic:'插件堆叠'};
+
+  /* ── Dock 条目 ── */
+  var trashEl=null, ctlEl=null, drawEl=null, sepMain=null, sepDl=null;
+  function mk(id,opt){opt=opt||{};
+    var b=document.createElement('button'); b.type='button'; b.className='v-ic'; b.dataset.app=id; b.dataset.uid='u'+(ID.seq++);
+    b.dataset.name=opt.name||NAMES[id]||id; b.draggable=opt.drag!==false;
+    if(opt.kind)b.dataset.kind=opt.kind;
+    b.setAttribute('data-tooltip',b.dataset.name); b.setAttribute('aria-label',b.dataset.name);
+    b.innerHTML='<span class="v-ico">'+(opt.inner||icn(id))+'</span><span class="v-pin" aria-hidden="true"></span><span class="v-dot" aria-hidden="true"></span><span class="v-badge" aria-hidden="true">1</span><span class="v-refl" aria-hidden="true">'+icn(id)+'</span>';
+    return b}
+  function add(id,opt){var b=mk(id,opt); place(b,opt); return b}
+  function place(b,opt){opt=opt||{};
+    if(opt.before)dock.insertBefore(b,opt.before); else if(opt.at==='docklets'){dock.insertBefore(b,trashEl)} else dock.insertBefore(b,sepMain);
+    wire(b)}
+  ctlEl=add('control',{drag:false,at:'head'});
+  drawEl=add('drawer',{drag:false});
+  ['browser','mail','music','terminal','gamepad'].forEach(function(a){add(a)});
+  sepMain=document.createElement('span'); sepMain.className='v-sep'; sepMain.setAttribute('aria-hidden','true'); dock.appendChild(sepMain);
+  add('folder',{drag:false}); add('menulist',{drag:false,kind:'menu'});
+  sepDl=document.createElement('span'); sepDl.className='v-sep'; sepDl.setAttribute('aria-hidden','true'); dock.appendChild(sepDl);
+  trashEl=add('trash',{drag:false});
+
+  /* docklet 工厂 */
+  var dockletEls={};
+  function docklet(id,inner,name){var b=mk(id,{drag:false,name:name||NAMES[id],inner:inner}); b.classList.add('docklet');
+    dock.insertBefore(b,trashEl); wire(b); dockletEls[id]=b; b.hidden=!S.docklets[id]; return b}
+  docklet('clock',icn('clock'),'时钟');
+  docklet('weather');
+  var mailD=docklet('mail'); mailD.classList.add('badge-on'); mailD.querySelector('.v-badge').textContent='3';
+  docklet('cpu');
+  var ramD=docklet('ram',icn('ram').replace('class="rambars"','class="rambars js-ram"'),'内存');
+  docklet('battery');
+  var tasksD=docklet('tasks'); tasksD.insertAdjacentHTML('beforeend','<span class="mini" aria-hidden="true"><i></i><i></i></span>');
+  var trayD=docklet('tray'); trayD.insertAdjacentHTML('beforeend','<span class="mini" aria-hidden="true"><i></i><i></i><i></i></span>');
+
+  /* 插件目录(BitDock 对标:本地目录,可安装新 docklet) */
+  var DL_META=[['clock','时钟(模拟/数字·原子钟证据)'],['weather','天气(METAR)'],['mail','邮件检查器(POP3×9)'],['cpu','CPU 表'],['ram','RAM 表'],['battery','电池监视'],['tasks','运行任务列表'],['tray','系统托盘'],['net','网速表'],['cal','日历'],['clip','剪贴板历史']];
+  function ensureDocklet(id){
+    if(dockletEls[id])return dockletEls[id];
+    var inner=null, name=NAMES[id];
+    if(id==='net'){inner='<span class="v-ico">'+icn('net').replace('stroke-width="3"','stroke-width="3"')+'</span><span class="v-dot" aria-hidden="true"></span>'; }
+    if(id==='cal'){inner='<span class="v-ico">'+icn('calendar')+'</span><span class="v-dot" aria-hidden="true"></span>'; }
+    if(id==='clip'){inner='<span class="v-ico">'+icn('clip')+'</span><span class="v-dot" aria-hidden="true"></span><span class="v-badge" aria-hidden="true">4</span>'; }
+    var b=docklet(id, inner, name);
+    if(id==='clip'){b.classList.add('badge-on'); b.querySelector('.v-badge').textContent='4';}
+    applyDlStack();
+    return b;}
+  var stackBtn=null;
+  function applyDlStack(){
+    var ids=Object.keys(S.docklets).filter(function(k){return S.docklets[k]&&dockletEls[k];});
+    if(S.dlStack&&ids.length){
+      ids.forEach(function(k){dockletEls[k].hidden=true;});
+      if(!stackBtn){
+        stackBtn=mk('stackic',{drag:false,name:'插件堆叠'});
+        stackBtn.classList.add('docklet','badge-on');
+        stackBtn.querySelector('.v-badge').textContent=ids.length;
+        dock.insertBefore(stackBtn,trashEl);
+        stackBtn.addEventListener('click',function(){stackFly();});
+        stackBtn.addEventListener('contextmenu',function(e){e.preventDefault(); S.dlStack=false; applyDlStack(); persist(); hint('取消叠放 — docklet 展开(macOS Stack 借鉴)');});
+      } else {stackBtn.hidden=false; stackBtn.querySelector('.v-badge').textContent=ids.length;}
+    } else {
+      if(stackBtn){stackBtn.hidden=true;}
+      ids.forEach(function(k){dockletEls[k].hidden=false;});
+    }
+    if(typeof fitDock==='function')fitDock();}
+  function stackFly(){
+    if(!stackBtn)return;
+    var ids=Object.keys(S.docklets).filter(function(k){return S.docklets[k]&&dockletEls[k];});
+    fly.textContent='';
+    var h=document.createElement('h5'); h.textContent='插件堆叠 · '+ids.length+' 个(右键堆叠图标取消)'; fly.appendChild(h);
+    var wrap=document.createElement('div');
+    wrap.style.cssText='display:grid;grid-template-columns:repeat(2,1fr);gap:6px;min-width:220px';
+    ids.forEach(function(id){
+      var s=document.createElement('button'); s.type='button';
+      s.style.cssText='display:flex;align-items:center;gap:7px;border:0;background:none;border-radius:8px;padding:6px 8px;cursor:pointer;font-size:12px';
+      s.innerHTML='<span style="width:26px;height:26px;display:inline-block">'+(id==='net'?icn('net'):id==='cal'?icn('calendar'):id==='clip'?icn('clip'):dockletEls[id].querySelector('.v-ico').innerHTML)+'</span>'+NAMES[id];
+      s.addEventListener('click',function(){fly.classList.remove('open'); dockletClick(id, stackBtn);});
+      wrap.appendChild(s);});
+    fly.appendChild(wrap);
+    var r=stackBtn.getBoundingClientRect(), sr=stage.getBoundingClientRect();
+    fly.style.left=Math.max(8,Math.min(r.left-sr.left-40, sr.width-260))+'px';
+    fly.style.top=Math.max(8,r.top-sr.top-260)+'px';
+    fly.classList.add('open');}
+
+  /* ── 应用库拖源 ── */
+  var TRAYAPPS=['code','calendar','notes'];
+  var trayEl=$('tray');
+  TRAYAPPS.forEach(function(id){
+    var c=document.createElement('button'); c.type='button'; c.className='t-chip'; c.draggable=true;
+    c.innerHTML=icn(id)+'<span>'+NAMES[id]+'</span>'; c.setAttribute('aria-label','拖入 '+NAMES[id]);
+    c.addEventListener('dragstart',function(e){dragNew=id; dragEl=null; if(e.dataTransfer){e.dataTransfer.setData('text/plain',id); e.dataTransfer.effectAllowed='copy';}});
+    trayEl.appendChild(c);
+  });
+
+  /* ── DnD:重排/插入/回收站/Shelf ── */
+  var dragNew=null, dragEl=null, insT=null, shelf=$('shelf');
+  function clearIns(){if(insT){insT.classList.remove('ins'); insT=null;} trashEl.classList.remove('trash-hot'); shelf.classList.remove('hot');}
+  dock.addEventListener('dragstart',function(e){var b=e.target.closest&&e.target.closest('.v-ic');
+    if(b&&b.draggable){dragEl=b; dragNew=null; if(e.dataTransfer){e.dataTransfer.setData('text/plain',b.dataset.app); e.dataTransfer.effectAllowed='move';}}});
+  dock.addEventListener('dragover',function(e){
+    if(!dragNew&&!dragEl)return; e.preventDefault(); e.dataTransfer.dropEffect=dragEl?'move':'copy';
+    clearIns(); var t=e.target.closest&&e.target.closest('.v-ic');
+    if(dragEl&&t===trashEl){trashEl.classList.add('trash-hot'); return;}
+    if(t&&t!==trashEl){t.classList.add('ins'); insT=t;}});
+  dock.addEventListener('drop',function(e){
+    e.preventDefault();
+    if(dragEl&&e.target.closest&&e.target.closest('.trash')){poof(dragEl); clearIns(); dragEl=null; return;}
+    if(dragEl){var t=e.target.closest&&e.target.closest('.v-ic'); if(t&&t!==dragEl&&t!==trashEl)dock.insertBefore(dragEl,t);
+      dragEl=null; clearIns(); hint('条目已重排(规格 R6)'); return;}
+    if(dragNew){insertApp(dragNew); dragNew=null; clearIns();}});
+  shelf.addEventListener('dragover',function(e){if(dragEl||dragNew){e.preventDefault(); shelf.classList.add('hot');}});
+  shelf.addEventListener('dragleave',function(){shelf.classList.remove('hot')});
+  shelf.addEventListener('drop',function(e){
+    e.preventDefault(); shelf.classList.remove('hot');
+    var src=dragEl||null, id=dragNew; dragNew=null;
+    if(src){toShelf(src.dataset.app,src.dataset.name); src.remove(); dragEl=null;}
+    else if(id){toShelf(id); insertShelfNoDupe(id);}
+    hint('搁架驻留(证据:Shelf Entry Properties / Displaying Shelf)');});
+  function insertApp(id){var b=mk(id); dock.insertBefore(b,sepMain); wire(b);
+    b.style.setProperty('--i',dock.children.length); b.classList.add('e-in'); setTimeout(function(){b.classList.remove('e-in')},600);
+    hint('拖入「'+NAMES[id]+'」— 自身图标插入(规格 R6)'); if(typeof fitDock==='function')fitDock();}
+  function toShelf(id,name){var body=$('shelfBody'); var em=body.querySelector('.sh-empty'); if(em)em.remove();
+    var d=document.createElement('button'); d.type='button'; d.className='sh-item'; d.draggable=true; d.innerHTML=icn(id)+'<span>'+(name||NAMES[id])+'</span>';
+    d.addEventListener('dragstart',function(e){dragNew=id; dragEl=null; if(e.dataTransfer){e.dataTransfer.setData('text/plain',id); e.dataTransfer.effectAllowed='copy';}});
+    body.appendChild(d);}
+  function insertShelfNoDupe(id){}
+  function poof(el){var r=el.getBoundingClientRect(), sr=stage.getBoundingClientRect();
+    for(var i=0;i<6;i++){var p=document.createElement('span'); p.className='ripple'; p.style.cssText='left:'+(r.left-sr.left+r.width/2-20)+'px;top:'+(r.top-sr.top+r.height/2-20)+'px;width:40px;height:40px';
+      p.style.setProperty('--px',(Math.random()*54-27)+'px'); stage.appendChild(p); setTimeout(function(pp){return function(){pp.remove()}}(p),700);}
+    var nm=el.dataset.name; el.style.transition='transform .25s var(--sig),opacity .25s var(--sig)'; el.style.transform='scale(.3)'; el.style.opacity='0';
+    setTimeout(function(){el.remove()},280); hint('「'+nm+'」拖入回收站删除(规格 R6)');}
+
+  /* ── 通用菜单 ── */
+  function closeMenus(){menu.classList.remove('open'); submenu.classList.remove('open'); submenu.removeAttribute('data-for');}
+  function buildMenu(el,items,forId){
+    el.textContent='';
+    items.forEach(function(it){
+      if(it.sep){var s=document.createElement('div'); s.className='msep'; el.appendChild(s); return;}
+      var b=document.createElement('button'); b.type='button'; b.className='mi'; b.setAttribute('role',it.chk!==undefined?'menuitemcheckbox':'menuitem');
+      if(it.dis){b.setAttribute('aria-disabled','true');}
+      var chk=document.createElement('span'); chk.className='chk'; chk.textContent=it.chk?'✓':'';
+      b.appendChild(chk); b.appendChild(document.createTextNode(it.t));
+      if(it.sub){var a=document.createElement('span'); a.className='sub-a'; a.textContent='▸'; b.appendChild(a);}
+      b.addEventListener('click',function(ev){if(it.dis)return; if(it.sub){ev.stopPropagation(); return;} closeMenus(); fly.classList.remove('open'); if(it.on)it.on();});
+      if(it.sub){b.addEventListener('pointerenter',function(){
+        var r=b.getBoundingClientRect(), sr=stage.getBoundingClientRect();
+        buildMenu(submenu,it.sub); submenu.style.left=Math.min(r.right-sr.left+2, sr.width-190)+'px';
+        submenu.style.top=Math.max(8,r.top-sr.top-4)+'px'; submenu.classList.add('open');});
+      } else {b.addEventListener('pointerenter',function(){submenu.classList.remove('open');});}
+      el.appendChild(b);
+    });
+  }
+  function openMenuAt(x,y,items,vertical){buildMenu(menu,items);
+    menu.style.visibility='hidden'; menu.classList.add('open');
+    var mw=menu.offsetWidth, mh=menu.offsetHeight, sr=stage.getBoundingClientRect();
+    var vx=vertical? x : x; // for vertical docks, caller pre-adjusts
+    menu.style.left=Math.max(8,Math.min(x, sr.width-mw-8))+'px';
+    menu.style.top=Math.max(8,Math.min(y-mh-8, sr.height-mh-8))+'px';
+    menu.style.visibility='';}
+  function anchorMenu(el,items){var r=el.getBoundingClientRect(), sr=stage.getBoundingClientRect();
+    var vert=S.pos==='left'||S.pos==='right';
+    var x=vert?(S.pos==='left'? r.right-sr.left+8 : r.left-sr.left-190) : r.left-sr.left;
+    var y=vert? r.top-sr.top : r.top-sr.top;
+    openMenuAt(x, S.pos==='top'? y+r.height+8 : y, items, vert);}
+  stage.addEventListener('pointerdown',function(e){
+    if(!e.target.closest('.menu')&&!e.target.closest('.dock')&&!e.target.closest('.hotspot'))closeMenus();
+    if(!e.target.closest('.fly')&&!e.target.closest('.dock'))fly.classList.remove('open');});
+  document.addEventListener('keydown',function(e){if(e.key==='Escape'){closeMenus(); fly.classList.remove('open'); ovl.classList.remove('open'); closeLpad();}});
+
+  /* ── 条目菜单(R7 全量)── */
+  function itemMenu(b){return [
+    {t:'Pin to Dock', chk:b.classList.contains('pinned'), on:function(){b.classList.toggle('pinned');
+      hint(b.classList.contains('pinned')?'已固定「'+b.dataset.name+'」(规格 R7:Pin to Dock)':'已取消固定「'+b.dataset.name+'」')}},
+    {t:'Launch Item', on:function(){launch(b)}},
+    {t:'Run As Administrator', on:function(){toastDlg('UAC 提权启动(原生 M2:ShellExecuteEx · runas)')}},
+    {t:'Run as Another User', on:function(){toastDlg('以其他用户启动(原生 M2:runas /user)')}},
+    {sep:true},
+    {t:'Rename', on:function(){renameInline(b)}},
+    {sep:true},
+    {t:'Remove from Dock', on:function(){poof(b)}},
+    {t:(b.dataset.app==='trash'?'Recycler Properties':'Item Properties'), on:function(){itemProps(b)}}
+  ]}
+  function launch(b){
+    var id=b.dataset.app;
+    if(id==='browser'&&winMin){restoreWin(); return;}
+    if(S.boing&&b.querySelector('.v-ico')){var ico=b.querySelector('.v-ico'); ico.classList.remove('fx-boing'); void ico.offsetWidth; ico.classList.add('fx-boing');
+      ico.addEventListener('animationend',function h(){ico.removeEventListener('animationend',h); ico.classList.remove('fx-boing');});}
+    b.classList.add('has-run');
+    hint('启动「'+b.dataset.name+'」'+(S.boing?' — Boing 弹跳(规格 R5)':' — Boing 已关(Disable Boing Effect)'));
+    if(S.collapseLaunch){setTimeout(function(){stage.classList.add('cl-dock'); dockCollapsed=true;},420);}}
+  function renameInline(b){
+    var ico=b.querySelector('.v-ico'); var inp=document.createElement('input'); inp.className='renaming'; inp.value=b.dataset.name;
+    b.appendChild(inp); inp.focus(); inp.select();
+    function done(){var v=inp.value.trim()||b.dataset.name; inp.remove(); b.dataset.name=v; b.setAttribute('data-tooltip',v); b.setAttribute('aria-label',v);
+      hint('重命名为「'+v+'」(规格 R7:Rename)');}
+    inp.addEventListener('blur',done);
+    inp.addEventListener('change',done);
+    inp.addEventListener('keydown',function(e){if(e.key==='Enter')inp.blur(); if(e.key==='Escape'){inp.value=b.dataset.name; inp.blur();}});}
+
+  /* ── Dock 空白菜单(R7 全量 + R12)── */
+  function dockMenu(){return [
+    {t:'Insert New Dock Item', on:function(){$('tray').classList.add('pulse'); setTimeout(function(){$('tray').classList.remove('pulse')},2000);
+      hint('从应用库拖入新条目(规格 R7:Insert New Dock Item)')}},
+    {t:'New Menu', on:function(){var b=mk('menulist',{kind:'menu',name:'新菜单'}); dock.insertBefore(b,sepDl); wire(b);
+      b.style.setProperty('--i',dock.children.length); b.classList.add('e-in'); hint('新建菜单条目 → 列表式子码头(规格 R7:New Menu)')}},
+    {t:'New Folder', on:function(){var b=mk('folder',{name:'新文件夹'}); dock.insertBefore(b,sepDl); wire(b);
+      b.classList.add('e-in'); hint('新建文件夹条目 → 网格子码头(规格 R7:New Folder)')}},
+    {t:'Duplicate Sub-Dock', dis:!dock.querySelector('[data-app=folder]'), on:function(){var f=dock.querySelector('[data-app=folder]');
+      var b=mk('folder',{name:f.dataset.name+' 副本'}); dock.insertBefore(b,f.nextSibling); wire(b); b.classList.add('e-in');
+      hint('复制子码头(规格 R7:Duplicate Sub-Dock)')}},
+    {t:'Detach Sub-Dock', dis:!dock.querySelector('[data-app=folder]'), on:function(){var f=dock.querySelector('[data-app=folder]');
+      var fd=$('floatdock'); fd.textContent=''; fd.hidden=false;
+      ['code','calendar','notes'].forEach(function(a){var s=document.createElement('button'); s.type='button'; s.className='v-ic'; s.innerHTML='<span class="v-ico">'+icn(a)+'</span>'; s.setAttribute('data-tooltip',NAMES[a]); fd.appendChild(s);});
+      var r=f.getBoundingClientRect(), sr=stage.getBoundingClientRect(); fd.style.left=(r.left-sr.left+80)+'px'; fd.style.top=(r.top-sr.top-90)+'px';
+      hint('子码头已分离为浮动 dock(规格 R7:Detach Sub-Dock)')}},
+    {sep:true},
+    {t:'Position', sub:[{t:'Top Screen Edge',chk:S.pos==='top',on:function(){setPos('top')}},{t:'Bottom Screen Edge',chk:S.pos==='bottom',on:function(){setPos('bottom')}},{t:'Left Screen Edge',chk:S.pos==='left',on:function(){setPos('left')}},{t:'Right Screen Edge',chk:S.pos==='right',on:function(){setPos('right')}}]},
+    {t:S.autohide?'Enable Auto-Hide':'Disable Auto-Hide', on:function(){S.autohide=!S.autohide; applyAll(); persist();
+      hint(S.autohide?'自动隐藏开 — 边缘 bump / 角落 / 热点唤出(规格 R9)':'自动隐藏关')}},
+    {t:'Effects', sub:[
+      {t:'Icon Reflections', chk:S.refl==='static', on:function(){S.refl=S.refl==='static'?'off':'static'; applyAll(); persist(); hint('图标反射 '+(S.refl==='static'?'开':'关')+'(规格 R10)')}},
+      {t:'Fluid Reflection', chk:S.fluid, on:function(){S.fluid=!S.fluid; if(S.fluid)S.refl='static'; applyAll(); persist(); hint('流态反射(证据:able Fluid Reflection Effect)')}},
+      {t:'Background Blur', chk:!S.noblur, on:function(){S.noblur=!S.noblur; applyAll(); persist(); hint('背景模糊 '+(S.noblur?'关':'开')+'(规格 R10)')}},
+      {t:'Water Ripple', chk:S.ripple, on:function(){S.ripple=!S.ripple; persist(); hint('水波纹 '+(S.ripple?'开':'关')+'(证据:DockWaterRipple)')}},
+      {t:'Icon Drop Shadows', chk:S.shadows, on:function(){S.shadows=!S.shadows; applyAll(); persist(); hint('图标投影(规格 R10:Icon Drop Shadows)')}},
+      {t:'Attention Effect', chk:S.attention, on:function(){S.attention=!S.attention; persist(); hint('注意力效果 '+(S.attention?'开':'关')+'(证据:DockAttentionFx)')}},
+      {t:'Boing Effect', chk:S.boing, on:function(){S.boing=!S.boing; persist(); hint('Boing 启动弹跳 '+(S.boing?'开':'关')+'(规格 R5:Disable Boing Effect)')}}
+    ]},
+    {sep:true},
+    {t:'Dock Properties…', on:function(){openProps('general')}},
+    {t:'Preferences…', on:function(){openProps('plugins')}},
+    {t:'Lock Dock…', on:function(){openLock()}}
+  ]}
+
+  /* ── 条目接线 ── */
+  var winMin=false, minTimer=0, win=$('win'), dockCollapsed=false;
+  function wire(b){
+    var id=b.dataset.app;
+    b.addEventListener('click',function(){
+      if(dockCollapsed&&b!==ctlEl){dockCollapsed=false; stage.classList.remove('cl-dock');}
+      if(id==='control'){hint('控制磁贴:单击=Preferences,双击=折叠,右键=dock 菜单(规格 R1/R12)'); return;}
+      if(id==='drawer'){toggleLpad(); return;}
+      if(id==='folder'||b.dataset.kind==='menu'){subDock(b); return;}
+      if(id==='trash'){hint('回收站(规格 R7:Recycler Properties 在其右键菜单)'); return;}
+      if(dockletEls[id]&&id!=='mail'){dockletClick(id,b); return;}
+      if(id==='mail'){dockletClick('mail',b); return;}
+      launch(b);});
+    b.addEventListener('dblclick',function(){
+      if(b===ctlEl){dockCollapsed=!dockCollapsed; stage.classList.toggle('cl-dock',dockCollapsed);
+        hint(dockCollapsed?'折叠 dock(规格 R1:双击控制磁贴)':'展开 dock');}});
+    b.addEventListener('contextmenu',function(e){
+      e.preventDefault(); closeMenus(); fly.classList.remove('open');
+      if(b===ctlEl){anchorMenu(b,dockMenu()); return;}               /* R12 证据 */
+      if(id==='trash'){anchorMenu(b,[{t:'Recycler Properties',on:function(){toastDlg('回收站属性(原生 M2:SHQueryUserBinState 容量/清空)')}},{t:'Empty Recycle Bin',on:function(){toastDlg('清空回收站(原生 M2:SHEmptyRecycleBin)')}}]); return;}
+      anchorMenu(b,itemMenu(b));});
+  }
+  $('wmin').addEventListener('click',function(){
+    var appB=dock.querySelector('[data-app=browser]'); if(!appB)return;
+    var wr=win.getBoundingClientRect(), ir=appB.getBoundingClientRect();
+    win.style.setProperty('--dx',(ir.left+ir.width/2-(wr.left+wr.width/2))+'px');
+    win.style.setProperty('--dy',(ir.top+ir.height/2-(wr.top+wr.height/2))+'px');
+    win.classList.add('minning'); winMin=true; appB.classList.add('has-run'); clearTimeout(minTimer);
+    minTimer=setTimeout(function(){win.classList.remove('minning'); win.classList.add('minned');},500);
+    running.push('浏览器 — 预览窗口'); hint('窗口最小化收进 dock(macOS 惯例)');
+  });
+  function restoreWin(){clearTimeout(minTimer); win.classList.remove('minning','minned'); winMin=false;
+    hint('从 dock 恢复窗口');}
+  stage.classList.add('cl-init');
+  var clStyle=document.createElement('style');
+  clStyle.textContent='#vitro-nx .cl-dock .dock > :not(.ctl){display:none}';
+  root.appendChild(clStyle);
+
+  /* ── 子码头(网格=文件夹 / 列表=菜单)── */
+  function subDock(b){
+    var list=b.dataset.kind==='menu'||b.dataset.app==='menulist';
+    fly.textContent='';
+    var h=document.createElement('h5'); h.textContent=b.dataset.name+(list?'(菜单式)':'(文件夹网格)'); fly.appendChild(h);
+    var wrap=document.createElement('div');
+    wrap.style.cssText=list?'display:flex;flex-direction:column;gap:2px;min-width:170px':'display:grid;grid-template-columns:repeat(2,1fr);gap:4px';
+    ['code','calendar','notes','weather'].forEach(function(a){
+      var s=document.createElement('button'); s.type='button';
+      s.style.cssText='display:flex;align-items:center;gap:7px;border:0;background:none;border-radius:8px;padding:5px 8px;cursor:pointer;font-size:12px';
+      s.innerHTML='<span style="width:24px;height:24px;display:inline-block">'+icn(a)+'</span>'+NAMES[a];
+      s.addEventListener('click',function(){fly.classList.remove('open'); hint('子码头启动 '+NAMES[a]+'(规格 R8)')});
+      wrap.appendChild(s);});
+    fly.appendChild(wrap);
+    var r=b.getBoundingClientRect(), sr=stage.getBoundingClientRect();
+    var vert=S.pos==='left'||S.pos==='right';
+    fly.style.left=Math.max(8,Math.min(vert?(S.pos==='left'?r.right-sr.left+8:r.left-sr.left-200):r.left-sr.left, sr.width-210))+'px';
+    fly.style.top=Math.max(8,r.top-sr.top-(vert?20:120))+'px';
+    fly.classList.add('open');}
+
+  /* ── 抽屉启动器(Launchpad 式:网格 + 搜索,Esc/空白关闭) ── */
+  var lpad=$('lpad'), lpsrch=$('lpsrch'), lpgrid=$('lpgrid');
+  var LPAPPS=['browser','mail','music','terminal','gamepad','settings','code','calendar','notes','weather','drawerapp','shelfico'];
+  var LPN={drawerapp:'下载',shelfico:'文件'};
+  function buildLpad(){
+    lpgrid.textContent='';
+    LPAPPS.forEach(function(a){
+      if(a==='drawerapp'||a==='shelfico')return;
+      var b=document.createElement('button'); b.type='button'; b.className='lp-it';
+      b.innerHTML=icn(a)+'<span>'+NAMES[a]+'</span>';
+      b.addEventListener('click',function(){
+        var db=dock.querySelector('[data-app='+a+']');
+        if(db){db.click();} else {insertApp(a); dock.querySelector('[data-app='+a+']').classList.add('has-run');}
+        closeLpad();});
+      lpgrid.appendChild(b);});}
+  function toggleLpad(){lpad.classList.contains('open')?closeLpad():openLpad()}
+  function openLpad(){closeMenus(); fly.classList.remove('open'); ovl.classList.remove('open');
+    lpad.classList.add('open'); lpsrch.value=''; lpsrch.dispatchEvent(new Event('input'));
+    setTimeout(function(){lpsrch.focus()},120);
+    hint('抽屉启动器 — GNOME 式网格 + 搜索(点击/Esc 关闭)');}
+  function closeLpad(){lpad.classList.remove('open')}
+  lpsrch.addEventListener('input',function(){var q=this.value.trim();
+    lpgrid.querySelectorAll('.lp-it').forEach(function(t){t.hidden=q&&t.textContent.indexOf(q)<0;});});
+  lpad.addEventListener('pointerdown',function(e){if(e.target===lpad)closeLpad()});
+  buildLpad();
+
+  /* ── docklet 交互 ── */
+  var unread=3, running=[];
+  var MAILS=[['Alice','Q3 报告终稿','09:12'],['Bob','代码评审邀请','08:47'],['Carol','会议纪要','昨天']];
+  function dockletClick(id,b){
+    if(id==='clock'){S.clockMode=S.clockMode==='analog'?'digital':'analog'; persist(); renderClock();
+      hint('时钟切换为'+(S.clockMode==='analog'?'模拟':'数字')+'模式(证据:Analog/Digital Clock Background)'); return;}
+    if(id==='weather'){weatherFly(b); return;}
+    if(id==='mail'){unread=0; b.classList.remove('badge-on'); mailFly(b); return;}
+    if(id==='battery'){hint('电池 78% · 交流供电(证据:BatteryPowerRestored / PSMBatteryLow)'); return;}
+    if(id==='tasks'){tasksFly(b); return;}
+    if(id==='tray'){trayFly(b); return;}
+    if(id==='cpu'){hint('CPU 表:直方图/仪表两种背景(证据:Histogram/Gauge Meter Background)'); return;}
+    if(id==='ram'){hint('RAM 表(证据:RAM Usage: %1)'); return;}
+    if(id==='net'){netFly(b); return;}
+    if(id==='cal'){hint('日历 docklet — 点击打开月历面板(原生 M4)'); return;}
+    if(id==='clip'){var cb=dockletEls.clip; if(cb){cb.classList.remove('badge-on');} clipFly(b); return;}
+  }
+  function netFly(b){var w=document.createElement('div');
+    w.innerHTML='<h5>Network Monitor(证据:Network Properties)</h5><div class="fc-day"><em>下行</em>↓ 86.4 Mb/s</div><div class="fc-day"><em>上行</em>↑ 12.1 Mb/s</div>';
+    openFlyAt(b,w); hint('网速表 docklet(插件目录安装)');}
+  function clipFly(b){var w=document.createElement('div');
+    w.innerHTML='<h5>剪贴板历史(插件目录安装)</h5><div class="mailrow"><b>https://developer.mozilla.org/…</b><span>刚刚</span></div><div class="mailrow"><b>const acc = wallAccent();</b><span>09:31</span></div><div class="mailrow"><b>调研报告.md</b><span>09:12</span></div>';
+    openFlyAt(b,w);}
+  function openFlyAt(b,w){fly.textContent=''; fly.appendChild(w);
+    var r=b.getBoundingClientRect(), sr=stage.getBoundingClientRect();
+    fly.style.left=Math.max(8,Math.min(r.left-sr.left, sr.width-220))+'px';
+    fly.style.top=Math.max(8,r.top-sr.top-150)+'px'; fly.classList.add('open');}
+  function mailFly(b){var w=document.createElement('div');
+    w.innerHTML='<h5>Email Checker — 收件箱(证据:9 个 POP3 账户)</h5>'+MAILS.map(function(m){return '<div class="mailrow"><b>'+m[0]+'</b><span>'+m[2]+'</span></div><div style="font-size:11px;color:var(--mut);margin:-3px 0 4px">'+m[1]+'</div>'}).join('');
+    openFlyAt(b,w); hint('邮件检查器:未读已清零(证据:a002 STATUS Inbox)');}
+  function weatherFly(b){var w=document.createElement('div');
+    w.innerHTML='<h5>Weather Monitor · METAR(证据:METARShowForecast)</h5><div class="fc-day"><em>今天</em>☁️ 多云 22°</div><div class="fc-day"><em>明天</em>🌤 晴 24°</div><div class="fc-day"><em>周三</em>🌧 小雨 19°</div>';
+    openFlyAt(b,w);}
+  function tasksFly(b){var w=document.createElement('div');
+    var items=running.length?running:['(暂无运行窗口 — 最小化预览窗口试试)'];
+    w.innerHTML='<h5>Currently Running Applications</h5>'+items.map(function(t){return '<div class="mailrow"><b>'+t+'</b><span>运行中</span></div>'}).join('');
+    openFlyAt(b,w); hint('任务列表 docklet(证据:Display a Menu Showing the Currently Running Applications)');}
+  function trayFly(b){var w=document.createElement('div');
+    w.innerHTML='<h5>System Tray(证据:DockShowSystray)</h5><div class="trayico">'+icn('settings')+icn('battery')+icn('tray')+icn('weather')+'</div>';
+    openFlyAt(b,w); hint('系统托盘内容菜单(证据:Display a Menu Showing the contents of the System Tray)');}
+
+  /* 时钟渲染 */
+  var clkEl=dockletEls.clock;
+  function renderClock(){
+    var ico=clkEl.querySelector('.v-ico');
+    var now=new Date();
+    if(S.clockMode==='digital'){
+      var hh=('0'+now.getHours()).slice(-2), mm=('0'+now.getMinutes()).slice(-2);
+      ico.innerHTML='<span class="clk-d"><b>'+hh+':'+mm+'</b><span id="clkS">Tick '+('0'+now.getSeconds()).slice(-2)+'</span></span>';
+    } else {
+      ico.innerHTML=icn('clock');
+      var h=now.getHours()%12+now.getMinutes()/60, m=now.getMinutes()+now.getSeconds()/60, s=now.getSeconds();
+      var hd=ico.querySelector('#clkHands');
+      if(hd){hd.innerHTML='<path d="M32 32 L32 '+(32-14*(0.5+0.5*Math.min(1,h/12)))+'" stroke="#2c3444" stroke-width="3.4" transform="rotate('+(h*30)+' 32 32)"/><path d="M32 32 L32 15" stroke="#2c3444" stroke-width="2.8" transform="rotate('+(m*6)+' 32 32)"/><path d="M32 32 L32 12" stroke="#ff5f6d" stroke-width="1.6" transform="rotate('+(s*6)+' 32 32)"/>';}
+    }}
+  setInterval(function(){if(!clkEl.hidden)renderClock();},1000);
+  /* CPU / RAM / 电池 数据 */
+  var hist=[30,34,28,36,40,32,26,38,44,36], ramVals=[34,52,28,61];
+  setInterval(function(){
+    var v=8+Math.floor(Math.random()*88); hist.push(v); hist.shift();
+    var pts=hist.map(function(y,i){return (14+i*6)+','+(42-y*0.28)}).join(' ');
+    var sp=document.getElementById('vSpark'); if(sp)sp.setAttribute('points',pts);
+    var tx=document.getElementById('vCpuT'); if(tx)tx.textContent=v;
+    ramVals.shift(); ramVals.push(20+Math.floor(Math.random()*45));
+    var bars=ramD.querySelectorAll('.js-ram rect'); bars.forEach(function(r,i){r.setAttribute('height',ramVals[i]*0.36); r.setAttribute('y',52-ramVals[i]*0.36);});
+  },2400);
+  setInterval(function(){
+    if(S.attention&&Math.random()<0.5){unread++; mailD.classList.add('badge-on'); mailD.querySelector('.v-badge').textContent=unread;
+      if(S.attention){mailD.classList.remove('attn'); void mailD.offsetWidth; mailD.classList.add('attn');
+        setTimeout(function(){mailD.classList.remove('attn')},2200);}
+      hint('新邮件 → 未读 '+unread+' + 注意力效果(证据:DockAttentionFx / Email Checker Chime)');}
+  },16000);
+
+  /* ── 边缘 bump / 角落 / Swipe / 热点 ── */
+  function reveal(){root.classList.remove('ah');}
+  var hideT=0;
+  function scheduleHide(){if(!S.autohide)return; clearTimeout(hideT);
+    hideT=setTimeout(function(){var dk=dock.getBoundingClientRect(), p=[lastPtr.x,lastPtr.y];
+      var sr=stage.getBoundingClientRect();
+      var over=p[0]>dk.left-sr.left-20&&p[0]<dk.right-sr.left+20&&p[1]>dk.top-sr.top-20&&p[1]<dk.bottom-sr.top+20;
+      if(!over)root.classList.add('ah');},700);}
+  var lastPtr={x:-99,y:-99};
+  stage.addEventListener('pointermove',function(e){var sr=stage.getBoundingClientRect(); lastPtr.x=e.clientX-sr.left; lastPtr.y=e.clientY-sr.top;});
+  ['top','bottom','left','right'].forEach(function(side){
+    var z=stage.querySelector('.ez[data-side='+side+']');
+    z.addEventListener('pointerenter',function(){if(S.autohide&&side===S.pos){reveal(); scheduleHide();
+      hint('Bump '+side+' screen edge 唤出(证据:Bump '+side.charAt(0).toUpperCase()+side.slice(1)+' Screen Edge)');}});});
+  ['tl','tr','bl','br'].forEach(function(c){
+    var z=stage.querySelector('.cz[data-corner='+c+']');
+    z.addEventListener('pointerenter',function(){if(S.autohide){reveal(); scheduleHide();
+      hint('撞角落 '+c.toUpperCase()+' 唤出(证据:Bump '+({tl:'Top Left',tr:'Top Right',bl:'Bottom Left',br:'Bottom Right'}[c])+' Screen Corner)');}});});
+  var swX=0, swT=0;
+  stage.querySelector('.ez[data-side=bottom]').addEventListener('pointermove',function(e){
+    var now=Date.now(); if(now-swT>500){swX=e.clientX; swT=now; return;}
+    if(Math.abs(e.clientX-swX)>90&&S.autohide){reveal(); scheduleHide(); swX=e.clientX;
+      hint('Swipe 底边唤出(证据:SwipeDistance / SwipeTimeLimit)');}});
+  var hotspot=$('hotspot');
+  hotspot.addEventListener('click',function(e){
+    if(S.hotspotBtn==='left'){ if(S.autohide){reveal(); scheduleHide();} else {subDockDock();} }
+    hint('热点按钮 · 左键模式(证据:Left Clicking on Hotspot)');});
+  hotspot.addEventListener('contextmenu',function(e){e.preventDefault();
+    if(S.hotspotBtn==='right'){anchorMenu(hotspot,dockMenu());}
+    else toastDlg('热点右键模式未启用 — 在 Dock 属性→一般 中选择(证据:Right Clicking on Hotspot)');});
+  hotspot.addEventListener('auxclick',function(e){
+    if(e.button===1){shelf.classList.toggle('open');
+      hint('热点中键 → 切换搁架(证据:Middle Clicking on Hotspot)');}});
+  function subDockDock(){var b=dock.querySelector('[data-app=drawer]'); subDock(b);}
+
+  /* dock 空白右键 + 水波纹 */
+  dock.addEventListener('contextmenu',function(e){
+    if(e.target.closest('.v-ic'))return; e.preventDefault(); closeMenus(); fly.classList.remove('open');
+    var sr=stage.getBoundingClientRect();
+    openMenuAt(e.clientX-sr.left, S.pos==='top'? e.clientY-sr.top+10 : e.clientY-sr.top, dockMenu(), S.pos==='left'||S.pos==='right');});
+  dock.addEventListener('click',function(e){
+    if(e.target.closest('.v-ic'))return;
+    if(S.ripple){var r=dock.getBoundingClientRect(), sr=stage.getBoundingClientRect();
+      var rp=document.createElement('span'); rp.className='ripple';
+      var sz=110; rp.style.cssText+=';left:'+(e.clientX-r.left-sz/2)+'px;top:'+(e.clientY-r.top-sz/2)+'px;width:'+sz+'px;height:'+sz+'px';
+      dock.appendChild(rp); setTimeout(function(){rp.remove()},850);
+      hint('水波纹(证据:RippleSpeed/Size/Distance)');}});
+
+  /* ── 对话框 ── */
+  function openDlg(html){dlg.innerHTML=html; ovl.classList.add('open');}
+  ovl.addEventListener('pointerdown',function(e){if(e.target===ovl)ovl.classList.remove('open');});
+  dlg.addEventListener('click',function(e){if(e.target.classList.contains('x'))ovl.classList.remove('open');});
+  function toastDlg(msg){openDlg('<div class="dlg-h"><b>提示</b><button type="button" class="x" aria-label="关闭">✕</button></div><div class="dlg-b" style="font-size:13px;color:#c6d0e4">'+msg+'</div>');}
+  function itemProps(b){openDlg('<div class="dlg-h"><b>'+b.dataset.name+' 属性</b><button type="button" class="x" aria-label="关闭">✕</button></div>'
+    +'<div class="dlg-b"><div class="row"><label>名称</label><span class="ro">'+b.dataset.name+'</span></div>'
+    +'<div class="row"><label>命令</label><span class="ro">C:\\\\Program Files\\\\'+b.dataset.name+'\\\\app.exe</span></div>'
+    +'<div class="row"><label>固定</label><span class="ro">'+(b.classList.contains('pinned')?'是':'否')+'</span></div>'
+    +'<div class="row"><label>运行指示</label><span class="ro">'+(b.classList.contains('has-run')?'运行中':'未运行')+'</span></div></div>');}
+  function openLock(){S.locked=true; persist();
+    openDlg('<div class="lockbox"><b style="font-size:14px">请输入密码(证据:Please Enter The Password!)</b>'
+      +'<input type="password" id="lkin" placeholder="任意密码可解锁(原型)" aria-label="密码">'
+      +'<button type="button" class="hbtn" id="lkok">解锁</button></div>');
+    var inp=$('lkin'); inp.focus();
+    function unlock(){S.locked=false; persist(); ovl.classList.remove('open'); hint('dock 已解锁(密码锁定为原型演示)');}
+    $('lkok').addEventListener('click',unlock);
+    inp.addEventListener('keydown',function(e){if(e.key==='Enter')unlock();});}
+  /* Dock 属性(四个标签页) */
+  function openProps(tab){
+    tab=tab||'general';
+    var tabs=[['general','一般'],['effects','效果'],['plugins','插件'],['tasks','任务']];
+    var body='';
+    if(tab==='general'){
+      body='<div class="row"><label>图标大小</label><input type="range" id="pSize" min="40" max="72" value="'+S.iconSize+'"><output id="oSize">'+S.iconSize+'px</output></div>'
+      +'<div class="row"><label>放大峰值</label><input type="range" id="pPeak" min="1.2" max="2" step="0.05" value="'+S.peak+'"><output id="oPeak">×'+S.peak+'</output></div>'
+      +'<div class="row"><label>动画速度</label><input type="range" id="pAnim" min="0.5" max="2" step="0.1" value="'+S.anim+'"><output id="oAnim">×'+S.anim+'</output></div>'
+      +'<div class="row"><label>停靠位置</label><select id="pPos"><option value="top">上</option><option value="bottom">下</option><option value="left">左</option><option value="right">右</option></select></div>'
+      +'<div class="row"><label>层级</label><select id="pTop"><option value="1">Always On Top</option><option value="0">Always On Bottom</option></select></div>'
+      +'<div class="row"><label>启动时折叠</label><input type="checkbox" id="pCl"' +(S.collapseLaunch?' checked':'')+'><span style="font-size:11.5px;color:var(--mut)">证据:DockCollapseOnLaunch</span></div>'
+      +'<div class="row"><label>热点按钮</label><select id="pHot"><option value="left">左键→dock</option><option value="right">右键→菜单</option><option value="middle">中键→搁架</option></select></div>';
+    } else if(tab==='effects'){
+      body='<div class="row"><label>背景模糊度</label><input type="range" id="pBlur" min="0" max="40" value="'+S.blur+'"><output id="oBlur">'+S.blur+'px</output></div>'
+      +'<div class="row"><label>反射</label><select id="pRefl"><option value="static">静止</option><option value="fluid">流态</option><option value="off">关</option></select></div>'
+      +'<div class="row"><label>图标投影</label><input type="checkbox" id="pSh"' +(S.shadows?' checked':'')+'></div>'
+      +'<div class="row"><label>水波纹</label><input type="checkbox" id="pRip"' +(S.ripple?' checked':'')+'><span style="font-size:11.5px;color:var(--mut)">证据:RippleSpeed/Size/Distance</span></div>'
+      +'<div class="row"><label>注意力效果</label><input type="checkbox" id="pAtt"' +(S.attention?' checked':'')+'></div>'
+      +'<div class="row"><label>Boing 弹跳</label><input type="checkbox" id="pBoing"' +(S.boing?' checked':'')+'></div>'
+      +'<div class="row"><button type="button" class="hbtn" id="pIni">导出配置(INI)</button><span style="font-size:11.5px;color:var(--mut)">规格 R11:文本存储</span></div>';
+    } else if(tab==='plugins'){
+      body='<div class="row" style="color:var(--mut);font-size:11.5px">已安装 docklet(观感与桌面图标同风格 §4.4)</div>';
+      DL_META.forEach(function(d){
+        if(!dockletEls[d[0]])return;
+        body+='<div class="row"><label>'+d[1]+'</label><input type="checkbox" data-dl="'+d[0]+'"'+(S.docklets[d[0]]?' checked':'')+'></div>';});
+      body+='<div class="row" style="margin-top:6px"><button type="button" class="hbtn" id="pStk">'+(S.dlStack?'取消叠放':'叠放 docklet 为堆(Stack)')+'</button><span style="font-size:11.5px;color:var(--mut)">macOS 堆叠借鉴:全部插件收进一个图标,点击展开</span></div>';
+      body+='<div class="row" style="margin-top:6px"><button type="button" class="hbtn" id="pPaste">粘贴代码创建插件…</button><span style="font-size:11.5px;color:var(--mut)">一段 JS 直接变成 docklet(正式版 QuickJS 沙箱)</span></div>';
+      body+='<div class="row" style="margin-top:6px;color:var(--mut);font-size:11.5px">插件目录(本地 · BitDock 模式)</div>';
+      var CAT=[['net','网速表','↑↓ 实时速率'],['cal','日历','日期 + 月历(M4)'],['clip','剪贴板历史','最近条目 + 角标']];
+      CAT.forEach(function(c){
+        body+='<div class="row"><label>'+c[1]+' · '+c[2]+'</label>'+(dockletEls[c[0]]
+          ?'<span style="font-size:11.5px;color:#7ce3a5">已安装</span>'
+          :'<button type="button" class="hbtn" data-cat="'+c[0]+'">安装</button>')+'</div>';});
+      [['截图','Snip(原生 M2:Win32 截图 API)'],['取色器','ColorPicker(M2:DXGI 拾色)'],['天气预报','7 日面板(M4:网络源)']].forEach(function(c){
+        body+='<div class="row"><label>'+c[0]+' · '+c[1]+'</label><button type="button" class="hbtn" aria-disabled="true" style="opacity:.45;cursor:default">M4</button></div>';});
+    } else {
+      body='<div class="row"><label>任务分组</label><input type="checkbox" checked disabled><span style="font-size:11.5px;color:var(--mut)">证据:Tasklist Grouping</span></div>'
+      +'<div class="row"><label>仅最小化显示</label><input type="checkbox" disabled><span style="font-size:11.5px;color:var(--mut)">证据:Only show this task when minimized</span></div>'
+      +'<div class="row"><label>缩略图排除</label><button type="button" class="hbtn" onclick="void 0">管理…</button><span style="font-size:11.5px;color:var(--mut)">证据:Thumbnail Exclusion List(M2:DWM 缩略图)</span></div>'
+      +'<div class="row"><button type="button" class="hbtn" id="pLock">锁定 Dock…</button><span style="font-size:11.5px;color:var(--mut)">证据:Password Properties</span></div>';}
+    openDlg('<div class="dlg-h"><b>Dock Properties</b><button type="button" class="x" aria-label="关闭">✕</button></div>'
+      +'<div class="tabs">'+tabs.map(function(t){return '<button type="button" class="tab'+(t[0]===tab?' on':'')+'" data-tab="'+t[0]+'">'+t[1]+'</button>'}).join('')+'</div>'
+      +'<div class="dlg-b">'+body+'</div>');
+    dlg.querySelectorAll('.tab').forEach(function(t){t.addEventListener('click',function(){openProps(t.dataset.tab)})});
+    if(tab==='general'){
+      var q=function(i){return dlg.querySelector(i)};
+      q('#pSize').addEventListener('input',function(){S.iconSize=+this.value; q('#oSize').textContent=S.iconSize+'px'; applyAll(); persist();});
+      q('#pPeak').addEventListener('input',function(){S.peak=+this.value; q('#oPeak').textContent='×'+S.peak; persist();});
+      q('#pAnim').addEventListener('input',function(){S.anim=+this.value; q('#oAnim').textContent='×'+S.anim; applyAll(); persist();});
+      q('#pPos').value=S.pos; q('#pPos').addEventListener('change',function(){setPos(this.value)});
+      q('#pTop').value=S.onTop?'1':'0'; q('#pTop').addEventListener('change',function(){S.onTop=this.value==='1'; applyAll(); persist();
+        hint(S.onTop?'Always On Top(规格 R1)':'Always On Bottom — dock 沉入窗口之下(规格 R1)');});
+      q('#pCl').addEventListener('change',function(){S.collapseLaunch=this.checked; persist(); hint('启动后折叠 '+(this.checked?'开':'关')+'(证据:DockCollapseOnLaunch)')});
+      q('#pHot').value=S.hotspotBtn; q('#pHot').addEventListener('change',function(){S.hotspotBtn=this.value; persist();
+        hint('热点按钮模式 → '+this.value+'(证据:'+({left:'Left',right:'Right',middle:'Middle'})[this.value]+' Clicking on Hotspot)')});
+    } else if(tab==='effects'){
+      var q2=function(i){return dlg.querySelector(i)};
+      q2('#pBlur').addEventListener('input',function(){S.blur=+this.value; S.noblur=S.blur===0; q2('#oBlur').textContent=S.blur+'px'; applyAll(); persist();});
+      q2('#pRefl').value=S.fluid?'fluid':S.refl; q2('#pRefl').addEventListener('change',function(){
+        if(this.value==='fluid'){S.fluid=true; S.refl='static';} else {S.fluid=false; S.refl=this.value;} applyAll(); persist();});
+      q2('#pSh').addEventListener('change',function(){S.shadows=this.checked; applyAll(); persist();});
+      q2('#pRip').addEventListener('change',function(){S.ripple=this.checked; persist();});
+      q2('#pAtt').addEventListener('change',function(){S.attention=this.checked; persist();});
+      q2('#pBoing').addEventListener('change',function(){S.boing=this.checked; persist();});
+      q2('#pIni').addEventListener('click',function(){exportIni()});;
+    } else if(tab==='plugins'){
+      dlg.querySelectorAll('[data-dl]').forEach(function(c){c.addEventListener('change',function(){
+        S.docklets[this.dataset.dl]=this.checked; persist();
+        if(dockletEls[this.dataset.dl]){dockletEls[this.dataset.dl].hidden=!this.checked;
+          if(this.dataset.dl==='clock')renderClock();}
+        applyDlStack();
+        hint('插件「'+this.dataset.dl+'」'+(this.checked?'显示':'隐藏'));});});
+      dlg.querySelectorAll('[data-cat]').forEach(function(c){c.addEventListener('click',function(){
+        var id=c.dataset.cat; S.docklets[id]=true; ensureDocklet(id); persist();
+        openProps('plugins');
+        hint('已安装「'+NAMES[id]+'」(插件目录 · 本地)');});});
+      var stk=dlg.querySelector('#pStk');
+      if(stk)stk.addEventListener('click',function(){S.dlStack=!S.dlStack; applyDlStack(); persist(); openProps('plugins');
+        hint(S.dlStack?'docklet 已叠放为堆 — 点击堆图标展开(macOS Stack)':'已展开 docklet');});
+      var pPaste=dlg.querySelector('#pPaste');
+      if(pPaste)pPaste.addEventListener('click',function(){ovl.classList.remove('open'); openClone('paste');});
+    } else { var q4=dlg.querySelector('#pLock'); if(q4)q4.addEventListener('click',function(){openLock()}); }
+  }
+  $('btnProps').addEventListener('click',function(){openProps('general')});
+
+  /* ══ 复刻中心:导入/导出 + 粘贴代码即插件 + AI 截图向导 ══ */
+  var uplSeq=0;
+  function installUserPlugin(name, code){
+    var b=mk('doc',{drag:false,name:name||('插件 '+(++uplSeq))});
+    b.classList.add('docklet','upl-item');
+    b.querySelector('.v-ico').innerHTML='<span class="upl"></span>';
+    var rf=b.querySelector('.v-refl'); if(rf)rf.remove();
+    dock.insertBefore(b,trashEl); wire(b);
+    var body=b.querySelector('.upl'), timers=[];
+    b._uplTimers=timers;
+    var api={ name:name,
+      set:function(h){ body.classList.remove('err'); body.innerHTML=String(h).slice(0,160); },
+      every:function(ms,fn){ var t=setInterval(fn,Math.max(250,ms|0)); timers.push(t); try{fn()}catch(e){} return t; } };
+    try{ new Function('api',code)(api); }
+    catch(e){ body.classList.add('err'); body.textContent='⚠ '+String(e&&e.message||'运行错误').slice(0,60); }
+    if(typeof fitDock==='function')fitDock();
+    return b;}
+  function removeUserPlugins(){
+    dock.querySelectorAll('.v-ic.upl-item').forEach(function(el){
+      if(el._uplTimers)el._uplTimers.forEach(clearInterval);
+      el.remove();});}
+  function exportConfig(){
+    var apps=[], subs=[];
+    var it=drawEl.nextSibling;
+    while(it&&it!==sepMain){ if(it.classList&&it.classList.contains('v-ic')&&!it.classList.contains('upl-item'))
+      apps.push({app:it.dataset.app,name:it.dataset.name,pin:it.classList.contains('pinned')}); it=it.nextSibling; }
+    var it2=sepMain.nextSibling;
+    while(it2&&it2!==sepDl){ if(it2.classList&&it2.classList.contains('v-ic')) subs.push(it2.dataset.app); it2=it2.nextSibling; }
+    var cfg={vitro:1, name:'我的 Vitro 布置',
+      dock:{pos:S.pos,iconSize:S.iconSize,peak:S.peak,blur:S.blur,refl:S.refl,fluid:S.fluid,attention:S.attention,boing:S.boing,autohide:S.autohide},
+      apps:apps, subs:subs, docklets:S.docklets,
+      custom:(S.customPlugins||[]).map(function(p){return {name:p.name,code:p.code}})};
+    return JSON.stringify(cfg,null,1);}
+  function rebuildFromConfig(cfg){
+    Array.prototype.slice.call(dock.children).forEach(function(el){
+      if(el===ctlEl||el===drawEl||el===sepMain||el===sepDl||el===trashEl)return;
+      if(el.classList&&el.classList.contains('docklet')&&!el.classList.contains('upl-item'))return;
+      if(el.classList&&el.classList.contains('upl-item')&&el._uplTimers)el._uplTimers.forEach(clearInterval);
+      el.remove();});
+    (cfg.apps||[]).forEach(function(a){
+      var known=!!SQ[a.app];
+      var b=mk(known?a.app:'doc',{name:a.name||a.app});
+      if(!known)b.dataset.app=a.app;
+      if(a.pin)b.classList.add('pinned');
+      dock.insertBefore(b,sepMain); wire(b); b.classList.add('e-in');});
+    (cfg.subs||[]).forEach(function(id){
+      var b=mk(SQ[id]?id:'menulist',{name:SQ[id]?(NAMES[id]||id):id});
+      dock.insertBefore(b,sepDl); wire(b); b.classList.add('e-in');});
+    if(cfg.docklets){Object.keys(cfg.docklets).forEach(function(k){
+      if(!(k in S.docklets))return;
+      S.docklets[k]=!!cfg.docklets[k];
+      if(S.docklets[k]&&!dockletEls[k]&&['net','cal','clip'].indexOf(k)>=0)ensureDocklet(k);
+      if(dockletEls[k])dockletEls[k].hidden=!S.docklets[k];});}
+    removeUserPlugins();
+    (cfg.custom||[]).forEach(function(p){installUserPlugin(p.name,p.code);});
+    S.customPlugins=cfg.custom||[];
+    if(cfg.dock){['pos','iconSize','peak','blur','refl','fluid','attention','boing','autohide'].forEach(function(k){
+      if(cfg.dock[k]!==undefined)S[k]=cfg.dock[k];});}
+    /* 顺序规范化:drawer | apps | sepMain | subs | sepDl | docklets(含用户插件) | trash */
+    var appsN=[], subsN=[], dlN=[];
+    Array.prototype.slice.call(dock.children).forEach(function(el){
+      if(el===ctlEl||el===drawEl||el===sepMain||el===sepDl||el===trashEl)return;
+      if(el.classList&&el.classList.contains('docklet'))dlN.push(el);
+      else if(el.classList&&el.classList.contains('v-sep'))return;
+      else if(el.classList&&el.classList.contains('spacer'))return;
+      else if(subsN.length||false){}
+      else appsN.push(el);});
+    /* 重新识别 subs:sepMain 与 sepDl 之间的现有节点已被收集进 appsN,改用位置判断 */
+    appsN=[]; subsN=[]; var zone=0;
+    Array.prototype.slice.call(dock.children).forEach(function(el){
+      if(el===sepMain){zone=1;return;} if(el===sepDl){zone=2;return;}
+      if(el===ctlEl||el===drawEl||el===trashEl)return;
+      if(el.classList&&el.classList.contains('docklet')){dlN.push(el);return;}
+      if(el.classList&&(el.classList.contains('v-sep')||el.classList.contains('spacer')))return;
+      if(zone===0)appsN.push(el); else if(zone===1)subsN.push(el);});
+    appsN.forEach(function(n){dock.appendChild(n)});
+    dock.appendChild(sepMain);
+    subsN.forEach(function(n){dock.appendChild(n)});
+    dock.appendChild(sepDl);
+    dlN.forEach(function(n){dock.appendChild(n)});
+    dock.appendChild(trashEl);
+    applyAll(); persist();
+    setTimeout(function(){dock.querySelectorAll('.e-in').forEach(function(b){b.classList.remove('e-in')})},700);}
+  function applyConfig(str){
+    try{ var cfg=JSON.parse(str);
+      if(cfg.vitre!==1&&cfg.vitro!==1)return {ok:false,msg:'不是 Vitro 配置(缺少 "vitro": 1)'};
+      rebuildFromConfig(cfg); return {ok:true,msg:'已复刻「'+(cfg.name||'未命名配置')+'」'};
+    }catch(e){ var st=String(e.stack||'').split(String.fromCharCode(10)); return {ok:false,msg:'应用失败:'+String(e.message).slice(0,60)+' @ '+(st[1]||'').trim().slice(0,72)}; }}
+  var SCHEMA_PROMPT='你是 Vitro Dock 的配置生成器。用户会给你一张别人的桌面截图,请分析截图里的 dock 布置,然后只输出一个 JSON(不要任何其他文字),schema 如下:\n'+
+    '{"vitro":1,"name":"配置名",\n'+
+    ' "dock":{"pos":"bottom|top|left|right","iconSize":40-68,"peak":1.2-2,"blur":0-40,"refl":"static|fluid|off","attention":true|false,"boing":true|false,"autohide":true|false},\n'+
+    ' "apps":[{"app":"browser|mail|music|terminal|gamepad|settings|code|calendar|notes|weather|doc|img|zip","name":"显示名(可选)","pin":true|false}],\n'+
+    ' "subs":["folder","menulist"],\n'+
+    ' "docklets":{"clock":true|false,"weather":true|false,"mail":true|false,"cpu":true|false,"ram":true|false,"battery":true|false,"tasks":true|false,"tray":true|false,"net":true|false,"cal":true|false,"clip":true|false},\n'+
+    ' "custom":[{"name":"插件名","code":"api.set(html) / api.every(ms,fn)"}]}\n'+
+    '规则:apps 按截图从左到右排列;识别不出的应用用 "doc" 加 name;截图里没有的开关用合理默认值。';
+  var PRESETS=[
+    {vitro:1,name:'macOS 极简风(模拟 AI 分析)',
+     dock:{pos:'bottom',iconSize:48,peak:1.4,blur:24,refl:'static',fluid:false,attention:false,boing:true,autohide:false},
+     apps:[{app:'browser',pin:true},{app:'mail',pin:true},{app:'music'},{app:'terminal'},{app:'code'}],
+     subs:['folder'],docklets:{clock:true,weather:true,mail:true,cpu:true,ram:false,battery:false,tasks:false,tray:false,net:false,cal:false,clip:false},
+     custom:[{name:'数字时钟',code:"api.every(1000,function(){var d=new Date();api.set('<b style=\"font-size:15px\">'+d.getHours()+':'+('0'+d.getMinutes()).slice(-2)+'</b>')})"}]},
+    {vitro:1,name:'重装开发者(模拟 AI 分析)',
+     dock:{pos:'bottom',iconSize:52,peak:1.8,blur:14,refl:'static',fluid:true,attention:true,boing:true,autohide:true},
+     apps:[{app:'terminal',pin:true},{app:'code',pin:true},{app:'browser'},{app:'gamepad'},{app:'calendar'},{app:'notes'}],
+     subs:['menulist'],docklets:{clock:false,weather:false,mail:true,cpu:true,ram:true,battery:true,tasks:true,tray:true,net:true,cal:false,clip:true},
+     custom:[]}];
+  var EX_CLOCK="api.every(1000,function(){var d=new Date();api.set('<b style=\"font-size:15px\">'+d.getHours()+':'+('0'+d.getMinutes()).slice(-2)+'</b><span style=\"font-size:8px;color:#98a1b6\">'+('0'+d.getSeconds()).slice(-2)+'</span>')})";
+  var EX_QUOTE="var q=['保持好奇','少即是多','代码即文档','今天也要加油'];var i=0;api.set(q[0]);api.every(6000,function(){i=(i+1)%q.length;api.set(q[i])})";
+  function copyText(t){
+    try{ if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t); return;} }catch(e){}
+    var ta=document.createElement('textarea'); ta.value=t; document.body.appendChild(ta); ta.select();
+    try{document.execCommand('copy')}catch(e){} ta.remove();}
+  function openClone(tab){
+    tab=tab||'wizard';
+    var tabs=[['wizard','① 截图复刻向导'],['io','② 导入 / 导出配置'],['paste','③ 粘贴代码出插件']];
+    var body='';
+    if(tab==='wizard'){
+      body='<div class="wz"><span class="wz-n">1</span><div class="wz-b"><b>截图</b><p>选一张别人的桌面截图(仅本地预览,不上传)</p>'
+        +'<input type="file" id="wzFile" accept="image/*" style="font-size:11px;color:var(--mut)">'
+        +'<img class="shotprev" id="wzPrev" alt="" hidden></div></div>'
+      +'<div class="wz"><span class="wz-n">2</span><div class="wz-b"><b>让 AI 分析</b><p>复制提示词 + 截图发给任意 AI(ChatGPT/Claude/Gemini…),AI 会按 Vitro schema 输出配置 JSON;或点下方按钮直接看演示结果</p>'
+        +'<textarea readonly id="wzPrompt" style="min-height:96px">'+SCHEMA_PROMPT+'</textarea>'
+        +'<div class="row" style="margin-top:6px"><button type="button" class="hbtn" id="wzCopy">📋 复制提示词</button>'
+        +'<button type="button" class="hbtn" id="wzDemo">🤖 模拟 AI 分析(演示)</button></div></div></div>'
+      +'<div class="wz"><span class="wz-n">3</span><div class="wz-b" style="border-bottom:0;margin-bottom:0;padding-bottom:0"><b>粘贴回来复刻</b><p>AI 返回的 JSON 粘贴到「② 导入」页,点应用即复刻该布置</p></div></div>';
+    } else if(tab==='io'){
+      body='<div class="row"><button type="button" class="hbtn" id="ioExport">⬇ 导出当前配置</button>'
+        +'<button type="button" class="hbtn" id="ioApply">✅ 应用配置(复刻)</button></div>'
+      +'<textarea id="ioTxt" placeholder=\'粘贴别人的 Vitro 配置 JSON,或先导出自己的看看格式…\'></textarea>'
+      +'<div class="okmsg" id="ioMsgOk"></div><div class="errmsg" id="ioMsgErr"></div>';
+    } else {
+      body='<div class="row"><label>插件名</label><input type="text" id="plName" placeholder="如:数字时钟" style="flex:1;font:inherit;font-size:12.5px;background:rgba(255,255,255,.07);border:1px solid var(--line);border-radius:7px;padding:5px 9px;color:var(--txt);outline:none"></div>'
+      +'<p style="font-size:11px;color:var(--mut);margin-bottom:6px">插件 API:<code>api.set(html)</code> 更新磁贴内容,<code>api.every(ms,fn)</code> 定时刷新。原型用 new Function 演示;正式版为 QuickJS 沙箱 + manifest 权限(PLAN §4.3)。</p>'
+      +'<textarea id="plCode" placeholder="api.set(\'Hello Vitro!\')"></textarea>'
+      +'<div class="row" style="margin-top:6px"><button type="button" class="hbtn" id="plEx1">填入示例:数字时钟</button>'
+        +'<button type="button" class="hbtn" id="plEx2">填入示例:名言轮播</button>'
+        +'<button type="button" class="hbtn" id="plInst">🔧 安装为插件</button></div>'
+      +'<div class="okmsg" id="plMsgOk"></div><div class="errmsg" id="plMsgErr"></div>';
+    }
+    openDlg('<div class="dlg-h"><b>复刻中心 — 复刻配置 · 粘贴插件</b><button type="button" class="x" aria-label="关闭">✕</button></div>'
+      +'<div class="tabs">'+tabs.map(function(t){return '<button type="button" class="tab'+(t[0]===tab?' on':'')+'" data-tab="'+t[0]+'">'+t[1]+'</button>'}).join('')+'</div>'
+      +'<div class="dlg-b">'+body+'</div>');
+    dlg.querySelectorAll('.tab').forEach(function(t){t.addEventListener('click',function(){openClone(t.dataset.tab)})});
+    var q=function(i){return dlg.querySelector(i)};
+    if(tab==='wizard'){
+      q('#wzFile').addEventListener('change',function(){
+        var f=this.files&&this.files[0]; var img=q('#wzPrev'); if(!f){img.hidden=true; return;}
+        var r=new FileReader(); r.onload=function(){img.src=r.result; img.hidden=false;}; r.readAsDataURL(f);});
+      q('#wzCopy').addEventListener('click',function(){copyText(SCHEMA_PROMPT); this.textContent='✅ 已复制'; var b=this; setTimeout(function(){b.textContent='📋 复制提示词'},1500);
+        hint('提示词已复制 — 连同截图发给任意 AI,返回 JSON 后到「② 导入」粘贴');});
+      q('#wzDemo').addEventListener('click',function(){
+        var p=PRESETS[Math.floor(Math.random()*PRESETS.length)];
+        openClone('io'); dlg.querySelector('#ioTxt').value=JSON.stringify(p,null,1);
+        hint('已填入模拟分析结果「'+p.name+'」— 点「应用配置」复刻');});
+    } else if(tab==='io'){
+      q('#ioExport').addEventListener('click',function(){ q('#ioTxt').value=exportConfig();
+        q('#ioMsgOk').textContent='已导出当前配置 — 复制文本发给别人即可被复刻'; q('#ioMsgErr').textContent='';});
+      q('#ioApply').addEventListener('click',function(){
+        var r=applyConfig(q('#ioTxt').value);
+        q('#ioMsgOk').textContent=r.ok?r.msg:''; q('#ioMsgErr').textContent=r.ok?'':r.msg;
+        if(r.ok){hint(r.msg); setTimeout(function(){ovl.classList.remove('open')},700);}});
+    } else {
+      q('#plEx1').addEventListener('click',function(){q('#plCode').value=EX_CLOCK; q('#plName').value=q('#plName').value||'数字时钟';});
+      q('#plEx2').addEventListener('click',function(){q('#plCode').value=EX_QUOTE; q('#plName').value=q('#plName').value||'名言轮播';});
+      q('#plInst').addEventListener('click',function(){
+        var name=(q('#plName').value||'').trim(), code=q('#plCode').value;
+        if(!code){q('#plMsgErr').textContent='代码不能为空'; return;}
+        var b=installUserPlugin(name,code);
+        S.customPlugins.push({name:b.dataset.name,code:code}); persist();
+        q('#plMsgErr').textContent=''; q('#plMsgOk').textContent='已安装「'+b.dataset.name+'」到 dock';
+        hint('粘贴代码创建插件「'+b.dataset.name+'」(正式版 QuickJS 沙箱)');});
+    }}
+  $('btnClone').addEventListener('click',function(){openClone('wizard')});
+  function exportIni(){
+    var lines=['[Dock]  ; 规格 R11:文本持久化(NeXuS 用 INI,原生 ~/.vitro 用 TOML)',
+      'Position='+S.pos.charAt(0).toUpperCase()+S.pos.slice(1),
+      'IconSize='+S.iconSize, 'Magnify='+(S.magnify?'1':'0'), 'MagnifyPeak='+S.peak,
+      'AutoHide='+(S.autohide?'1':'0'), 'AnimationSpeed='+S.anim,
+      'Reflection='+(S.fluid?'Fluid':S.refl==='static'?'Icon':'None'),
+      'GlassBlur='+S.blur, 'WaterRipple='+(S.ripple?'1':'0'), 'AttentionFx='+(S.attention?'1':'0'),
+      'BoingFx='+(S.boing?'1':'0'), 'CollapseOnLaunch='+(S.collapseLaunch?'1':'0'),
+      'RunningIndicators=1  ; 证据:DockShowRunningIndicators','',
+      '[Docklets]'];
+    Object.keys(S.docklets).forEach(function(k){lines.push(k+'='+(S.docklets[k]?'1':'0'))});
+    lines.push(''); lines.push('[Items]');
+    dock.querySelectorAll('.v-ic').forEach(function(b,i){lines.push((i+1)+'='+b.dataset.name+(b.classList.contains('pinned')?'|pin':'')+(b.classList.contains('has-run')?'|running':''))});
+    openDlg('<div class="dlg-h"><b>导出配置(INI)</b><button type="button" class="x" aria-label="关闭">✕</button></div><div class="dlg-b"><pre class="ini">'+lines.join('\n')+'</pre></div>');
+    hint('配置导出为 INI 文本(规格 R11)');}
+
+  /* ── 放大联动(横/纵)── */
+  var raf=0;
+  dock.addEventListener('pointermove',function(e){
+    if(root.classList.contains('lp')||RM||!S.magnify)return;
+    dock.classList.remove('settle');
+    if(raf)return; raf=requestAnimationFrame(function(){raf=0; mag(e)});});
+  dock.addEventListener('pointerleave',function(){dock.classList.add('settle');
+    dock.querySelectorAll('.v-ic').forEach(function(el){el.style.transform=''});
+    setTimeout(function(){dock.classList.remove('settle')},520);});
+  function mag(e){var vert=S.pos==='left'||S.pos==='right'; var p=vert?e.clientY:e.clientX;
+    dock.querySelectorAll('.v-ic').forEach(function(el){
+      var r=el.getBoundingClientRect(); var c=vert?(r.top+r.height/2):(r.left+r.width/2);
+      var d=Math.abs(c-p); var f=Math.pow(Math.max(0,1-d/120),1.6);
+      var ty=vert?0:-10*f, tx=vert?(S.pos==='left'?10*f:-10*f):0;
+      el.style.transform='translate('+tx+'px,'+ty+'px) scale('+(1+(S.peak-1)*f)+')';});}
+
+  /* ── 头部开关 ── */
+  $('swAh').addEventListener('change',function(e){S.autohide=this.checked; applyAll(); persist();
+    hint(this.checked?'自动隐藏开 — 底边 bump / 四角 / 热点 / Swipe 唤出(规格 R9)':'自动隐藏关'); if(this.checked)scheduleHide();});
+  $('swMag').addEventListener('change',function(){S.magnify=this.checked; persist(); hint('放大联动 '+(this.checked?'开':'关')+'(规格 R2)')});
+  $('swLp').addEventListener('change',function(){root.classList.toggle('lp',this.checked);
+    hint(this.checked?'省电动效:动画归零、反射关闭(PLAN §4.5 电池感知)':'恢复完整动效')});
+
+  /* ── 应用全部状态 ── */
+  function setPos(p){S.pos=p; applyAll(); persist();
+    hint('停靠到 '+({top:'上',bottom:'下',left:'左',right:'右'}[p])+' 边(规格 R1:'+p.charAt(0).toUpperCase()+p.slice(1)+' Screen Edge)');}
+  function applyAll(){
+    root.dataset.pos=S.pos;
+    root.dataset.refl=S.refl; root.dataset.fluid=S.fluid?'on':'off';
+    root.classList.toggle('noblur',S.noblur||S.blur===0);
+    root.classList.toggle('shadows-on',S.shadows);
+    root.classList.toggle('ah',S.autohide);
+    fitDock();
+    root.style.setProperty('--anim',S.anim);
+    root.style.setProperty('--blur',S.blur);
+    dock.style.zIndex=S.onTop?20:6;
+    $('swAh').checked=S.autohide; $('swMag').checked=S.magnify;
+    renderClock();}
+
+  /* ── 审计表 ── */
+  var AUDIT=[
+    ['ok','R1 四边停靠 + 垂直方向','左/右停靠时 dock 纵排、放大按 Y 轴、无反射(证据:DockVertNoReflection)'],
+    ['ok','R1 控制磁贴','单击=Preferences、双击=折叠、右键=dock 菜单(全部实证字符串)'],
+    ['ok','R1 Always On Top / Bottom','属性页可切,Bottom 时 dock 沉入窗口下'],
+    ['ok','R2 放大联动 / 可关 / 峰值可调','属性页滑杆实时调峰值'],
+    ['ok','R3 Tooltip + 标签','悬停气泡(80ms 延迟族)'],
+    ['ok','R4 双击判定','控制磁贴双击折叠'],
+    ['ok','R5 Boing 启动弹跳 + 运行指示','Boing 可关(Disable Boing Effect);运行=光点'],
+    ['ok','R6 拖放全套','拖入新建(自身图标)/重排/回收站删除(烟雾)'],
+    ['ok','R7 完整菜单树','条目菜单 8 项 + dock 菜单 10 项含 Position/Effects 子菜单'],
+    ['ok','R8 子码头','文件夹=网格、菜单=列表两种形态'],
+    ['ok','R9 自动隐藏全家','四边 bump + 四角 + Swipe + 桌面热点(左/中/右键可配)+ 速度滑杆'],
+    ['ok','R10 效果开关 8 项','反射/流态反射/背景模糊(可调)/水波纹/投影/注意力/Boing 全实装'],
+    ['web','R11 持久化','INI 导出演示;原生为 ~/.vitro TOML(M1)'],
+    ['ok','R12 Shelf 搁架','右缘搁架,拖入驻留(Insert New Shelf Item)'],
+    ['ok','R12 任务列表 docklet','运行窗口菜单(证据原文可查)'],
+    ['ok','R12 系统托盘 docklet','托盘内容弹出(DockShowSystray)'],
+    ['ok','R12 时钟 docklet','模拟/数字切换、实时走针(原子钟对时→M4 网络)'],
+    ['ok','R12 天气 docklet','预报面板(METAR 实数据→M4)'],
+    ['ok','R12 邮件检查器','未读角标 + 注意力效果(POP3 实收→M4,证据:9 账户上限)'],
+    ['ok','R12 CPU/RAM 表','sparkline + 直方图(仪表背景→M1 D2D)'],
+    ['ok','R12 电池监视','电量显示(低电告警→M4,证据:PSMBatteryLow)'],
+    ['ok','R12 密码锁定','锁定/解锁演示(Please Enter The Password!)'],
+    ['ok','R12 启动时折叠','开关实装(DockCollapseOnLaunch)'],
+    ['na','窗口缩略图预览','原生 M2:DWM Thumbnail(证据:TaskbarSnapshotSize)'],
+    ['na','OLE 深度集成','原生 M2:Shell IDList/FileGroupDescriptor(规格 R6 证实)'],
+    ['na','原子钟对时/语音报时','原生 M4:网络+音频(证据:ClockAtomic*/VoiceTheme*)'],
+    ['ok','配置复刻:导入/导出','JSON schema 一键应用别人布置;正式版 ~/.vitro TOML 分享'],
+    ['ok','粘贴代码即插件','new Function 演示 + api.set/every;正式版 QuickJS 沙箱(M4)'],
+    ['ok','AI 截图复刻向导','截图+提示词→任意 AI→JSON→粘贴复刻;内置模拟分析演示']
+  ];
+  var ag=$('audit');
+  AUDIT.forEach(function(r){var d=document.createElement('div'); d.className='arow';
+    var st=r[0]==='ok'?'ok':r[0]==='web'?'web':'na';
+    var lbl={ok:'原型已实现',web:'Web 模拟',na:'原生阶段'}[st];
+    d.innerHTML='<span class="st '+st+'">'+lbl+'</span><span class="tx">'+r[1]+'<br><small>'+r[2]+'</small></span>'; ag.appendChild(d);});
+
+  function hint(t){hintEl.innerHTML='<b>最近动作</b>'+t;}
+  applyAll(); applyDlStack();
+  if(Array.isArray(S.customPlugins))S.customPlugins.forEach(function(p){installUserPlugin(p.name,p.code)});
+  /* dock 自适应:任何舞台宽度都不溢出 */
+  function fitDock(){
+    var avail=stage.clientWidth-28; if(avail<200)avail=200;
+    var n=0;
+    Array.prototype.forEach.call(dock.children,function(el){
+      if(el.classList.contains('v-ic')&&!el.hidden)n++;
+      else if(el.classList.contains('v-sep')||el.classList.contains('spacer'))n+=0.3;});
+    var gap=9, pad=26;
+    var need=n*(S.iconSize+gap)+pad+n*0.3*(S.iconSize+gap);
+    var eff=S.iconSize;
+    if(need>avail)eff=Math.max(26,Math.floor(S.iconSize*avail/need));
+    dock.style.setProperty('--isz',eff+'px');
+    dock.dataset.eff=eff;}
+  window.addEventListener('resize',fitDock);
+
+  window.__nx={S:S, setPos:setPos, openProps:openProps, dock:dock, insertApp:insertApp, fitDock:fitDock, toggleLpad:toggleLpad, rebuildFromConfig:rebuildFromConfig, exportConfig:exportConfig};
+})();
+</script>
+</div>
