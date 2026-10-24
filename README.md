@@ -81,6 +81,7 @@ vitro/src/
 
 | 文档 | 内容 |
 |---|---|
+| [HANDOVER.md](HANDOVER.md) | ★ 接手文档:上手清单/架构决策/踩坑/验证手段/协作偏好 |
 | [docs/INTEGRATION.md](docs/INTEGRATION.md) | 资源整合权威表(NeXuS/Glassboard/macOS 规格/HTML 原型四方取舍) |
 | [docs/PLAN.md](docs/PLAN.md) | M0–M7 里程碑日志(含每步性能数字与技术笔记) |
 | [docs/research/](docs/research/) | NeXuS 行为逆向规格(Frida 证据)、macOS Dock 设计规格、竞品调研 |
