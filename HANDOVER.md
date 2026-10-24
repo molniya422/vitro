@@ -8,7 +8,7 @@
 ## 0. 30 分钟上手清单
 
 1. 装好 Rust stable(唯一构建依赖)
-2. `cd D:\dockyh\vito && cargo build --release` → `./target/release/vitro.exe`(约 1 分钟)
+2. `cd D:\dockyh\vitro && cargo build --release` → `./target/release/vitro.exe`(约 1 分钟)
 3. 打开 `docs/prototypes/vitro-nexus-full.html`(浏览器)——这是**视觉与交互的验收基准**,原生实现以它为目标
 4. 跑一遍性能门(见 §5),确认数字在预算内
 5. 通读本文档 §2(架构决策)和 §3(踩坑记录)——这些坑全部真实发生过
