@@ -18,6 +18,7 @@ serde_json = "1"
 toml = "0.8"
 thiserror = "2"
 uuid = { version = "1", features = ["serde", "v4"] }
+sha2 = "0.10"
 windows = { version = "0.61", features = [
     "Win32_Foundation",
     "Win32_Graphics_Direct2D",
@@ -34,7 +35,6 @@ windows = { version = "0.61", features = [
 ] }
 
 [dev-dependencies]
-sha2 = "0.10"
 tempfile = "3"
 
 [[test]]
@@ -44,5 +44,13 @@ path = "tests/unit/workspace_smoke.rs"
 [[test]]
 name = "test_registration"
 path = "tests/unit/test_registration.rs"
+
+[[test]]
+name = "provenance"
+path = "tests/unit/provenance.rs"
+
+[[test]]
+name = "release_boundary"
+path = "tests/desktop/release_boundary.rs"
 
 [workspace]

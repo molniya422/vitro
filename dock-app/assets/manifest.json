@@ -1,0 +1,565 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-10-25",
+  "assets": [
+    {
+      "path": "vitro/assets/icons/battery.png",
+      "source": "docs/prototypes/vitro-nexus-full.html (SQ SVG icon library) rasterized by vitro/tools/gen_sq_icons.py",
+      "author": "Dock App project (artwork authorship unverified)",
+      "license": "Project MIT claim, unverified for artwork",
+      "sha256": "c10e6cad4dd40d14e0ad6b0707aab037cda543f7e8f681111b7b4ce6485d44c8",
+      "width": 96,
+      "height": 96,
+      "allowed_use": "reference",
+      "verified_at": "2026-10-25"
+    },
+    {
+      "path": "vitro/assets/icons/browser.png",
+      "source": "docs/prototypes/vitro-nexus-full.html (SQ SVG icon library) rasterized by vitro/tools/gen_sq_icons.py",
+      "author": "Dock App project (artwork authorship unverified)",
+      "license": "Project MIT claim, unverified for artwork",
+      "sha256": "c5c5f4a7d1f7aaa280dd598013a65cd7dfa0b65279a8b3655e41c5ad9e96bc92",
+      "width": 96,
+      "height": 96,
+      "allowed_use": "reference",
+      "verified_at": "2026-10-25"
+    },
+    {
+      "path": "vitro/assets/icons/calendar.png",
+      "source": "docs/prototypes/vitro-nexus-full.html (SQ SVG icon library) rasterized by vitro/tools/gen_sq_icons.py",
+      "author": "Dock App project (artwork authorship unverified)",
+      "license": "Project MIT claim, unverified for artwork",
+      "sha256": "4ece25f02f26c328bb8c0cac3b867fe70e8c021996ee5252a935adf1db9a2091",
+      "width": 96,
+      "height": 96,
+      "allowed_use": "reference",
+      "verified_at": "2026-10-25"
+    },
+    {
+      "path": "vitro/assets/icons/clip.png",
+      "source": "docs/prototypes/vitro-nexus-full.html (SQ SVG icon library) rasterized by vitro/tools/gen_sq_icons.py",
+      "author": "Dock App project (artwork authorship unverified)",
+      "license": "Project MIT claim, unverified for artwork",
+      "sha256": "83df8a14429284f1f2a811fbc13ff31c7074852a16cca815bd38118c042c913a",
+      "width": 96,
+      "height": 96,
+      "allowed_use": "reference",
+      "verified_at": "2026-10-25"
+    },
+    {
+      "path": "vitro/assets/icons/clock.png",
+      "source": "docs/prototypes/vitro-nexus-full.html (SQ SVG icon library) rasterized by vitro/tools/gen_sq_icons.py",
+      "author": "Dock App project (artwork authorship unverified)",
+      "license": "Project MIT claim, unverified for artwork",
+      "sha256": "2202eb9dce3fdb37db199b4c2289e3e1702c1dfa008d7b01a608b845f40af90d",
+      "width": 96,
+      "height": 96,
+      "allowed_use": "reference",
+      "verified_at": "2026-10-25"
+    },
+    {
+      "path": "vitro/assets/icons/code.png",
+      "source": "docs/prototypes/vitro-nexus-full.html (SQ SVG icon library) rasterized by vitro/tools/gen_sq_icons.py",
+      "author": "Dock App project (artwork authorship unverified)",
+      "license": "Project MIT claim, unverified for artwork",
+      "sha256": "eede6fd5993ac485bed8d15906ba406990aaf93a66c271c35a639c8aa0ca21b5",
+      "width": 96,
+      "height": 96,
+      "allowed_use": "reference",
+      "verified_at": "2026-10-25"
+    },
+    {
+      "path": "vitro/assets/icons/control.png",
+      "source": "docs/prototypes/vitro-nexus-full.html (SQ SVG icon library) rasterized by vitro/tools/gen_sq_icons.py",
+      "author": "Dock App project (artwork authorship unverified)",
+      "license": "Project MIT claim, unverified for artwork",
+      "sha256": "18fd1758e194213d06b579a8fa545a384670bff0e2b67624b083328f08d3a0fd",
+      "width": 96,
+      "height": 96,
+      "allowed_use": "reference",
+      "verified_at": "2026-10-25"
+    },
+    {
+      "path": "vitro/assets/icons/cpu.png",
+      "source": "docs/prototypes/vitro-nexus-full.html (SQ SVG icon library) rasterized by vitro/tools/gen_sq_icons.py",
+      "author": "Dock App project (artwork authorship unverified)",
+      "license": "Project MIT claim, unverified for artwork",
+      "sha256": "84fab5d8f0940779e199a9de27f930a4d52b888366d4c923df8bb8dc15d0f46c",
+      "width": 96,
+      "height": 96,
+      "allowed_use": "reference",
+      "verified_at": "2026-10-25"
+    },
+    {
+      "path": "vitro/assets/icons/doc.png",
+      "source": "docs/prototypes/vitro-nexus-full.html (SQ SVG icon library) rasterized by vitro/tools/gen_sq_icons.py",
+      "author": "Dock App project (artwork authorship unverified)",
+      "license": "Project MIT claim, unverified for artwork",
+      "sha256": "0f1d7fc4ae78841adcb9e88886469555e312cb226d9db443b1b98500baa3a060",
+      "width": 96,
+      "height": 96,
+      "allowed_use": "reference",
+      "verified_at": "2026-10-25"
+    },
+    {
+      "path": "vitro/assets/icons/drawer.png",
+      "source": "docs/prototypes/vitro-nexus-full.html (SQ SVG icon library) rasterized by vitro/tools/gen_sq_icons.py",
+      "author": "Dock App project (artwork authorship unverified)",
+      "license": "Project MIT claim, unverified for artwork",
+      "sha256": "b25a56c9c01d886a07b99fccd5d8f328dd56e85421987967f5d7924d777d5f85",
+      "width": 96,
+      "height": 96,
+      "allowed_use": "reference",
+      "verified_at": "2026-10-25"
+    },
+    {
+      "path": "vitro/assets/icons/folder.png",
+      "source": "docs/prototypes/vitro-nexus-full.html (SQ SVG icon library) rasterized by vitro/tools/gen_sq_icons.py",
+      "author": "Dock App project (artwork authorship unverified)",
+      "license": "Project MIT claim, unverified for artwork",
+      "sha256": "bae0337a17f474326f4a3ffa85c85ff335f639c9caea775b7552377c22ea0b73",
+      "width": 96,
+      "height": 96,
+      "allowed_use": "reference",
+      "verified_at": "2026-10-25"
+    },
+    {
+      "path": "vitro/assets/icons/gamepad.png",
+      "source": "docs/prototypes/vitro-nexus-full.html (SQ SVG icon library) rasterized by vitro/tools/gen_sq_icons.py",
+      "author": "Dock App project (artwork authorship unverified)",
+      "license": "Project MIT claim, unverified for artwork",
+      "sha256": "debb76064979fbaf636b98005a9dcb0f07e884b5f5406a62222b3dd0dc940f0e",
+      "width": 96,
+      "height": 96,
+      "allowed_use": "reference",
+      "verified_at": "2026-10-25"
+    },
+    {
+      "path": "vitro/assets/icons/mail.png",
+      "source": "docs/prototypes/vitro-nexus-full.html (SQ SVG icon library) rasterized by vitro/tools/gen_sq_icons.py",
+      "author": "Dock App project (artwork authorship unverified)",
+      "license": "Project MIT claim, unverified for artwork",
+      "sha256": "67ee2784e6792efb80b3324b8fd93ad2e566cdbd390f85232db56309d52343fb",
+      "width": 96,
+      "height": 96,
+      "allowed_use": "reference",
+      "verified_at": "2026-10-25"
+    },
+    {
+      "path": "vitro/assets/icons/menulist.png",
+      "source": "docs/prototypes/vitro-nexus-full.html (SQ SVG icon library) rasterized by vitro/tools/gen_sq_icons.py",
+      "author": "Dock App project (artwork authorship unverified)",
+      "license": "Project MIT claim, unverified for artwork",
+      "sha256": "ad7841bc3d09a2c910af41ca76ee3b5fb6a1405fb0d4a297244d820e4de25d59",
+      "width": 96,
+      "height": 96,
+      "allowed_use": "reference",
+      "verified_at": "2026-10-25"
+    },
+    {
+      "path": "vitro/assets/icons/music.png",
+      "source": "docs/prototypes/vitro-nexus-full.html (SQ SVG icon library) rasterized by vitro/tools/gen_sq_icons.py",
+      "author": "Dock App project (artwork authorship unverified)",
+      "license": "Project MIT claim, unverified for artwork",
+      "sha256": "67a8777640c80ff42fbf2eaf7bd7e30a7e1eda9037afe3d7078e06c14f8e68c4",
+      "width": 96,
+      "height": 96,
+      "allowed_use": "reference",
+      "verified_at": "2026-10-25"
+    },
+    {
+      "path": "vitro/assets/icons/net.png",
+      "source": "docs/prototypes/vitro-nexus-full.html (SQ SVG icon library) rasterized by vitro/tools/gen_sq_icons.py",
+      "author": "Dock App project (artwork authorship unverified)",
+      "license": "Project MIT claim, unverified for artwork",
+      "sha256": "2a0d51a45bfe5dfd9a0b8279c757bbfc3923bea2dad28d05a892ad917e1f53bf",
+      "width": 96,
+      "height": 96,
+      "allowed_use": "reference",
+      "verified_at": "2026-10-25"
+    },
+    {
+      "path": "vitro/assets/icons/notes.png",
+      "source": "docs/prototypes/vitro-nexus-full.html (SQ SVG icon library) rasterized by vitro/tools/gen_sq_icons.py",
+      "author": "Dock App project (artwork authorship unverified)",
+      "license": "Project MIT claim, unverified for artwork",
+      "sha256": "586588c4bc896ec032080c07ebdf46bbe687ec2b713cd11f26852625371f6cba",
+      "width": 96,
+      "height": 96,
+      "allowed_use": "reference",
+      "verified_at": "2026-10-25"
+    },
+    {
+      "path": "vitro/assets/icons/ram.png",
+      "source": "docs/prototypes/vitro-nexus-full.html (SQ SVG icon library) rasterized by vitro/tools/gen_sq_icons.py",
+      "author": "Dock App project (artwork authorship unverified)",
+      "license": "Project MIT claim, unverified for artwork",
+      "sha256": "193e0627a4ef4579b7d547356e13ab5b0e683eb5955b3dc0c765ef54bc9df6f4",
+      "width": 96,
+      "height": 96,
+      "allowed_use": "reference",
+      "verified_at": "2026-10-25"
+    },
+    {
+      "path": "vitro/assets/icons/settings.png",
+      "source": "docs/prototypes/vitro-nexus-full.html (SQ SVG icon library) rasterized by vitro/tools/gen_sq_icons.py",
+      "author": "Dock App project (artwork authorship unverified)",
+      "license": "Project MIT claim, unverified for artwork",
+      "sha256": "61b3761bf3f374bcf89bcba21b9ed69a0b31b28651fa14e18c51253b39b8af2c",
+      "width": 96,
+      "height": 96,
+      "allowed_use": "reference",
+      "verified_at": "2026-10-25"
+    },
+    {
+      "path": "vitro/assets/icons/shelfico.png",
+      "source": "docs/prototypes/vitro-nexus-full.html (SQ SVG icon library) rasterized by vitro/tools/gen_sq_icons.py",
+      "author": "Dock App project (artwork authorship unverified)",
+      "license": "Project MIT claim, unverified for artwork",
+      "sha256": "b9a5e2944e0fa3fe0d20915ae2121ee301ad555113b71a00f655ce68ac02e2d9",
+      "width": 96,
+      "height": 96,
+      "allowed_use": "reference",
+      "verified_at": "2026-10-25"
+    },
+    {
+      "path": "vitro/assets/icons/tasks.png",
+      "source": "docs/prototypes/vitro-nexus-full.html (SQ SVG icon library) rasterized by vitro/tools/gen_sq_icons.py",
+      "author": "Dock App project (artwork authorship unverified)",
+      "license": "Project MIT claim, unverified for artwork",
+      "sha256": "ff566eefc4329022ed2fefa2a484c7c01274b579b3307f25591bb19f38925696",
+      "width": 96,
+      "height": 96,
+      "allowed_use": "reference",
+      "verified_at": "2026-10-25"
+    },
+    {
+      "path": "vitro/assets/icons/terminal.png",
+      "source": "docs/prototypes/vitro-nexus-full.html (SQ SVG icon library) rasterized by vitro/tools/gen_sq_icons.py",
+      "author": "Dock App project (artwork authorship unverified)",
+      "license": "Project MIT claim, unverified for artwork",
+      "sha256": "005654ecba3239fa19ef8a22faa83cbe2a051834ae96479f25c791720bd9c486",
+      "width": 96,
+      "height": 96,
+      "allowed_use": "reference",
+      "verified_at": "2026-10-25"
+    },
+    {
+      "path": "vitro/assets/icons/trash.png",
+      "source": "docs/prototypes/vitro-nexus-full.html (SQ SVG icon library) rasterized by vitro/tools/gen_sq_icons.py",
+      "author": "Dock App project (artwork authorship unverified)",
+      "license": "Project MIT claim, unverified for artwork",
+      "sha256": "690a1f0e3aa00c902a4577d21e3f5d188e6e2562806d5422560d48ba514e311c",
+      "width": 96,
+      "height": 96,
+      "allowed_use": "reference",
+      "verified_at": "2026-10-25"
+    },
+    {
+      "path": "vitro/assets/icons/tray.png",
+      "source": "docs/prototypes/vitro-nexus-full.html (SQ SVG icon library) rasterized by vitro/tools/gen_sq_icons.py",
+      "author": "Dock App project (artwork authorship unverified)",
+      "license": "Project MIT claim, unverified for artwork",
+      "sha256": "1c2ec29733e8317fa8e3deb9066081b37f35d613908009dc151b1df1880c55cb",
+      "width": 96,
+      "height": 96,
+      "allowed_use": "reference",
+      "verified_at": "2026-10-25"
+    },
+    {
+      "path": "vitro/assets/icons/weather.png",
+      "source": "docs/prototypes/vitro-nexus-full.html (SQ SVG icon library) rasterized by vitro/tools/gen_sq_icons.py",
+      "author": "Dock App project (artwork authorship unverified)",
+      "license": "Project MIT claim, unverified for artwork",
+      "sha256": "308bcfd2a7a0701b62c75959244d4ff000c2d5bbf82ebce29063b11cb142ba3c",
+      "width": 96,
+      "height": 96,
+      "allowed_use": "reference",
+      "verified_at": "2026-10-25"
+    },
+    {
+      "path": "docs/specs/effects-catalog.toml",
+      "source": "Dock App design specification",
+      "author": "Dock App project",
+      "license": "MIT",
+      "sha256": "ec3dc6a4544142753686d94c61c5d55730af25bb30fe3ef1e87ebc25439edbd2",
+      "allowed_use": "release",
+      "verified_at": "2026-10-25"
+    },
+    {
+      "path": "docs/specs/motion-tokens.toml",
+      "source": "Dock App design specification",
+      "author": "Dock App project",
+      "license": "MIT",
+      "sha256": "97ce9f3bcdc8235e3197e8c395ccbcfc00713747020f1dfaf4cac422688037f1",
+      "allowed_use": "release",
+      "verified_at": "2026-10-25"
+    },
+    {
+      "path": "docs/specs/macos-parity.toml",
+      "source": "Dock App design specification",
+      "author": "Dock App project",
+      "license": "MIT",
+      "sha256": "39f1a0e0be4048f39a2b4dd98d83cc347e3783cd75c16099af6615d7ddbe3537",
+      "allowed_use": "release",
+      "verified_at": "2026-10-25"
+    },
+    {
+      "path": "docs/prototypes/vitro-effects-gallery.html",
+      "source": "Dock App interactive design prototype",
+      "author": "Dock App project",
+      "license": "MIT",
+      "sha256": "f07a4cd834951a6e2b71f0d4b244b0217a33dd00e6318c0761fb862026b48c31",
+      "allowed_use": "reference",
+      "verified_at": "2026-10-25"
+    },
+    {
+      "path": "docs/prototypes/vitro-m05.html",
+      "source": "Dock App interactive design prototype",
+      "author": "Dock App project",
+      "license": "MIT",
+      "sha256": "79c5e353619a6285da38dd2c44d3c8f1f15df074db5eb3c0ad7595c6641cdcbe",
+      "allowed_use": "reference",
+      "verified_at": "2026-10-25"
+    },
+    {
+      "path": "docs/prototypes/vitro-macos-parity.html",
+      "source": "Dock App interactive design prototype",
+      "author": "Dock App project",
+      "license": "MIT",
+      "sha256": "87acb26492013fe74c4fa8f77731bb8c3c9eadfb39e5ab885e2f9dd19123e505",
+      "allowed_use": "reference",
+      "verified_at": "2026-10-25"
+    },
+    {
+      "path": "docs/prototypes/vitro-nexus-full.html",
+      "source": "Dock App interactive design prototype",
+      "author": "Dock App project",
+      "license": "MIT",
+      "sha256": "68c5da97fa5e46a8f517c7d5b38a1b53e3de3e326f6f7321c46b7349317cb108",
+      "allowed_use": "reference",
+      "verified_at": "2026-10-25"
+    },
+    {
+      "path": "docs/research/00-SUMMARY.md",
+      "source": "Dock App research notes (public behavior and design observations)",
+      "author": "Dock App project",
+      "license": "MIT",
+      "sha256": "241b52d36c3699a80d2cde92355377492614ac7e2db985eb11da515fab4515df",
+      "allowed_use": "reference",
+      "verified_at": "2026-10-25"
+    },
+    {
+      "path": "docs/research/competitive-research-2026-10.md",
+      "source": "Dock App research notes (public behavior and design observations)",
+      "author": "Dock App project",
+      "license": "MIT",
+      "sha256": "fd02cf4c37581f9a3da7b3f0620a2486445ac100dd7a91ed0ee7717ad9aa0b35",
+      "allowed_use": "reference",
+      "verified_at": "2026-10-25"
+    },
+    {
+      "path": "docs/research/design-language-research.md",
+      "source": "Dock App research notes (public behavior and design observations)",
+      "author": "Dock App project",
+      "license": "MIT",
+      "sha256": "97a364286bfa071d667d85153ab5f3657ac4e47e7a58ff9222cf4be2ec0dfbb7",
+      "allowed_use": "reference",
+      "verified_at": "2026-10-25"
+    },
+    {
+      "path": "docs/research/design-skills-mcp.md",
+      "source": "Dock App research notes (public behavior and design observations)",
+      "author": "Dock App project",
+      "license": "MIT",
+      "sha256": "b49251c09f83265f2e0f5f11e91752136b71ce359554faad0c333beef80ac19a",
+      "allowed_use": "reference",
+      "verified_at": "2026-10-25"
+    },
+    {
+      "path": "docs/research/frontend-design-research.md",
+      "source": "Dock App research notes (public behavior and design observations)",
+      "author": "Dock App project",
+      "license": "MIT",
+      "sha256": "0a777c112b093851e7b06846b8d44e71c443473d3cc833f85630c56510f822c8",
+      "allowed_use": "reference",
+      "verified_at": "2026-10-25"
+    },
+    {
+      "path": "docs/research/glassdesk-vitro-audit.md",
+      "source": "Dock App research notes (public behavior and design observations)",
+      "author": "Dock App project",
+      "license": "MIT",
+      "sha256": "1c47cfcb8582eefff1b1e718025c14f61814e89deb2560f33a2928a78959dea1",
+      "allowed_use": "reference",
+      "verified_at": "2026-10-25"
+    },
+    {
+      "path": "docs/research/macos-dock-spec.md",
+      "source": "Dock App research notes (public behavior and design observations)",
+      "author": "Dock App project",
+      "license": "MIT",
+      "sha256": "d6259689c2acb47604dd1e1549132e1c24a72bf9d30708acf3cfd8c1d8b60e66",
+      "allowed_use": "reference",
+      "verified_at": "2026-10-25"
+    },
+    {
+      "path": "docs/research/mydockfinder-bitdock-deepdive.md",
+      "source": "Dock App research notes (public behavior and design observations)",
+      "author": "Dock App project",
+      "license": "MIT",
+      "sha256": "02fc2a4f3975df0b4a51e92fa20498beb9fc7ddfaba0748e071e21ec4ade5d5a",
+      "allowed_use": "reference",
+      "verified_at": "2026-10-25"
+    },
+    {
+      "path": "docs/research/nexus-dock-behavior-spec.md",
+      "source": "Dock App research notes (public behavior and design observations)",
+      "author": "Dock App project",
+      "license": "MIT",
+      "sha256": "be6f34e5a2926f13bb044ee4b636042768788f6aa9a9db1fd63a0383660dc718",
+      "allowed_use": "reference",
+      "verified_at": "2026-10-25"
+    },
+    {
+      "path": "docs/research/plugin-design-language.md",
+      "source": "Dock App research notes (public behavior and design observations)",
+      "author": "Dock App project",
+      "license": "MIT",
+      "sha256": "b79eb590011f1a6149678adbf9d889a0c239373c463a8dcd6f9257dd58f0a7ca",
+      "allowed_use": "reference",
+      "verified_at": "2026-10-25"
+    },
+    {
+      "path": "docs/research/skillry-premium-design-research.md",
+      "source": "Dock App research notes (public behavior and design observations)",
+      "author": "Dock App project",
+      "license": "MIT",
+      "sha256": "953ee2e37050969a94a87854d737d0e930ca248457b5760b96441216c72788ab",
+      "allowed_use": "reference",
+      "verified_at": "2026-10-25"
+    },
+    {
+      "path": "docs/research/tech-stack-research.md",
+      "source": "Dock App research notes (public behavior and design observations)",
+      "author": "Dock App project",
+      "license": "MIT",
+      "sha256": "67132e8ef026426439097f327f8aae72c6dc81f52708ff30723af756b77eaf58",
+      "allowed_use": "reference",
+      "verified_at": "2026-10-25"
+    }
+  ],
+  "restricted_sources": [
+    {
+      "name": "vitro legacy application",
+      "location": "vitro/",
+      "license": "MIT",
+      "allowed_use": "reference",
+      "shipped": false,
+      "rationale": "Legacy application. May be inspected but never compiled, referenced, or packaged; assets stay reference-only until authorship and trademark review."
+    },
+    {
+      "name": "Glassboard",
+      "location": "Glassboard-main/",
+      "license": "MIT",
+      "allowed_use": "reference",
+      "shipped": false,
+      "rationale": "Independent annotation and screenshot product. The product boundary forbids merging its code into the dock release even though MIT would permit it."
+    },
+    {
+      "name": "GlassDesk",
+      "location": "external repository (everlosttime/glassdesk-open-source)",
+      "license": "PolyForm Noncommercial 1.0.0 for new work; Apache-2.0 for historical parts",
+      "allowed_use": "reference",
+      "shipped": false,
+      "rationale": "Architecture and behavior notes only. Noncommercial terms forbid code, brand, icon, and material reuse."
+    },
+    {
+      "name": "Seelen UI",
+      "location": "external repository (eythaann/seelen-ui)",
+      "license": "AGPL-3.0",
+      "allowed_use": "reference",
+      "shipped": false,
+      "rationale": "Public behavior observations only. No AGPL code is read for implementation."
+    },
+    {
+      "name": "Winstep Nexus",
+      "location": "docs/research/nexus-dock-behavior-spec.md",
+      "license": "Proprietary; black-box behavior notes",
+      "allowed_use": "reference",
+      "shipped": false,
+      "rationale": "R1-R12 acceptance behavior is documented from observation. No code or private resources are used."
+    },
+    {
+      "name": "BitDock",
+      "location": "docs/research/mydockfinder-bitdock-deepdive.md",
+      "license": "Proprietary; public behavior notes",
+      "allowed_use": "reference",
+      "shipped": false,
+      "rationale": "Public behavior and feature inventory only; no reverse engineering or resource reuse."
+    },
+    {
+      "name": "MyDockFinder",
+      "location": "docs/research/mydockfinder-bitdock-deepdive.md",
+      "license": "Proprietary; public behavior notes",
+      "allowed_use": "reference",
+      "shipped": false,
+      "rationale": "Public behavior and feature inventory only; no reverse engineering or resource reuse."
+    },
+    {
+      "name": "transitions.dev",
+      "location": "transitions.dev-main/ (parameter source for docs/specs/motion-tokens.toml)",
+      "license": "Transitions.dev license (personal and commercial use permitted)",
+      "allowed_use": "reference",
+      "shipped": false,
+      "rationale": "Motion parameter values are recorded in the frozen TOML specs; no site code or assets are packaged."
+    }
+  ],
+  "platform_apis": [
+    {
+      "component": "Win32 windowing and messaging (user32)",
+      "provider": "Windows SDK",
+      "allowed_use": "release"
+    },
+    {
+      "component": "DWM backdrop and composition attributes",
+      "provider": "Windows SDK",
+      "allowed_use": "release"
+    },
+    {
+      "component": "Direct2D and DirectWrite",
+      "provider": "Windows SDK",
+      "allowed_use": "release"
+    },
+    {
+      "component": "DirectComposition",
+      "provider": "Windows SDK",
+      "allowed_use": "release"
+    },
+    {
+      "component": "DXGI and WIC",
+      "provider": "Windows SDK",
+      "allowed_use": "release"
+    },
+    {
+      "component": "Shell32 (icon extraction, IFileOperation, IShellItem)",
+      "provider": "Windows SDK",
+      "allowed_use": "release"
+    },
+    {
+      "component": "UI Automation",
+      "provider": "Windows SDK",
+      "allowed_use": "release"
+    },
+    {
+      "component": "OLE drag and drop",
+      "provider": "Windows SDK",
+      "allowed_use": "release"
+    },
+    {
+      "component": "Per-monitor DPI awareness",
+      "provider": "Windows SDK",
+      "allowed_use": "release"
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "note": "Release-boundary deny list consumed by core::provenance::scan_release. Path patterns match whole path segments; content markers match file text case-insensitively; extensions reject prototype files.",
+  "forbidden_path_patterns": [
+    "vitro/src",
+    "vitro/src-tauri",
+    "Glassboard-main",
+    "GlassDesk",
+    "Seelen"
+  ],
+  "forbidden_content_markers": [
+    "Glassboard-main",
+    "GlassDesk",
+    "Seelen",
+    "reference-only",
+    "vitro/src",
+    "vitro/src-tauri"
+  ],
+  "forbidden_extensions": ["html", "htm", "js", "mjs", "cjs", "jsx", "ts", "tsx"],
+  "skipped_directory_names": ["target", ".git", "node_modules"],
+  "provenance_record_file_names": ["manifest.json", "forbidden_patterns.json"]
+}
