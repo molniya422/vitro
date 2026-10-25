@@ -1,5 +1,6 @@
 # Rust
 /vitro/target/
+/dock-app/target/
 **/*.rs.bk
 
 # 第三方参考资料(许可证独立,不入库:Glassboard=AGPL-3.0)
