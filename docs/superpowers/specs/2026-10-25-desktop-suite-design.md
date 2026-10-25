@@ -14,6 +14,7 @@ The suite is not a decorative icon strip. Every visible item maps to a real appl
 
 - `Glassboard-main` remains the source of the original annotation product: transparent drawing, capture, undo/redo, tutorials, tray, startup, and update flows. Its code is not folded into Dock state or Docklet state.
 - The old `vitro` implementation is not an implementation dependency. Its research and art assets may be inspected, but its runtime, state model, and window code are not reused.
+- GlassDesk 1.4.0 is the primary architecture reference for layering and acceptance coverage: Core, Platform, AppServices, Dock, Launcher, Settings, and UI are separate responsibilities. Its implementation, brand, icons, and PolyForm-restricted additions are not copied into this product.
 - The new product lives in a new top-level product domain, initially `dock-app/`, with its own runtime, tests, configuration namespace, and release packaging.
 - The suite uses existing research and artwork only where the license and asset inventory permit it. The HTML prototypes are behavioral and visual references, not production runtime code.
 - Windows Explorer remains the shell owner. There is no Explorer/DWM injection, shell replacement, or system-taskbar takeover.
