@@ -1,0 +1,30 @@
+[package]
+name = "dock-app"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "dock_app"
+path = "src/lib.rs"
+
+[[bin]]
+name = "dock-app"
+path = "src/main.rs"
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+toml = "0.8"
+thiserror = "2"
+uuid = { version = "1", features = ["serde", "v4"] }
+
+[target.'cfg(windows)'.dependencies]
+windows = { version = "0.61", features = ["Win32_Foundation", "Win32_Graphics_Direct2D", "Win32_Graphics_DirectWrite", "Win32_Graphics_Dxgi", "Win32_System_Com", "Win32_UI_WindowsAndMessaging"] }
+
+[dev-dependencies]
+sha2 = "0.10"
+tempfile = "3"
+
+[[test]]
+name = "workspace_smoke"
+path = "tests/unit/workspace_smoke.rs"
