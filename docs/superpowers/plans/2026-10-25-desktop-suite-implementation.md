@@ -46,10 +46,56 @@ D:\dockyh\dock-app\
   schemas\docklet-manifest.schema.json
 ```
 
+The resource classifications, visual language, innovation points, hard metrics, online verification list, and phase gates are fixed in [Dock App 资源、设计与实现细化规格](D:/dockyh/docs/superpowers/specs/2026-10-25-desktop-suite-resource-design.md). Every implementation task below must satisfy that specification before it is marked complete.
+
+## Task 0: Freeze resource provenance and release boundaries
+
+**Files:**
+- Create: `D:\dockyh\dock-app\assets\manifest.json`
+- Create: `D:\dockyh\docs\PROVENANCE.md`
+- Create: `D:\dockyh\docs\THIRD_PARTY_NOTICES.md`
+- Create: `D:\dockyh\dock-app\tests\unit\provenance.rs`
+- Create: `D:\dockyh\dock-app\tests\desktop\release_boundary.rs`
+
+- [ ] **Step 1: Write failing provenance tests**
+
+```rust
+#[test]
+fn every_runtime_asset_has_source_license_hash_and_allowed_use() {
+    for asset in load_asset_manifest() {
+        assert!(!asset.source.is_empty());
+        assert!(!asset.license.is_empty());
+        assert_eq!(asset.sha256.len(), 64);
+        assert!(matches!(asset.allowed_use.as_str(), "reference" | "internal" | "release"));
+    }
+}
+
+#[test]
+fn release_scan_rejects_reference_sources_and_old_runtime_paths() {
+    let files = stage_release_fixture();
+    assert!(scan_release(&files).contains("vitro/src") == false);
+    assert!(scan_release(&files).contains("Glassboard-main") == false);
+    assert!(scan_release(&files).contains("reference-only") == false);
+}
+```
+
+- [ ] **Step 2: Run the tests and verify failure**
+
+Run `cargo test --manifest-path D:\dockyh\dock-app\Cargo.toml provenance release_boundary`. Expected: FAIL because the asset manifest, source records, and release scanner do not exist.
+
+- [ ] **Step 3: Inventory and classify the current resources**
+
+Record all 25 current 96×96 PNGs under `D:\dockyh\vitro\assets\icons` with SHA-256, dimensions, source, and `allowed_use = "reference"` until authorship and trademark review are complete. Record the three TOML specs as `release` inputs, the HTML prototypes as `reference`, Windows SDK APIs as `release`, and GlassDesk/competitor code as `reference` only. Add a CI scan that rejects `Glassboard-main`, `vitro/src`, `vitro/src-tauri`, `GlassDesk`, `Seelen`, and HTML/JS prototype files from the runtime and staging directories.
+
+- [ ] **Step 4: Verify and commit**
+
+Run the provenance tests, `rg -n "Glassboard-main|vitro/src|vitro/src-tauri|GlassDesk|Seelen" D:\dockyh\dock-app`, and `git diff --check`. Expected: no runtime references and every staged asset has a complete record. Commit `chore: freeze dock app provenance and release boundaries`.
+
 ## Task 1: Create the isolated Rust workspace
 
 **Files:**
 - Create: `D:\dockyh\dock-app\Cargo.toml`
+- Create: `D:\dockyh\dock-app\src\lib.rs`
 - Create: `D:\dockyh\dock-app\src\main.rs`
 - Create: `D:\dockyh\dock-app\src\core\mod.rs`
 - Create: `D:\dockyh\dock-app\src\platform\windows\mod.rs`
