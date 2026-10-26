@@ -54,4 +54,8 @@ path = "tests/unit/geometry.rs"
 name = "autohide"
 path = "tests/unit/autohide.rs"
 
+[[test]]
+name = "settings"
+path = "tests/unit/settings.rs"
+
 [workspace]

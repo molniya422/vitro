@@ -2,6 +2,7 @@
 
 pub mod autohide;
 pub mod geometry;
+pub mod settings;
 
 pub fn product_name() -> &'static str {
     "Dock Tauri"
