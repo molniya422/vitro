@@ -102,3 +102,10 @@ name = "window_geom"
 path = "tests/unit/window_geom.rs"
 
 [workspace]
+
+[profile.release]
+lto = true
+codegen-units = 1
+strip = true
+opt-level = "s"
+panic = "abort"
