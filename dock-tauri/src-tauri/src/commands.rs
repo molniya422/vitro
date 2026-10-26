@@ -4,14 +4,17 @@ use crate::apps::{self, AppEntry};
 use crate::autohide::{Action, AutoHide, Event, Visibility};
 use crate::metrics::Sample;
 use crate::settings::{self, Settings};
-use crate::state::{build_dock_state, DockConfig, DockStateView};
+use crate::state::{build_catalog, build_dock_state, DockConfig, DockItemView, DockStateView};
 use serde::Serialize;
 use std::path::PathBuf;
 use std::sync::Mutex;
 use tauri::{AppHandle, Emitter, Manager, State};
 
 pub struct Runtime {
-    pub apps: Mutex<Vec<AppEntry>>,
+    /// Every discovered app. Launchpad renders this list; the dock does not.
+    pub catalog: Mutex<Vec<AppEntry>>,
+    /// Ids shown in the dock, in display order. Capped by `DOCK_ITEM_CAP`.
+    pub pinned: Mutex<Vec<String>>,
     pub settings_path: PathBuf,
     /// Owns at most one sidecar and respawns it after a crash.
     pub sidecar: Mutex<crate::metrics::Supervisor>,
@@ -48,23 +51,107 @@ pub(crate) fn config_from(settings: &Settings) -> DockConfig {
 pub fn get_dock_state(runtime: State<'_, Runtime>) -> Result<DockStateView, CommandError> {
     let settings = settings::load_or_recover(&runtime.settings_path)
         .map_err(|e| CommandError::new("settings_unreadable", e.to_string()))?;
-    let apps = runtime
-        .apps
+    let catalog = runtime
+        .catalog
         .lock()
         .map_err(|_| CommandError::new("lock_poisoned", "app catalog lock poisoned"))?;
-    let running = crate::windows_tracker::snapshot_and_reconcile(&apps);
-    let icons = crate::icon_cache::icons_for(&apps, 48);
+    let pinned = runtime
+        .pinned
+        .lock()
+        .map_err(|_| CommandError::new("lock_poisoned", "pinned lock poisoned"))?;
+    let running = crate::windows_tracker::snapshot_and_reconcile(&catalog);
+    let icons = crate::icon_cache::icons_for(&catalog, 48);
     Ok(build_dock_state(
-        &apps,
+        &catalog,
+        &pinned,
         &running,
         &icons,
         &config_from(&settings),
     ))
 }
 
+/// Every discovered app, for Launchpad. Never capped by the dock limit.
+#[tauri::command]
+pub fn get_catalog(runtime: State<'_, Runtime>) -> Result<Vec<DockItemView>, CommandError> {
+    let catalog = runtime
+        .catalog
+        .lock()
+        .map_err(|_| CommandError::new("lock_poisoned", "app catalog lock poisoned"))?;
+    let running = crate::windows_tracker::snapshot_and_reconcile(&catalog);
+    let icons = crate::icon_cache::icons_for(&catalog, 48);
+    Ok(build_catalog(&catalog, &running, &icons))
+}
+
+fn persist_pins(runtime: &Runtime, pinned: &[String]) -> Result<(), CommandError> {
+    let mut settings = settings::load_or_recover(&runtime.settings_path)
+        .map_err(|e| CommandError::new("settings_unreadable", e.to_string()))?;
+    settings.pinned = pinned.to_vec();
+    settings::save_atomic(&runtime.settings_path, &settings)
+        .map_err(|e| CommandError::new("settings_unwritable", e.to_string()))
+}
+
+/// Add an app to the dock. Idempotent; rejects a full dock or an unknown id.
+#[tauri::command]
+pub fn pin_app(runtime: State<'_, Runtime>, id: String) -> Result<(), CommandError> {
+    let catalog = runtime
+        .catalog
+        .lock()
+        .map_err(|_| CommandError::new("lock_poisoned", "app catalog lock poisoned"))?;
+    let known = apps::system_entry(&id).is_some() || catalog.iter().any(|app| app.id == id);
+    if !known {
+        return Err(CommandError::new("unknown_app", id));
+    }
+
+    let mut pinned = runtime
+        .pinned
+        .lock()
+        .map_err(|_| CommandError::new("lock_poisoned", "pinned lock poisoned"))?;
+    if pinned.iter().any(|pinned_id| pinned_id == &id) {
+        return Ok(());
+    }
+    if pinned.len() >= crate::state::DOCK_ITEM_CAP {
+        return Err(CommandError::new(
+            "dock_full",
+            format!("the dock is limited to {}", crate::state::DOCK_ITEM_CAP),
+        ));
+    }
+
+    let mut next = pinned.clone();
+    next.push(id);
+    persist_pins(&runtime, &next)?;
+    *pinned = next;
+    Ok(())
+}
+
+/// Remove an app from the dock. Idempotent.
+#[tauri::command]
+pub fn unpin_app(runtime: State<'_, Runtime>, id: String) -> Result<(), CommandError> {
+    let mut pinned = runtime
+        .pinned
+        .lock()
+        .map_err(|_| CommandError::new("lock_poisoned", "pinned lock poisoned"))?;
+    let Some(index) = pinned.iter().position(|pinned_id| pinned_id == &id) else {
+        return Ok(());
+    };
+
+    let mut next = pinned.clone();
+    next.remove(index);
+    persist_pins(&runtime, &next)?;
+    *pinned = next;
+    Ok(())
+}
+
 #[tauri::command]
 pub fn launch_item(id: String) -> Result<(), CommandError> {
     apps::launch(&id).map_err(|e| CommandError::new("launch_failed", e))
+}
+
+fn dock_item_count(runtime: &Runtime) -> usize {
+    runtime
+        .pinned
+        .lock()
+        .map(|pinned| pinned.len().min(crate::state::DOCK_ITEM_CAP))
+        .unwrap_or(0)
 }
 
 #[tauri::command]
@@ -80,7 +167,9 @@ pub fn set_route(
 
     let monitor = crate::platform::primary_work_area()
         .ok_or_else(|| CommandError::new("no_monitor", "no primary monitor"))?;
-    let item_count = runtime.apps.lock().map(|apps| apps.len()).unwrap_or(0);
+    // The window tracks the visible pill, so the pinned count (not the whole
+    // catalog) drives its width.
+    let item_count = dock_item_count(&runtime);
     let (width, height) = crate::window_geom::route_size(&route, monitor, item_count, 48.0);
 
     if let Some(window) = app.get_webview_window("dock") {
@@ -107,13 +196,17 @@ pub fn set_route(
 pub fn refresh_state(app: AppHandle, runtime: State<'_, Runtime>) -> Result<(), CommandError> {
     let settings = settings::load_or_recover(&runtime.settings_path)
         .map_err(|e| CommandError::new("settings_unreadable", e.to_string()))?;
-    let apps = runtime
-        .apps
+    let catalog = runtime
+        .catalog
         .lock()
         .map_err(|_| CommandError::new("lock_poisoned", "app catalog lock poisoned"))?;
-    let running = crate::windows_tracker::snapshot_and_reconcile(&apps);
-    let icons = crate::icon_cache::icons_for(&apps, 48);
-    let state = build_dock_state(&apps, &running, &icons, &config_from(&settings));
+    let pinned = runtime
+        .pinned
+        .lock()
+        .map_err(|_| CommandError::new("lock_poisoned", "pinned lock poisoned"))?;
+    let running = crate::windows_tracker::snapshot_and_reconcile(&catalog);
+    let icons = crate::icon_cache::icons_for(&catalog, 48);
+    let state = build_dock_state(&catalog, &pinned, &running, &icons, &config_from(&settings));
     app.emit("dock://state", &state)
         .map_err(|e| CommandError::new("emit_failed", e.to_string()))
 }
@@ -125,7 +218,17 @@ pub fn get_settings(runtime: State<'_, Runtime>) -> Result<Settings, CommandErro
 }
 
 #[tauri::command]
-pub fn save_settings(runtime: State<'_, Runtime>, settings: Settings) -> Result<(), CommandError> {
+pub fn save_settings(
+    runtime: State<'_, Runtime>,
+    mut settings: Settings,
+) -> Result<(), CommandError> {
+    // `pinned` is owned by pin_app/unpin_app; the settings form must not clobber
+    // it with a stale copy.
+    settings.pinned = runtime
+        .pinned
+        .lock()
+        .map_err(|_| CommandError::new("lock_poisoned", "pinned lock poisoned"))?
+        .clone();
     settings::save_atomic(&runtime.settings_path, &settings)
         .map_err(|e| CommandError::new("settings_unwritable", e.to_string()))
 }
@@ -172,7 +275,7 @@ fn apply_autohide_geometry(app: &AppHandle, runtime: &Runtime, visible: bool) {
     let Some(monitor) = crate::platform::primary_work_area() else {
         return;
     };
-    let item_count = runtime.apps.lock().map(|apps| apps.len()).unwrap_or(0);
+    let item_count = dock_item_count(runtime);
     let (width, height) = crate::window_geom::route_size("dock", monitor, item_count, 48.0);
 
     // Collapsed: a 2 px full-width strip at the screen edge is the hot zone.

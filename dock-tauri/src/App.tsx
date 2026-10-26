@@ -4,12 +4,14 @@ import { Dock } from "./dock/Dock";
 import { Launchpad } from "./launchpad/Launchpad";
 import { MonitorPanel } from "./monitor/MonitorPanel";
 import { SettingsPanel } from "./settings/SettingsPanel";
-import type { DockState } from "./types";
+import type { DockItemView, DockState } from "./types";
 
 type Route = "dock" | "launchpad" | "monitor" | "settings";
 
 export function App() {
   const [state, setState] = useState<DockState | null>(null);
+  const [catalog, setCatalog] = useState<DockItemView[] | null>(null);
+  const [catalogError, setCatalogError] = useState<string | null>(null);
   const [route, setRoute] = useState<Route>("dock");
   const [collapsed, setCollapsed] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -20,6 +22,12 @@ export function App() {
       .getDockState()
       .then(setState)
       .catch((e) => setError(String(e)));
+    // Launchpad is the only consumer of the full catalog; the dock keeps its
+    // own short pinned list.
+    api
+      .getCatalog()
+      .then(setCatalog)
+      .catch((e) => setCatalogError(String(e)));
     void onDockState(setState).then((unlisten) => {
       dispose = unlisten;
     });
@@ -86,6 +94,11 @@ export function App() {
     void api.openRoute(next);
   };
 
+  const addToDock = async (id: string) => {
+    await api.pinApp(id);
+    setState(await api.getDockState());
+  };
+
   if (error) {
     return (
       <main className="dock-stage" role="alert">
@@ -112,9 +125,11 @@ export function App() {
       )}
       {route === "launchpad" && (
         <Launchpad
-          items={state.items}
-          loading={false}
-          error={null}
+          items={catalog ?? []}
+          loading={catalog === null && catalogError === null}
+          error={catalogError}
+          pinnedIds={state.items.map((item) => item.id)}
+          onPin={addToDock}
           onLaunch={(id) => void api.launchItem(id)}
           onClose={() => go("dock")}
         />

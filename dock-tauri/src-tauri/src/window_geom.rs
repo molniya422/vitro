@@ -25,9 +25,16 @@ pub fn route_size(
         ),
         "settings" => (720.0, 560.0),
         "monitor" => {
+            let scale = if monitor.scale > 0.0 {
+                monitor.scale
+            } else {
+                1.0
+            };
             let dock =
                 DockGeometry::compute(monitor, item_count, icon_size, leading_width(icon_size));
-            (dock.width.max(360.0), dock.height + 320.0)
+            // The extra height and the minimum width are logical values; scale
+            // them so the panel keeps its CSS height at every DPI.
+            (dock.width.max(360.0 * scale), dock.height + 320.0 * scale)
         }
         _ => {
             let dock =

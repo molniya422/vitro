@@ -5567,6 +5567,214 @@ Add `const [collapsed, setCollapsed] = useState(false);` to `App`. Add two butto
 
 Place this immediately after `<ControlTile …>` and a matching one for the monitor with `aria-label="Open system monitor"` and glyph `▤`.
 
+- [ ] **Step 9b: Wire auto-hide without duplicating the state machine**
+
+The Rust `AutoHide` machine already exists and is tested. React must **not** reimplement the timing — it only reports pointer presence. Rust owns the decision and resizes the real window.
+
+Add to `commands.rs`:
+
+```rust
+#[derive(Clone, Copy, Debug, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct AutoHideState {
+    pub enabled: bool,
+    pub visible: bool,
+    /// True while a delayed transition is armed and Rust needs another tick.
+    pub pending: bool,
+}
+
+fn apply_autohide_geometry(app: &AppHandle, runtime: &Runtime, visible: bool) {
+    let Some(monitor) = crate::platform::primary_work_area() else {
+        return;
+    };
+    let item_count = runtime.apps.lock().map(|apps| apps.len()).unwrap_or(0);
+    let (width, height) = crate::window_geom::route_size("dock", monitor, item_count, 48.0);
+
+    // Collapsed: a 2 px full-width strip at the screen edge is the hot zone.
+    let (w, h) = if visible {
+        (width, height)
+    } else {
+        ((monitor.right - monitor.left) as f64, 2.0)
+    };
+    let x = monitor.left as f64;
+    let y = if visible {
+        (monitor.bottom as f64) - h
+    } else {
+        (monitor.bottom as f64) - 2.0
+    };
+
+    if let Some(window) = app.get_webview_window("dock") {
+        let _ = window.set_size(tauri::PhysicalSize::new(
+            w.max(1.0) as u32,
+            h.max(1.0) as u32,
+        ));
+        let _ = window.set_position(tauri::PhysicalPosition::new(x as i32, y as i32));
+    }
+}
+
+#[tauri::command]
+pub fn set_pointer_inside(
+    app: AppHandle,
+    runtime: State<'_, Runtime>,
+    inside: bool,
+    now_ms: u64,
+) -> Result<AutoHideState, CommandError> {
+    let mut machine = runtime
+        .autohide
+        .lock()
+        .map_err(|_| CommandError::new("lock_poisoned", "autohide lock poisoned"))?;
+    let action = machine.handle(
+        if inside {
+            Event::PointerEntered
+        } else {
+            Event::PointerLeft
+        },
+        now_ms,
+    );
+    drop(machine);
+
+    if action != Action::None {
+        let visible = action == Action::Reveal;
+        apply_autohide_geometry(&app, &runtime, visible);
+    }
+    Ok(autohide_state(&runtime))
+}
+
+#[tauri::command]
+pub fn autohide_tick(
+    app: AppHandle,
+    runtime: State<'_, Runtime>,
+    now_ms: u64,
+) -> Result<AutoHideState, CommandError> {
+    let mut machine = runtime
+        .autohide
+        .lock()
+        .map_err(|_| CommandError::new("lock_poisoned", "autohide lock poisoned"))?;
+    let action = machine.handle(Event::Tick, now_ms);
+    drop(machine);
+
+    if action != Action::None {
+        let visible = action == Action::Reveal;
+        apply_autohide_geometry(&app, &runtime, visible);
+    }
+    Ok(autohide_state(&runtime))
+}
+
+fn autohide_state(runtime: &Runtime) -> AutoHideState {
+    let machine = runtime.autohide.lock();
+    match machine {
+        Ok(machine) => AutoHideState {
+            enabled: machine.enabled(),
+            visible: machine.visibility() == Visibility::Visible,
+            pending: machine.pending(),
+        },
+        Err(_) => AutoHideState {
+            enabled: false,
+            visible: true,
+            pending: false,
+        },
+    }
+}
+
+/// Apply the persisted auto-hide setting at startup and when it changes.
+#[tauri::command]
+pub fn set_autohide_enabled(
+    app: AppHandle,
+    runtime: State<'_, Runtime>,
+    enabled: bool,
+) -> Result<AutoHideState, CommandError> {
+    {
+        let mut machine = runtime
+            .autohide
+            .lock()
+            .map_err(|_| CommandError::new("lock_poisoned", "autohide lock poisoned"))?;
+        machine.handle(Event::SetEnabled(enabled), 0);
+    }
+    apply_autohide_geometry(&app, &runtime, !enabled);
+    Ok(autohide_state(&runtime))
+}
+```
+
+`autohide.rs` must expose three small accessors (add them; they do not change behaviour):
+
+```rust
+pub fn enabled(&self) -> bool {
+    self.enabled && !self.locked
+}
+
+pub fn pending(&self) -> bool {
+    self.deadline.is_some()
+}
+```
+
+Also add `pub autohide: Mutex<AutoHide>` to `Runtime`, initialized as `Mutex::new(AutoHide::new(false))` — auto-hide defaults off per the spec. In `setup`, after loading settings, call the enabling path once so a persisted `autohide: true` is honoured.
+
+Register all three commands in `generate_handler!`.
+
+**React side** — in `App.tsx`:
+
+```tsx
+useEffect(() => {
+  let timer: number | null = null;
+  let cancelled = false;
+
+  const report = (inside: boolean) => {
+    void api.setPointerInside(inside, Date.now());
+  };
+
+  const tick = async () => {
+    if (cancelled) return;
+    const state = await api.autohideTick(Date.now());
+    if (!cancelled && state.pending) {
+      timer = window.setTimeout(() => void tick(), 100);
+    }
+  };
+
+  const enter = () => {
+    report(true);
+    // Poll only while a transition is armed: idle cost is zero.
+    timer = window.setTimeout(() => void tick(), 100);
+  };
+  const leave = () => {
+    report(false);
+    timer = window.setTimeout(() => void tick(), 100);
+  };
+
+  document.addEventListener("mouseenter", enter);
+  document.addEventListener("mouseleave", leave);
+
+  return () => {
+    cancelled = true;
+    document.removeEventListener("mouseenter", enter);
+    document.removeEventListener("mouseleave", leave);
+    if (timer !== null) window.clearTimeout(timer);
+  };
+}, []);
+```
+
+Add the three wrappers to `api.ts`:
+
+```ts
+setPointerInside: (inside: boolean, nowMs: number) =>
+  invoke<AutoHideState>("set_pointer_inside", { inside, nowMs }),
+autohideTick: (nowMs: number) =>
+  invoke<AutoHideState>("autohide_tick", { nowMs }),
+setAutohideEnabled: (enabled: boolean) =>
+  invoke<AutoHideState>("set_autohide_enabled", { enabled }),
+```
+
+and an `AutoHideState` type in `types.ts`:
+
+```ts
+export interface AutoHideState {
+  enabled: boolean;
+  visible: boolean;
+  pending: boolean;
+}
+```
+
+**Verification for this step:** with auto-hide enabled in settings and the app running, move the pointer away from the bottom edge — the dock collapses to a 2 px strip; touch the strip — it returns within about a second. Then confirm with `Get-Process` that the dock process is still the same PID (no restart). If the dock disappears and never comes back, the strip geometry is wrong; check `apply_autohide_geometry` uses `monitor.bottom - 2.0` for `y`.
+
 - [ ] **Step 10: Run everything**
 
 ```bash
@@ -5575,7 +5783,7 @@ D:/rust/cargo/bin/cargo.exe test --manifest-path D:/dockyh/dock-tauri/src-tauri/
 cd D:/dockyh/dock-tauri && npm test && npm run build
 ```
 
-Expected: all Rust tests pass (including 4 new `window_geom` tests); all Vitest tests pass (including 3 new control-tile tests); build succeeds.
+Expected: all Rust tests pass (including 4 new `window_geom` tests and the auto-hide accessors); all Vitest tests pass (including 3 new control-tile tests); build succeeds.
 
 - [ ] **Step 11: Launch the app and confirm it works**
 

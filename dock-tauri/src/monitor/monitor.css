@@ -1,0 +1,130 @@
+/* System monitor: glass panel with label/value rows and a CPU sparkline. */
+.monitor-panel {
+  --panel-fill: rgba(22, 26, 38, 0.82);
+  --panel-highlight: rgba(255, 255, 255, 0.15);
+  --text: #e9edf7;
+  --muted: #98a1b6;
+  --accent: #7fa4ff;
+  --body-size: 14px;
+  --body-line: 20px;
+  --body-large-size: 18px;
+  --body-large-line: 24px;
+  --title-size: 28px;
+  --title-line: 36px;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-4: 16px;
+  --radius-pill: 20px;
+  --radius-panel: 18px;
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+
+  box-sizing: border-box;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  background: var(--panel-fill);
+  box-shadow: inset 0 1px 0 var(--panel-highlight);
+  border-radius: var(--radius-panel);
+  color: var(--text);
+  font-family: "Segoe UI Variable", "Segoe UI", system-ui, sans-serif;
+  font-size: var(--body-size);
+  line-height: var(--body-line);
+  user-select: none;
+  overflow-y: auto;
+}
+
+.monitor-panel header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.monitor-panel h2 {
+  margin: 0;
+  font-size: var(--title-size);
+  line-height: var(--title-line);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.monitor-panel header button {
+  height: 40px;
+  padding: 0 var(--space-4);
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+  transition: background 120ms var(--ease);
+}
+
+.monitor-panel header button:hover {
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.monitor-panel header button:focus-visible {
+  outline: none;
+  box-shadow:
+    inset 0 1px 0 var(--panel-highlight),
+    inset 0 0 0 2px rgba(127, 164, 255, 0.65);
+}
+
+.monitor-panel dl {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.monitor-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.monitor-row dt {
+  color: var(--muted);
+  font-size: var(--body-size);
+  line-height: var(--body-line);
+}
+
+.monitor-row dd {
+  margin: 0;
+  font-size: var(--body-large-size);
+  line-height: var(--body-large-line);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.monitor-sparkline {
+  margin: 0;
+  padding: 0 0 var(--space-2);
+}
+
+.monitor-sparkline svg {
+  display: block;
+  width: 100%;
+  height: 32px;
+}
+
+.monitor-panel p[role="alert"] {
+  margin: 0;
+  color: #ffb4b4;
+  font-size: var(--body-size);
+  line-height: var(--body-line);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .monitor-panel *,
+  .monitor-panel *::before,
+  .monitor-panel *::after {
+    transition: none;
+    animation: none;
+  }
+}

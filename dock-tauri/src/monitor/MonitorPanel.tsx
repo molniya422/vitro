@@ -3,6 +3,7 @@ import { api } from "../api";
 import type { MonitorSample } from "../types";
 import { formatBytes, formatPercent } from "./format";
 import { Sparkline } from "./Sparkline";
+import "./monitor.css";
 
 interface Props {
   onClose: () => void;
@@ -53,22 +54,31 @@ export function MonitorPanel({ onClose }: Props) {
 
       {sample && (
         <dl>
-          <dt>CPU</dt>
-          <dd>
-            {formatPercent(sample.cpu)} <Sparkline values={cpuHistory} />
-          </dd>
-          <dt>Memory</dt>
-          <dd>
-            {formatBytes(sample.memUsed)} / {formatBytes(sample.memTotal)}
-          </dd>
-          <dt>Disk</dt>
-          <dd>
-            {formatBytes(sample.diskUsed)} / {formatBytes(sample.diskTotal)}
-          </dd>
-          <dt>Network</dt>
-          <dd>
-            ↓ {formatBytes(sample.netRx)} · ↑ {formatBytes(sample.netTx)}
-          </dd>
+          <div className="monitor-row">
+            <dt>CPU</dt>
+            <dd>{formatPercent(sample.cpu)}</dd>
+          </div>
+          <div className="monitor-sparkline">
+            <Sparkline values={cpuHistory} />
+          </div>
+          <div className="monitor-row">
+            <dt>Memory</dt>
+            <dd>
+              {formatBytes(sample.memUsed)} / {formatBytes(sample.memTotal)}
+            </dd>
+          </div>
+          <div className="monitor-row">
+            <dt>Disk</dt>
+            <dd>
+              {formatBytes(sample.diskUsed)} / {formatBytes(sample.diskTotal)}
+            </dd>
+          </div>
+          <div className="monitor-row">
+            <dt>Network</dt>
+            <dd>
+              ↓ {formatBytes(sample.netRx)} · ↑ {formatBytes(sample.netTx)}
+            </dd>
+          </div>
         </dl>
       )}
     </section>

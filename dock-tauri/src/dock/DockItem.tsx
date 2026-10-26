@@ -1,5 +1,6 @@
 import { useRef } from "react";
 import type { DockItemView } from "../types";
+import { Glyph, glyphForSystem } from "./Glyph";
 import { Tooltip } from "./Tooltip";
 
 interface Props {
@@ -51,6 +52,10 @@ export function DockItem({
     >
       {item.icon ? (
         <img src={item.icon} alt="" draggable={false} />
+      ) : item.kind === "system" ? (
+        <span className="app-icon system-icon">
+          <Glyph name={glyphForSystem(item.name)} />
+        </span>
       ) : (
         <span className="fallback-icon" aria-hidden="true">
           {item.name.slice(0, 1).toUpperCase()}

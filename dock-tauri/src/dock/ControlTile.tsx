@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { Glyph } from "./Glyph";
 
 interface Props {
   collapsed: boolean;
@@ -47,8 +48,8 @@ export function ControlTile({ collapsed, onSettings, onToggleCollapsed }: Props)
       aria-expanded={!collapsed}
       onClick={handleClick}
     >
-      <span className="fallback-icon" aria-hidden="true">
-        ⚙
+      <span className="app-icon system-icon" aria-hidden="true">
+        <Glyph name="sliders" />
       </span>
     </button>
   );

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { api } from "../api";
 import { validateSettings, type SettingsInput } from "./validate";
+import "./settings.css";
 
 interface Props {
   onClose: () => void;
@@ -71,65 +72,67 @@ export function SettingsPanel({ onClose }: Props) {
         </button>
       </header>
 
-      <label>
-        Icon size
-        <input
-          type="range"
-          min={16}
-          max={128}
-          step={4}
-          value={form.iconSize}
-          onChange={(e) => setForm({ ...form, iconSize: Number(e.target.value) })}
-        />
-        <output>{form.iconSize} px</output>
-      </label>
+      <div className="settings-fields">
+        <label>
+          Icon size
+          <input
+            type="range"
+            min={16}
+            max={128}
+            step={4}
+            value={form.iconSize}
+            onChange={(e) => setForm({ ...form, iconSize: Number(e.target.value) })}
+          />
+          <output>{form.iconSize} px</output>
+        </label>
 
-      <label>
-        <input
-          type="checkbox"
-          checked={form.magnify}
-          onChange={(e) => setForm({ ...form, magnify: e.target.checked })}
-        />
-        Magnification
-      </label>
+        <label>
+          <input
+            type="checkbox"
+            checked={form.magnify}
+            onChange={(e) => setForm({ ...form, magnify: e.target.checked })}
+          />
+          Magnification
+        </label>
 
-      <label>
-        <input
-          type="checkbox"
-          checked={form.autohide}
-          onChange={(e) => setForm({ ...form, autohide: e.target.checked })}
-        />
-        Auto-hide when the pointer leaves
-      </label>
+        <label>
+          <input
+            type="checkbox"
+            checked={form.autohide}
+            onChange={(e) => setForm({ ...form, autohide: e.target.checked })}
+          />
+          Auto-hide when the pointer leaves
+        </label>
 
-      <label>
-        <input
-          type="checkbox"
-          checked={form.reducedMotion}
-          onChange={(e) => setForm({ ...form, reducedMotion: e.target.checked })}
-        />
-        Reduced motion
-      </label>
+        <label>
+          <input
+            type="checkbox"
+            checked={form.reducedMotion}
+            onChange={(e) => setForm({ ...form, reducedMotion: e.target.checked })}
+          />
+          Reduced motion
+        </label>
 
-      <label>
-        Motion profile
-        <select
-          value={form.profile}
-          onChange={(e) => setForm({ ...form, profile: e.target.value })}
-        >
-          <option value="vitro">Elastic</option>
-          <option value="macos">Restrained</option>
-        </select>
-      </label>
+        <label>
+          Motion profile
+          <select
+            value={form.profile}
+            onChange={(e) => setForm({ ...form, profile: e.target.value })}
+          >
+            <option value="vitro">Elastic</option>
+            <option value="macos">Restrained</option>
+          </select>
+        </label>
 
-      <label>
-        <input
-          type="checkbox"
-          checked={form.showMonitor}
-          onChange={(e) => setForm({ ...form, showMonitor: e.target.checked })}
-        />
-        Show system monitor
-      </label>
+        <label>
+          <input
+            type="checkbox"
+            checked={form.showMonitor}
+            onChange={(e) => setForm({ ...form, showMonitor: e.target.checked })}
+          />
+          Show system monitor
+        </label>
+      </div>
 
       {errors.length > 0 && (
         <ul role="alert">
@@ -139,7 +142,7 @@ export function SettingsPanel({ onClose }: Props) {
         </ul>
       )}
 
-      <button type="button" onClick={() => void save()}>
+      <button type="button" className="settings-save" onClick={() => void save()}>
         Save
       </button>
       {saved && <p role="status">Saved.</p>}

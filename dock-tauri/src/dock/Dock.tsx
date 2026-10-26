@@ -3,6 +3,7 @@ import type { DockState } from "../types";
 import { profileFor, scalesFor } from "./magnify";
 import { ControlTile } from "./ControlTile";
 import { DockItem } from "./DockItem";
+import { Glyph } from "./Glyph";
 import "./dock.css";
 
 interface Props {
@@ -88,8 +89,8 @@ export function Dock({
           aria-label="Open Launchpad"
           onClick={onOpenLaunchpad}
         >
-          <span className="fallback-icon" aria-hidden="true">
-            ▦
+          <span className="app-icon system-icon">
+            <Glyph name="grid" />
           </span>
         </button>
         <button
@@ -98,8 +99,8 @@ export function Dock({
           aria-label="Open system monitor"
           onClick={onOpenMonitor}
         >
-          <span className="fallback-icon" aria-hidden="true">
-            ▤
+          <span className="app-icon system-icon">
+            <Glyph name="chart" />
           </span>
         </button>
         {state.items.map((item, index) => (

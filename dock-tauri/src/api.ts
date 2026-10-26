@@ -1,9 +1,17 @@
 import { invoke } from "@tauri-apps/api/core";
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
-import type { AutoHideState, DockState, MonitorSample } from "./types";
+import type {
+  AutoHideState,
+  DockItemView,
+  DockState,
+  MonitorSample,
+} from "./types";
 
 export const api = {
   getDockState: () => invoke<DockState>("get_dock_state"),
+  getCatalog: () => invoke<DockItemView[]>("get_catalog"),
+  pinApp: (id: string) => invoke<void>("pin_app", { id }),
+  unpinApp: (id: string) => invoke<void>("unpin_app", { id }),
   launchItem: (id: string) => invoke<void>("launch_item", { id }),
   openRoute: (route: string) => invoke<void>("set_route", { route }),
   getSettings: () => invoke<Record<string, unknown>>("get_settings"),

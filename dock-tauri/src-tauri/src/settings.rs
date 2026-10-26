@@ -14,6 +14,8 @@ pub struct Settings {
     pub reduced_motion: bool,
     pub profile: String,
     pub show_monitor: bool,
+    /// Ids of the apps shown in the dock, in display order.
+    #[serde(default)]
     pub pinned: Vec<String>,
 }
 

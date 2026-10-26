@@ -1,0 +1,193 @@
+/* Settings: glass panel with 16 px rows and a bottom-aligned save pill. */
+.settings-panel {
+  --panel-fill: rgba(22, 26, 38, 0.82);
+  --panel-highlight: rgba(255, 255, 255, 0.15);
+  --text: #e9edf7;
+  --muted: #98a1b6;
+  --accent: #7fa4ff;
+  --body-size: 14px;
+  --body-line: 20px;
+  --body-large-size: 18px;
+  --body-large-line: 24px;
+  --title-size: 28px;
+  --title-line: 36px;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-4: 16px;
+  --radius-pill: 22px;
+  --radius-panel: 18px;
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+
+  box-sizing: border-box;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  background: var(--panel-fill);
+  box-shadow: inset 0 1px 0 var(--panel-highlight);
+  border-radius: var(--radius-panel);
+  color: var(--text);
+  font-family: "Segoe UI Variable", "Segoe UI", system-ui, sans-serif;
+  font-size: var(--body-size);
+  line-height: var(--body-line);
+  user-select: none;
+  overflow-y: auto;
+}
+
+.settings-panel header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.settings-panel h2 {
+  margin: 0;
+  font-size: var(--title-size);
+  line-height: var(--title-line);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.settings-panel header button {
+  height: 40px;
+  padding: 0 var(--space-4);
+  border: 0;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+  transition: background 120ms var(--ease);
+}
+
+.settings-panel header button:hover {
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.settings-panel header button:focus-visible {
+  outline: none;
+  box-shadow:
+    inset 0 1px 0 var(--panel-highlight),
+    inset 0 0 0 2px rgba(127, 164, 255, 0.65);
+}
+
+.settings-fields {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.settings-panel label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--body-size);
+  line-height: var(--body-line);
+}
+
+.settings-panel input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  accent-color: var(--accent);
+}
+
+.settings-panel input[type="range"] {
+  flex: 1;
+  width: 100%;
+  min-width: 0;
+  height: 20px;
+  margin: 0;
+  accent-color: var(--accent);
+}
+
+.settings-panel output {
+  min-width: 48px;
+  text-align: right;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.settings-panel select {
+  margin-left: auto;
+  height: 32px;
+  padding: 0 var(--space-2);
+  border: 0;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+}
+
+.settings-panel select option {
+  background: #161a26;
+  color: var(--text);
+}
+
+.settings-panel select:focus-visible,
+.settings-panel input[type="range"]:focus-visible {
+  outline: none;
+}
+
+.settings-panel select:focus-visible {
+  box-shadow:
+    inset 0 1px 0 var(--panel-highlight),
+    inset 0 0 0 2px rgba(127, 164, 255, 0.65);
+}
+
+.settings-panel ul[role="alert"] {
+  margin: 0;
+  padding-left: var(--space-4);
+  color: #ffb4b4;
+  font-size: var(--body-size);
+  line-height: var(--body-line);
+}
+
+.settings-save {
+  margin-top: auto;
+  align-self: flex-end;
+  height: 44px;
+  padding: 0 24px;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--accent);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  color: #101522;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  transition: filter 120ms var(--ease);
+}
+
+.settings-save:hover {
+  filter: brightness(1.08);
+}
+
+.settings-save:focus-visible {
+  outline: none;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.35),
+    0 0 0 2px rgba(127, 164, 255, 0.65);
+}
+
+.settings-panel p[role="status"] {
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--body-size);
+  line-height: var(--body-line);
+  text-align: right;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .settings-panel *,
+  .settings-panel *::before,
+  .settings-panel *::after {
+    transition: none;
+    animation: none;
+  }
+}

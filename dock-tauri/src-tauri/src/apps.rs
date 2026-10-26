@@ -14,6 +14,25 @@ pub struct AppEntry {
     pub target: Option<String>,
 }
 
+/// Stable ids for the two system tiles a first-run dock seeds.
+pub const SYSTEM_EXPLORER_ID: &str = "shell:explorer";
+pub const SYSTEM_SETTINGS_ID: &str = "shell:settings";
+
+/// Represent a seeded system tile as an [`AppEntry`]. These are not Start Menu
+/// shortcuts, so they have no catalog entry; `launch` maps them specially.
+pub fn system_entry(id: &str) -> Option<AppEntry> {
+    let (display_name, target) = match id {
+        SYSTEM_EXPLORER_ID => ("Explorer", "explorer.exe"),
+        SYSTEM_SETTINGS_ID => ("Settings", "ms-settings:"),
+        _ => return None,
+    };
+    Some(AppEntry {
+        id: id.to_string(),
+        display_name: display_name.to_string(),
+        target: Some(target.to_string()),
+    })
+}
+
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct WindowRef {
     pub process_path: String,
@@ -190,7 +209,11 @@ pub fn launch(id: &str) -> Result<(), String> {
         use windows::Win32::UI::Shell::ShellExecuteW;
         use windows::Win32::UI::WindowsAndMessaging::SW_SHOWNORMAL;
 
-        let path = id.replace('/', "\\");
+        let path = match id {
+            SYSTEM_EXPLORER_ID => "explorer.exe".to_string(),
+            SYSTEM_SETTINGS_ID => "ms-settings:".to_string(),
+            _ => id.replace('/', "\\"),
+        };
         let wide: Vec<u16> = std::ffi::OsStr::new(&path)
             .encode_wide()
             .chain(std::iter::once(0))

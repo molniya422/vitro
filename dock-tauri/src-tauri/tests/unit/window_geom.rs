@@ -41,3 +41,20 @@ fn monitor_route_is_taller_than_the_dock() {
     let (_, monitor_h) = route_size("monitor", monitor(), 6, 48.0);
     assert!(monitor_h > dock_h);
 }
+
+#[test]
+fn monitor_route_scales_its_extra_height_with_dpi() {
+    let mut high_dpi = monitor();
+    high_dpi.scale = 1.5;
+    let (_, dock_h) = route_size("dock", high_dpi, 6, 48.0);
+    let (_, monitor_h) = route_size("monitor", high_dpi, 6, 48.0);
+    assert_eq!(monitor_h - dock_h, 320.0 * 1.5);
+}
+
+#[test]
+fn monitor_route_scales_its_minimum_width_with_dpi() {
+    let mut high_dpi = monitor();
+    high_dpi.scale = 1.5;
+    let (width, _) = route_size("monitor", high_dpi, 0, 48.0);
+    assert_eq!(width, 360.0 * 1.5);
+}
