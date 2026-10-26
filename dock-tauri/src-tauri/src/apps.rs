@@ -30,6 +30,39 @@ fn normalize(path: &str) -> String {
     path.replace('\\', "/").to_ascii_lowercase()
 }
 
+/// The identity two entries must share to be considered the same app.
+///
+/// A resolved target is the real identity: Start Menu mirrors the same shortcut
+/// into the all-users and per-user roots, and both resolve to one executable.
+/// Without a target there is nothing better than the display name, so unrelated
+/// malformed shortcuts may still collapse.
+fn dedup_key(entry: &AppEntry) -> String {
+    match &entry.target {
+        Some(target) => format!("target:{}", normalize(target)),
+        None => format!("name:{}", entry.display_name.to_ascii_lowercase()),
+    }
+}
+
+/// Collapse duplicate entries. Two entries are duplicates when they resolve to
+/// the same target; entries without a target fall back to display name.
+/// The first entry wins.
+///
+/// Keying on the target rather than the name keeps two genuinely different apps
+/// that share a display name ("Settings" from a vendor and Windows' own).
+pub fn dedup_entries(entries: Vec<AppEntry>) -> Vec<AppEntry> {
+    let mut seen: Vec<String> = Vec::new();
+    let mut unique = Vec::with_capacity(entries.len());
+    for entry in entries {
+        let key = dedup_key(&entry);
+        if seen.contains(&key) {
+            continue;
+        }
+        seen.push(key);
+        unique.push(entry);
+    }
+    unique
+}
+
 /// Match each app to the windows that belong to it.
 pub fn reconcile(apps: &[AppEntry], windows: &[WindowRef]) -> Vec<RunningInfo> {
     apps.iter()
@@ -53,11 +86,12 @@ pub fn reconcile(apps: &[AppEntry], windows: &[WindowRef]) -> Vec<RunningInfo> {
 }
 
 /// Scan directories for `.lnk` shortcuts. Missing directories are skipped.
+///
+/// Shortcuts are collected in scan order and then collapsed by resolved target,
+/// so the all-users root (listed first by [`start_menu_dirs`]) wins over a
+/// per-user copy of the same app.
 pub fn catalog_from_dirs(dirs: &[PathBuf]) -> Vec<AppEntry> {
     let mut entries: Vec<AppEntry> = Vec::new();
-    // Start Menu duplicates the same shortcut across the per-user and all-users
-    // roots, so the display name is the identity that collapses them.
-    let mut seen: Vec<String> = Vec::new();
 
     for dir in dirs {
         let Ok(read) = std::fs::read_dir(dir) else {
@@ -71,11 +105,6 @@ pub fn catalog_from_dirs(dirs: &[PathBuf]) -> Vec<AppEntry> {
             let Some(stem) = path.file_stem().and_then(|s| s.to_str()) else {
                 continue;
             };
-            let key = stem.to_ascii_lowercase();
-            if seen.contains(&key) {
-                continue;
-            }
-            seen.push(key);
             entries.push(AppEntry {
                 id: normalize(&path.to_string_lossy()),
                 display_name: stem.to_string(),
@@ -84,6 +113,7 @@ pub fn catalog_from_dirs(dirs: &[PathBuf]) -> Vec<AppEntry> {
         }
     }
 
+    let mut entries = dedup_entries(entries);
     entries.sort_by_key(|a| a.display_name.to_ascii_lowercase());
     entries
 }

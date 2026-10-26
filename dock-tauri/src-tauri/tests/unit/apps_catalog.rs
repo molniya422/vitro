@@ -104,3 +104,43 @@ fn app_without_a_target_is_never_running() {
     let running = reconcile(&entries, &windows);
     assert!(!running[0].running);
 }
+
+#[test]
+fn different_apps_sharing_a_display_name_are_both_kept() {
+    let a = tempfile::tempdir().unwrap();
+    write_lnk(a.path(), "Settings");
+
+    // Build the first entry by hand so it has a distinct target: a fake `.lnk`
+    // resolves to no target, and two target-less entries would collapse by name.
+    let mut scanned = dock_tauri_lib::apps::catalog_from_dirs(&[a.path().to_path_buf()]);
+    scanned[0].target = Some("C:/Windows/System32/control.exe".into());
+    let other = AppEntry {
+        id: "c:/other/settings.lnk".into(),
+        display_name: "Settings".into(),
+        target: Some("C:/Other/settings.exe".into()),
+    };
+
+    let merged = dock_tauri_lib::apps::dedup_entries(vec![scanned[0].clone(), other]);
+    assert_eq!(merged.len(), 2, "distinct targets must not collapse");
+}
+
+#[test]
+fn the_same_target_from_two_roots_collapses() {
+    let shared = "C:/Windows/notepad.exe";
+    let first = AppEntry {
+        id: "c:/programdata/notepad.lnk".into(),
+        display_name: "Notepad".into(),
+        target: Some(shared.into()),
+    };
+    let second = AppEntry {
+        id: "c:/appdata/notepad.lnk".into(),
+        display_name: "Notepad".into(),
+        target: Some(shared.into()),
+    };
+    let merged = dock_tauri_lib::apps::dedup_entries(vec![first, second]);
+    assert_eq!(merged.len(), 1);
+    assert_eq!(
+        merged[0].id, "c:/programdata/notepad.lnk",
+        "first scanned wins"
+    );
+}
