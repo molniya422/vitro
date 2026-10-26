@@ -106,9 +106,9 @@ D:/dockyh/dock-tauri/
       test_sampler.py
       test_protocol.py
       fake_psutil.py
-  tests/
-    unit/                            Rust unit tests (see Task 1 for wiring)
-    fake_sidecar.rs                  scripted fake sidecar binary
+  src-tauri/
+    tests/unit/                      Rust unit tests (registered per-file in Cargo.toml)
+    src/bin/fake_sidecar.rs          scripted fake sidecar binary (Task 9)
   scripts/
     measure_memory.ps1               two-gate memory + idle CPU measurement
   README.md                          features, gates, measured numbers
@@ -144,13 +144,13 @@ Task 1 adds a guard test that fails the build when a test file exists without a 
 - Create: `dock-tauri/src/main.tsx`
 - Create: `dock-tauri/src/App.tsx`
 - Create: `dock-tauri/src/types.ts`
-- Create: `dock-tauri/tests/unit/workspace_smoke.rs`
-- Create: `dock-tauri/tests/unit/test_registration.rs`
+- Create: `dock-tauri/src-tauri/tests/unit/workspace_smoke.rs`
+- Create: `dock-tauri/src-tauri/tests/unit/test_registration.rs`
 - Modify: `D:/dockyh/.gitignore`
 
 - [ ] **Step 1: Write the failing smoke test**
 
-`dock-tauri/tests/unit/workspace_smoke.rs`:
+`dock-tauri/src-tauri/tests/unit/workspace_smoke.rs`:
 
 ```rust
 #[test]
@@ -297,7 +297,7 @@ fn main() {
       }
     ],
     "security": {
-      "csp": "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'"
+      "csp": "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; connect-src ipc: http://ipc.localhost"
     }
   },
   "bundle": {
@@ -397,7 +397,8 @@ export default defineConfig({
   plugins: [react()],
   clearScreen: false,
   server: { port: 1420, strictPort: true },
-  build: { target: "chrome105", minify: "esbuild", sourcemap: false },
+  // Vite 8 is Rolldown-based and no longer bundles esbuild; "oxc" is its default minifier.
+  build: { target: "chrome105", minify: "oxc", sourcemap: false },
   test: {
     environment: "happy-dom",
     globals: true,
@@ -486,7 +487,7 @@ export interface MonitorSample {
 
 - [ ] **Step 7: Write the test-registration guard**
 
-`dock-tauri/tests/unit/test_registration.rs`:
+`dock-tauri/src-tauri/tests/unit/test_registration.rs`:
 
 ```rust
 use std::path::{Path, PathBuf};
@@ -619,12 +620,56 @@ git add dock-tauri/package.json dock-tauri/package-lock.json dock-tauri/tsconfig
   dock-tauri/src-tauri/src/main.rs dock-tauri/src-tauri/src/lib.rs \
   dock-tauri/src-tauri/icons \
   dock-tauri/src/main.tsx dock-tauri/src/App.tsx dock-tauri/src/types.ts \
-  dock-tauri/tests/unit/workspace_smoke.rs dock-tauri/tests/unit/test_registration.rs \
+  dock-tauri/src-tauri/tests/unit/workspace_smoke.rs dock-tauri/src-tauri/tests/unit/test_registration.rs \
   .gitignore
 git commit -m "feat: scaffold dock tauri workspace"
 ```
 
 Do not use `git add dock-tauri` — it would stage `node_modules` and `target` if the ignore rules are wrong.
+
+---
+
+## Task 1b: Remove unreachable mobile and macOS icons
+
+`npx tauri icon` generates icons for every platform. This product is MSI-only Windows, so the android, ios, and macOS files are dead weight that nothing reads.
+
+**Files:**
+- Delete: `dock-tauri/src-tauri/icons/android/`, `dock-tauri/src-tauri/icons/ios/`, `dock-tauri/src-tauri/icons/icon.icns`
+- Modify: `dock-tauri/src-tauri/tauri.conf.json` (icon list must still resolve)
+
+- [ ] **Step 1: Delete the unreachable sets**
+
+```bash
+cd D:/dockyh
+git rm -r --cached dock-tauri/src-tauri/icons/android dock-tauri/src-tauri/icons/ios
+git rm --cached dock-tauri/src-tauri/icons/icon.icns
+rm -rf dock-tauri/src-tauri/icons/android dock-tauri/src-tauri/icons/ios dock-tauri/src-tauri/icons/icon.icns
+```
+
+- [ ] **Step 2: Confirm the bundle still resolves**
+
+`bundle.icon` lists only `icons/icon.ico`, so removing the other sets changes nothing. Verify by building:
+
+```bash
+export CARGO_HOME='D:
+ust\cargo' RUSTUP_HOME='D:
+ust
+ustup'
+D:/rust/cargo/bin/cargo.exe build --manifest-path D:/dockyh/dock-tauri/src-tauri/Cargo.toml
+```
+
+Expected: success.
+
+- [ ] **Step 3: Keep the Windows PNGs**
+
+`icons/icon.png`, the `Square*Logo.png` set, and `StoreLogo.png` stay: they are MSIX/store assets and `tauri-codegen` uses `icon.png` on non-Windows targets for tooling. Do not delete them.
+
+- [ ] **Step 4: Commit**
+
+```bash
+cd D:/dockyh
+git commit -m "chore: drop unreachable mobile and macos icons"
+```
 
 ---
 
@@ -634,11 +679,11 @@ Do not use `git add dock-tauri` — it would stage `node_modules` and `target` i
 - Create: `dock-tauri/src-tauri/src/geometry.rs`
 - Modify: `dock-tauri/src-tauri/src/lib.rs` (add `pub mod geometry;`)
 - Modify: `dock-tauri/src-tauri/Cargo.toml` (register test)
-- Test: `dock-tauri/tests/unit/geometry.rs`
+- Test: `dock-tauri/src-tauri/tests/unit/geometry.rs`
 
 - [ ] **Step 1: Write the failing test**
 
-`dock-tauri/tests/unit/geometry.rs`:
+`dock-tauri/src-tauri/tests/unit/geometry.rs`:
 
 ```rust
 use dock_tauri_lib::geometry::{DockGeometry, MonitorRect};
@@ -665,7 +710,7 @@ fn window_includes_magnify_headroom_above_and_reflection_below() {
 fn pill_rect_sits_below_the_magnify_margin() {
     let g = DockGeometry::compute(monitor(), 6, 48.0, 180.0);
     assert_eq!(g.pill_top(), g.y + 84.0);
-    assert_eq!(g.pill_height(), 68.0);
+    assert_eq!(g.pill_height, 68.0);
 }
 
 #[test]
@@ -822,7 +867,7 @@ If `dock_never_exceeds_a_narrow_work_area` fails, check that `width` is clamped 
 ```bash
 cd D:/dockyh
 git add dock-tauri/src-tauri/src/geometry.rs dock-tauri/src-tauri/src/lib.rs \
-  dock-tauri/src-tauri/Cargo.toml dock-tauri/tests/unit/geometry.rs
+  dock-tauri/src-tauri/Cargo.toml dock-tauri/src-tauri/tests/unit/geometry.rs
 git commit -m "feat: add pure dock geometry per monitor and dpi"
 ```
 
@@ -834,11 +879,11 @@ git commit -m "feat: add pure dock geometry per monitor and dpi"
 - Create: `dock-tauri/src-tauri/src/autohide.rs`
 - Modify: `dock-tauri/src-tauri/src/lib.rs`
 - Modify: `dock-tauri/src-tauri/Cargo.toml`
-- Test: `dock-tauri/tests/unit/autohide.rs`
+- Test: `dock-tauri/src-tauri/tests/unit/autohide.rs`
 
 - [ ] **Step 1: Write the failing test**
 
-`dock-tauri/tests/unit/autohide.rs`:
+`dock-tauri/src-tauri/tests/unit/autohide.rs`:
 
 ```rust
 use dock_tauri_lib::autohide::{Action, AutoHide, Event, Visibility};
@@ -1067,7 +1112,7 @@ Expected: 6 tests pass.
 ```bash
 cd D:/dockyh
 git add dock-tauri/src-tauri/src/autohide.rs dock-tauri/src-tauri/src/lib.rs \
-  dock-tauri/src-tauri/Cargo.toml dock-tauri/tests/unit/autohide.rs
+  dock-tauri/src-tauri/Cargo.toml dock-tauri/src-tauri/tests/unit/autohide.rs
 git commit -m "feat: add pure autohide state machine"
 ```
 
@@ -1079,11 +1124,11 @@ git commit -m "feat: add pure autohide state machine"
 - Create: `dock-tauri/src-tauri/src/settings.rs`
 - Modify: `dock-tauri/src-tauri/src/lib.rs`
 - Modify: `dock-tauri/src-tauri/Cargo.toml`
-- Test: `dock-tauri/tests/unit/settings.rs`
+- Test: `dock-tauri/src-tauri/tests/unit/settings.rs`
 
 - [ ] **Step 1: Write the failing test**
 
-`dock-tauri/tests/unit/settings.rs`:
+`dock-tauri/src-tauri/tests/unit/settings.rs`:
 
 ```rust
 use dock_tauri_lib::settings::{
@@ -1353,7 +1398,7 @@ Expected: 7 tests pass.
 ```bash
 cd D:/dockyh
 git add dock-tauri/src-tauri/src/settings.rs dock-tauri/src-tauri/src/lib.rs \
-  dock-tauri/src-tauri/Cargo.toml dock-tauri/tests/unit/settings.rs
+  dock-tauri/src-tauri/Cargo.toml dock-tauri/src-tauri/tests/unit/settings.rs
 git commit -m "feat: add versioned settings with atomic write and recovery"
 ```
 
@@ -1364,13 +1409,13 @@ git commit -m "feat: add versioned settings with atomic write and recovery"
 - Create: `dock-tauri/src-tauri/src/platform.rs`
 - Modify: `dock-tauri/src-tauri/src/lib.rs`
 - Modify: `dock-tauri/src-tauri/Cargo.toml`
-- Test: `dock-tauri/tests/unit/platform_monitor.rs`
+- Test: `dock-tauri/src-tauri/tests/unit/platform_monitor.rs`
 
 `platform.rs` is the only module allowed to call Win32 for display data. It returns plain values from `geometry::MonitorRect`.
 
 - [ ] **Step 1: Write the failing test**
 
-`dock-tauri/tests/unit/platform_monitor.rs`:
+`dock-tauri/src-tauri/tests/unit/platform_monitor.rs`:
 
 ```rust
 use dock_tauri_lib::platform::primary_work_area;
@@ -1517,7 +1562,7 @@ Expected: 2 tests pass.
 ```bash
 cd D:/dockyh
 git add dock-tauri/src-tauri/src/platform.rs dock-tauri/src-tauri/src/lib.rs \
-  dock-tauri/src-tauri/Cargo.toml dock-tauri/tests/unit/platform_monitor.rs
+  dock-tauri/src-tauri/Cargo.toml dock-tauri/src-tauri/tests/unit/platform_monitor.rs
 git commit -m "feat: add win32 monitor work area adapter"
 ```
 
@@ -1529,11 +1574,11 @@ git commit -m "feat: add win32 monitor work area adapter"
 - Create: `dock-tauri/src-tauri/src/apps.rs`
 - Modify: `dock-tauri/src-tauri/src/lib.rs`
 - Modify: `dock-tauri/src-tauri/Cargo.toml`
-- Test: `dock-tauri/tests/unit/apps_catalog.rs`
+- Test: `dock-tauri/src-tauri/tests/unit/apps_catalog.rs`
 
 - [ ] **Step 1: Write the failing test**
 
-`dock-tauri/tests/unit/apps_catalog.rs`:
+`dock-tauri/src-tauri/tests/unit/apps_catalog.rs`:
 
 ```rust
 use dock_tauri_lib::apps::{catalog_from_dirs, reconcile, AppEntry, WindowRef};
@@ -1866,7 +1911,7 @@ The catalog tests pass on fake `.lnk` bytes because `resolve_shortcut_target` re
 ```bash
 cd D:/dockyh
 git add dock-tauri/src-tauri/src/apps.rs dock-tauri/src-tauri/src/lib.rs \
-  dock-tauri/src-tauri/Cargo.toml dock-tauri/tests/unit/apps_catalog.rs
+  dock-tauri/src-tauri/Cargo.toml dock-tauri/src-tauri/tests/unit/apps_catalog.rs
 git commit -m "feat: add start menu catalog launch and reconciliation"
 ```
 
@@ -1878,11 +1923,11 @@ git commit -m "feat: add start menu catalog launch and reconciliation"
 - Create: `dock-tauri/src-tauri/src/icon_cache.rs`
 - Modify: `dock-tauri/src-tauri/src/lib.rs`
 - Modify: `dock-tauri/src-tauri/Cargo.toml`
-- Test: `dock-tauri/tests/unit/icon_cache.rs`
+- Test: `dock-tauri/src-tauri/tests/unit/icon_cache.rs`
 
 - [ ] **Step 1: Write the failing test**
 
-`dock-tauri/tests/unit/icon_cache.rs`:
+`dock-tauri/src-tauri/tests/unit/icon_cache.rs`:
 
 ```rust
 use dock_tauri_lib::icon_cache::IconCache;
@@ -2133,7 +2178,7 @@ Add `Win32_Storage_FileSystem` to the `windows` feature list in `src-tauri/Cargo
 
 - [ ] **Step 6: Write extraction tests**
 
-`dock-tauri/tests/unit/icon_extract.rs`:
+`dock-tauri/src-tauri/tests/unit/icon_extract.rs`:
 
 ```rust
 use dock_tauri_lib::icon_cache::{extract_png, IconCache};
@@ -2226,8 +2271,8 @@ Expected: 5 cache tests pass; 3 extraction tests pass.
 ```bash
 cd D:/dockyh
 git add dock-tauri/src-tauri/src/icon_cache.rs dock-tauri/src-tauri/src/lib.rs \
-  dock-tauri/src-tauri/Cargo.toml dock-tauri/tests/unit/icon_cache.rs \
-  dock-tauri/tests/unit/icon_extract.rs
+  dock-tauri/src-tauri/Cargo.toml dock-tauri/src-tauri/tests/unit/icon_cache.rs \
+  dock-tauri/src-tauri/tests/unit/icon_extract.rs
 git commit -m "feat: add shell icon extraction with disk cache"
 ```
 
@@ -2518,7 +2563,7 @@ git commit -m "feat: add python metrics sidecar over stdio json-rpc"
 - Modify: `dock-tauri/src-tauri/src/lib.rs`
 - Modify: `dock-tauri/src-tauri/Cargo.toml`
 - Create: `dock-tauri/src-tauri/src/bin/fake_sidecar.rs`
-- Test: `dock-tauri/tests/unit/metrics_supervisor.rs`
+- Test: `dock-tauri/src-tauri/tests/unit/metrics_supervisor.rs`
 
 - [ ] **Step 1: Write the fake sidecar binary**
 
@@ -2579,7 +2624,7 @@ path = "src/bin/fake_sidecar.rs"
 
 - [ ] **Step 2: Write the failing supervisor test**
 
-`dock-tauri/tests/unit/metrics_supervisor.rs`:
+`dock-tauri/src-tauri/tests/unit/metrics_supervisor.rs`:
 
 ```rust
 use dock_tauri_lib::metrics::{RpcError, SampleRpc};
@@ -2793,7 +2838,7 @@ Expected: 5 tests pass.
 cd D:/dockyh
 git add dock-tauri/src-tauri/src/metrics.rs dock-tauri/src-tauri/src/lib.rs \
   dock-tauri/src-tauri/src/bin/fake_sidecar.rs dock-tauri/src-tauri/Cargo.toml \
-  dock-tauri/tests/unit/metrics_supervisor.rs
+  dock-tauri/src-tauri/tests/unit/metrics_supervisor.rs
 git commit -m "feat: add sidecar supervisor with typed rpc errors"
 ```
 
@@ -3443,11 +3488,11 @@ git commit -m "feat: add dock surface with glass tiles reflection and tooltip"
 - Create: `dock-tauri/src-tauri/src/state.rs`
 - Modify: `dock-tauri/src-tauri/src/lib.rs`
 - Modify: `dock-tauri/src-tauri/Cargo.toml`
-- Test: `dock-tauri/tests/unit/dock_state_view.rs`
+- Test: `dock-tauri/src-tauri/tests/unit/dock_state_view.rs`
 
 - [ ] **Step 1: Write the failing test for the view builder**
 
-`dock-tauri/tests/unit/dock_state_view.rs`:
+`dock-tauri/src-tauri/tests/unit/dock_state_view.rs`:
 
 ```rust
 use dock_tauri_lib::apps::{AppEntry, RunningInfo};
@@ -3920,7 +3965,7 @@ If `QueryFullProcessImageNameW` or `OpenProcess` is missing, add the features `W
 cd D:/dockyh
 git add dock-tauri/src-tauri/src/commands.rs dock-tauri/src-tauri/src/state.rs \
   dock-tauri/src-tauri/src/windows_tracker.rs dock-tauri/src-tauri/src/lib.rs \
-  dock-tauri/src-tauri/Cargo.toml dock-tauri/tests/unit/dock_state_view.rs
+  dock-tauri/src-tauri/Cargo.toml dock-tauri/src-tauri/tests/unit/dock_state_view.rs
 git commit -m "feat: wire tauri commands to dock state and app catalog"
 ```
 
@@ -4687,11 +4732,11 @@ git commit -m "feat: add launchpad monitor and settings panels"
 - Modify: `dock-tauri/src/dock/Dock.tsx`
 - Modify: `dock-tauri/src/App.tsx`
 - Modify: `dock-tauri/package.json`
-- Test: `dock-tauri/tests/unit/window_geom.rs`
+- Test: `dock-tauri/src-tauri/tests/unit/window_geom.rs`
 
 - [ ] **Step 1: Write the failing Rust geometry-application test**
 
-`dock-tauri/tests/unit/window_geom.rs`:
+`dock-tauri/src-tauri/tests/unit/window_geom.rs`:
 
 ```rust
 use dock_tauri_lib::geometry::{DockGeometry, MonitorRect};
@@ -5087,7 +5132,7 @@ git add dock-tauri/src/dock/ControlTile.tsx dock-tauri/src/dock/ControlTile.test
   dock-tauri/src/test-setup.ts dock-tauri/vite.config.ts dock-tauri/package.json \
   dock-tauri/package-lock.json dock-tauri/src-tauri/src/window_geom.rs \
   dock-tauri/src-tauri/src/commands.rs dock-tauri/src-tauri/src/lib.rs \
-  dock-tauri/src-tauri/Cargo.toml dock-tauri/tests/unit/window_geom.rs
+  dock-tauri/src-tauri/Cargo.toml dock-tauri/src-tauri/tests/unit/window_geom.rs
 git commit -m "feat: add control tile route entry points and live window sync"
 ```
 
