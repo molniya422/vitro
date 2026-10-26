@@ -3438,9 +3438,13 @@ export function magnifiedScale(
   if (!(radius > 0)) return 1;
   const d = Math.max(0, distance);
   if (d >= radius) return 1;
-  const t = 1 - d / radius;
-  // Gaussian-like falloff over the normalised distance, shaped by `falloff`.
-  const weight = Math.exp(-((1 - t) ** 2) / Math.max(falloff, 1e-6));
+  // Generalized Gaussian: `falloff` is the influence width as a fraction of the
+  // radius. The quartic exponent keeps influence local AND makes the curve
+  // continuous at the radius boundary — the naive exp(-(1-t)^2 / falloff)
+  // variant jumps ~6% at d = radius, which reads as a visible pop.
+  const normalized = d / radius;
+  const width = Math.max(falloff, 1e-6);
+  const weight = Math.exp(-((normalized / width) ** 4));
   return 1 + (peak - 1) * weight;
 }
 
