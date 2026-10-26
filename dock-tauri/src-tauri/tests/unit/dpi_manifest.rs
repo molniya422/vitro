@@ -18,3 +18,19 @@ fn build_script_embeds_the_manifest() {
         "build.rs must pass the manifest to the linker"
     );
 }
+
+#[test]
+fn manifest_keeps_the_common_controls_dependency() {
+    // Suppressing tauri-build's manifest drops its Common-Controls v6 dependency.
+    // Tauri dialog APIs and native controls rely on it, so ours must declare it.
+    let path = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("dock-tauri.exe.manifest");
+    let text = std::fs::read_to_string(&path).expect("manifest must exist");
+    assert!(
+        text.contains("Microsoft.Windows.Common-Controls"),
+        "manifest must declare the Common-Controls v6 dependency"
+    );
+    assert!(
+        text.contains("6595b64144ccf1df"),
+        "Common-Controls public key token missing"
+    );
+}
