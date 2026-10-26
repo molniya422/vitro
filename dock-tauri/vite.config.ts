@@ -7,8 +7,9 @@ export default defineConfig({
   server: { port: 1420, strictPort: true },
   build: { target: "chrome105", minify: "oxc", sourcemap: false },
   test: {
-    environment: "happy-dom",
+    environment: "jsdom",
     globals: true,
+    setupFiles: ["./src/test-setup.ts"],
     include: ["src/**/*.test.ts", "src/**/*.test.tsx"],
   },
 });

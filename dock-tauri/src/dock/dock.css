@@ -1,0 +1,173 @@
+:root {
+  --glass-fill: rgba(22, 26, 38, 0.62);
+  --glass-top-highlight: rgba(255, 255, 255, 0.15);
+  --glass-bottom-shadow: rgba(0, 0, 0, 0.15);
+  --pill-radius: 34px;
+  --icon-size: 48px;
+  --icon-gap: 8px;
+  --pad-h: 16px;
+  --pad-v: 10px;
+  --text: #e9edf7;
+  --muted: #98a1b6;
+  --accent: #7fa4ff;
+  --spring: cubic-bezier(0.34, 1.36, 0.64, 1);
+  --signature: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  overflow: hidden;
+  font-family: "Segoe UI Variable", "Segoe UI", system-ui, sans-serif;
+  color: var(--text);
+  user-select: none;
+}
+
+.dock-stage {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  height: 100%;
+  padding-bottom: 40px; /* reflection margin */
+}
+
+.dock-pill {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  gap: var(--icon-gap);
+  height: calc(var(--icon-size) + var(--pad-v) * 2);
+  padding: 0 var(--pad-h);
+  border-radius: var(--pill-radius);
+  background: var(--glass-fill);
+  box-shadow:
+    inset 0 1px 0 var(--glass-top-highlight),
+    inset 0 -1px 0 var(--glass-bottom-shadow);
+  /* No outer stroke, no heavy outer shadow: depth comes from the material. */
+}
+
+/* Tiled monochrome grain, pre-rendered as a repeating layer. */
+.dock-pill::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0.0025;
+  background-image: radial-gradient(#fff 0.5px, transparent 0.5px);
+  background-size: 3px 3px;
+}
+
+.dock-item {
+  position: relative;
+  width: var(--icon-size);
+  height: var(--icon-size);
+  margin-bottom: var(--pad-v);
+  transform-origin: bottom center;
+  transition: transform 160ms var(--signature);
+  will-change: auto;
+}
+
+.dock-item.is-magnifying {
+  /* Only icons inside the magnify radius hold a compositor layer. */
+  will-change: transform;
+}
+
+.dock-item.is-reduced {
+  transition: opacity 200ms linear;
+}
+
+.dock-item img,
+.dock-item .fallback-icon {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: contain;
+  border-radius: 20%;
+}
+
+.dock-item .fallback-icon {
+  display: grid;
+  place-items: center;
+  background: rgba(255, 255, 255, 0.08);
+  font-size: calc(var(--icon-size) * 0.4);
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.dock-item .reflection {
+  position: absolute;
+  left: 0;
+  top: 100%;
+  width: 100%;
+  height: 32px;
+  transform: scaleY(-0.45);
+  transform-origin: top center;
+  opacity: 0.25;
+  -webkit-mask-image: linear-gradient(to bottom, #000, transparent);
+  mask-image: linear-gradient(to bottom, #000, transparent);
+  pointer-events: none;
+}
+
+.dock-item .running-dot {
+  position: absolute;
+  left: 50%;
+  bottom: -10px; /* 4px dot, 6px gap below the icon */
+  width: 4px;
+  height: 4px;
+  margin-left: -2px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.6);
+}
+
+.dock-item .badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 8px;
+  background: #e8342e;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 16px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.dock-item.is-disabled {
+  filter: saturate(0);
+  opacity: 0.7;
+}
+
+.dock-tooltip {
+  position: absolute;
+  bottom: calc(100% + 10px);
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 4px 8px;
+  border-radius: 8px;
+  background: var(--glass-fill);
+  box-shadow: inset 0 1px 0 var(--glass-top-highlight);
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  pointer-events: none;
+  animation: tooltip-in 150ms var(--signature);
+}
+
+@keyframes tooltip-in {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
