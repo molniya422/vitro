@@ -3,6 +3,7 @@
 pub mod apps;
 pub mod autohide;
 pub mod geometry;
+pub mod icon_cache;
 pub mod platform;
 pub mod settings;
 
