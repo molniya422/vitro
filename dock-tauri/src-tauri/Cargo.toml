@@ -13,6 +13,10 @@ path = "src/lib.rs"
 name = "dock-tauri"
 path = "src/main.rs"
 
+[[bin]]
+name = "fake_sidecar"
+path = "src/bin/fake_sidecar.rs"
+
 [dependencies]
 tauri = { version = "2.12", features = [] }
 serde = { version = "1", features = ["derive"] }
@@ -82,5 +86,9 @@ path = "tests/unit/icon_cache.rs"
 [[test]]
 name = "icon_extract"
 path = "tests/unit/icon_extract.rs"
+
+[[test]]
+name = "metrics_supervisor"
+path = "tests/unit/metrics_supervisor.rs"
 
 [workspace]
