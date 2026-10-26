@@ -1832,6 +1832,40 @@ fn duplicates_across_directories_are_collapsed() {
 }
 
 #[test]
+fn different_apps_sharing_a_display_name_are_both_kept() {
+    let a = AppEntry {
+        id: "c:/programdata/settings.lnk".into(),
+        display_name: "Settings".into(),
+        target: Some("C:/Windows/System32/control.exe".into()),
+    };
+    let b = AppEntry {
+        id: "c:/other/settings.lnk".into(),
+        display_name: "Settings".into(),
+        target: Some("C:/Other/vendor-settings.exe".into()),
+    };
+    let merged = dock_tauri_lib::apps::dedup_entries(vec![a, b]);
+    assert_eq!(merged.len(), 2, "distinct targets must not collapse");
+}
+
+#[test]
+fn the_same_target_from_two_roots_collapses() {
+    let shared = "C:/Windows/notepad.exe";
+    let first = AppEntry {
+        id: "c:/programdata/notepad.lnk".into(),
+        display_name: "Notepad".into(),
+        target: Some(shared.into()),
+    };
+    let second = AppEntry {
+        id: "c:/appdata/notepad.lnk".into(),
+        display_name: "Notepad".into(),
+        target: Some(shared.into()),
+    };
+    let merged = dock_tauri_lib::apps::dedup_entries(vec![first, second]);
+    assert_eq!(merged.len(), 1);
+    assert_eq!(merged[0].id, "c:/programdata/notepad.lnk", "first scanned wins");
+}
+
+#[test]
 fn missing_directory_is_not_an_error() {
     let entries = catalog_from_dirs(&[std::path::PathBuf::from("Z:/does/not/exist")]);
     assert!(entries.is_empty());
@@ -1966,10 +2000,39 @@ pub fn reconcile(apps: &[AppEntry], windows: &[WindowRef]) -> Vec<RunningInfo> {
         .collect()
 }
 
+/// Deduplication key for a catalog entry.
+///
+/// Two shortcuts are the same app when they resolve to the same executable —
+/// that is how the same app appears in both the all-users and per-user Start
+/// Menu roots. Entries with no resolvable target fall back to display name.
+fn dedup_key(entry: &AppEntry) -> String {
+    match &entry.target {
+        Some(target) => format!("target:{}", normalize(target)),
+        None => format!("name:{}", entry.display_name.to_ascii_lowercase()),
+    }
+}
+
+/// Collapse duplicate entries, keeping the first occurrence.
+///
+/// Order matters: `start_menu_dirs` lists the all-users root first, so the
+/// all-users copy wins over a per-user duplicate.
+pub fn dedup_entries(entries: Vec<AppEntry>) -> Vec<AppEntry> {
+    let mut seen: Vec<String> = Vec::new();
+    let mut kept: Vec<AppEntry> = Vec::new();
+    for entry in entries {
+        let key = dedup_key(&entry);
+        if seen.contains(&key) {
+            continue;
+        }
+        seen.push(key);
+        kept.push(entry);
+    }
+    kept
+}
+
 /// Scan directories for `.lnk` shortcuts. Missing directories are skipped.
 pub fn catalog_from_dirs(dirs: &[PathBuf]) -> Vec<AppEntry> {
     let mut entries: Vec<AppEntry> = Vec::new();
-    let mut seen: Vec<String> = Vec::new();
 
     for dir in dirs {
         let Ok(read) = std::fs::read_dir(dir) else {
@@ -1983,19 +2046,15 @@ pub fn catalog_from_dirs(dirs: &[PathBuf]) -> Vec<AppEntry> {
             let Some(stem) = path.file_stem().and_then(|s| s.to_str()) else {
                 continue;
             };
-            let id = normalize(&path.to_string_lossy());
-            if seen.contains(&id) {
-                continue;
-            }
-            seen.push(id.clone());
             entries.push(AppEntry {
-                id,
+                id: normalize(&path.to_string_lossy()),
                 display_name: stem.to_string(),
                 target: resolve_shortcut_target(&path),
             });
         }
     }
 
+    let mut entries = dedup_entries(entries);
     entries.sort_by_key(|a| a.display_name.to_ascii_lowercase());
     entries
 }
@@ -2104,7 +2163,7 @@ Add `pub mod apps;` to `lib.rs`, then:
 D:/rust/cargo/bin/cargo.exe test --manifest-path D:/dockyh/dock-tauri/src-tauri/Cargo.toml --test apps_catalog
 ```
 
-Expected: 8 tests pass.
+Expected: 10 tests pass.
 
 The catalog tests pass on fake `.lnk` bytes because `resolve_shortcut_target` returns `None` rather than erroring. Do not assert on `target` in those tests.
 
