@@ -1,5 +1,7 @@
 //! Dock Tauri host: window geometry, app catalog, metrics sidecar, settings.
 
+pub mod geometry;
+
 pub fn product_name() -> &'static str {
     "Dock Tauri"
 }

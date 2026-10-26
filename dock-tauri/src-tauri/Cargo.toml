@@ -46,4 +46,8 @@ path = "tests/unit/workspace_smoke.rs"
 name = "test_registration"
 path = "tests/unit/test_registration.rs"
 
+[[test]]
+name = "geometry"
+path = "tests/unit/geometry.rs"
+
 [workspace]
