@@ -16,7 +16,10 @@ interface Props {
   onActivate: (id: string) => void;
 }
 
-const ICON_PITCH = 56; // icon width + gap; must match the CSS
+const ICON_SIZE = 48; // must match --icon-size in dock.css
+const ICON_GAP = 8; // must match --icon-gap
+const ICON_PITCH = ICON_SIZE + ICON_GAP;
+const PILL_PADDING_H = 16; // must match --pad-h
 const TOOLTIP_DELAY_MS = 500;
 // The control tile and the two route entry points sit before the app tiles.
 const LEADING_TILES = 3;
@@ -33,12 +36,18 @@ export function Dock({
   const [pointerX, setPointerX] = useState<number | null>(null);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const tooltipTimer = useRef<number | null>(null);
+  const pillRef = useRef<HTMLDivElement>(null);
   const profile = profileFor(state.profile, state.reducedMotion);
 
+  // Centers are pill-local: the leading padding plus whole icon pitches. Using
+  // pitch/2 as the first center was 12 px short and shifted the magnify peak.
   const centers = useMemo(
     () =>
       state.items.map(
-        (_, index) => (index + LEADING_TILES) * ICON_PITCH + ICON_PITCH / 2,
+        (_, index) =>
+          PILL_PADDING_H +
+          (index + LEADING_TILES) * ICON_PITCH +
+          ICON_SIZE / 2,
       ),
     [state.items],
   );
@@ -51,9 +60,12 @@ export function Dock({
   }, [centers, pointerX, state.magnify, state.reducedMotion, profile, state.items]);
 
   const handlePointerMove = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
-    // Read layout, not React state: this runs on every pointer move.
-    const bounds = event.currentTarget.getBoundingClientRect();
-    setPointerX(event.clientX - bounds.left);
+    // Measure against the pill, not the stage: the icon centers are pill-local,
+    // and the stage is wider than the pill whenever the window is not exactly
+    // pill-sized (a browser, or a window mid-route-change).
+    const pill = pillRef.current;
+    if (!pill) return;
+    setPointerX(event.clientX - pill.getBoundingClientRect().left);
   }, []);
 
   const handleHover = useCallback((id: string | null) => {
@@ -74,6 +86,7 @@ export function Dock({
   return (
     <div className="dock-stage" onPointerMove={handlePointerMove} onPointerLeave={() => setPointerX(null)}>
       <div
+        ref={pillRef}
         className={`dock-pill${collapsed ? " is-collapsed" : ""}`}
         role="toolbar"
         aria-label="Dock"

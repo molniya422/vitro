@@ -47,19 +47,22 @@ test("clicking a tile records launch_item for that tile", async ({ page }) => {
 });
 
 test("hovering a tile magnifies it and leaving restores it", async ({ page }) => {
-  // Rust sizes the dock window to exactly the pill width (window_geom), while
-  // the browser harness is full-page and centers the pill. Match the production
-  // window width so the dock's pointer coordinate and its icon centers share an
-  // origin. In a wider window, pointer X is measured against .dock-stage while
-  // the icon centers are pill-local, so the magnify peak shifts right.
-  const pillBox = await page.getByRole("toolbar", { name: "Dock" }).boundingBox();
-  if (!pillBox) throw new Error("dock pill has no bounding box");
-  await page.setViewportSize({ width: Math.ceil(pillBox.width), height: 720 });
-
+  // Deliberately left at the default viewport width: the pointer coordinate and
+  // the icon centers must share the pill's origin regardless of how much empty
+  // stage surrounds it. Shrinking the viewport to the pill width used to hide a
+  // 12 px offset that put the magnify peak on the wrong icon.
   const tile = page.getByRole("button", { name: "Idle App", exact: true });
 
   await tile.hover();
   await expect.poll(() => scaleOf(tile), { timeout: 3_000 }).toBeGreaterThan(1.01);
+
+  // The hovered tile must be the peak, not merely enlarged: neighbours magnify
+  // too, but by less.
+  const hovered = await scaleOf(tile);
+  for (const name of ["Running App, running", "Minimized App, running"]) {
+    const neighbour = await scaleOf(page.getByRole("button", { name, exact: true }));
+    expect(hovered).toBeGreaterThan(neighbour);
+  }
 
   await page.mouse.move(10, 10);
   await expect.poll(() => scaleOf(tile), { timeout: 3_000 }).toBeLessThan(1.01);
