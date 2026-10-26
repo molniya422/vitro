@@ -144,3 +144,82 @@ fn the_same_target_from_two_roots_collapses() {
         "first scanned wins"
     );
 }
+
+#[test]
+fn running_window_in_a_different_directory_matches_by_file_name() {
+    // The Doubao shape: shortcut target is D:\doubao\Doubao.exe, but the app
+    // actually runs its window from D:\doubao\app\Doubao.exe.
+    let entries = vec![AppEntry {
+        id: "c:/programdata/doubao.lnk".into(),
+        display_name: "Doubao".into(),
+        target: Some("D:/doubao/Doubao.exe".into()),
+    }];
+    let windows = vec![WindowRef {
+        process_path: "D:/doubao/app/Doubao.exe".into(),
+        minimized: false,
+    }];
+    let running = reconcile(&entries, &windows);
+    assert!(running[0].running, "file-name fallback should match");
+}
+
+#[test]
+fn exact_path_wins_over_a_same_named_binary_elsewhere() {
+    let entries = vec![AppEntry {
+        id: "c:/a/editor.lnk".into(),
+        display_name: "Editor".into(),
+        target: Some("C:/A/editor.exe".into()),
+    }];
+    // A different program that happens to share the file name.
+    let windows = vec![
+        WindowRef {
+            process_path: "D:/B/editor.exe".into(),
+            minimized: true,
+        },
+        WindowRef {
+            process_path: "C:/A/editor.exe".into(),
+            minimized: false,
+        },
+    ];
+    let running = reconcile(&entries, &windows);
+    assert!(running[0].running);
+    assert_eq!(
+        running[0].minimized, 0,
+        "only the exact-path window belongs to this app"
+    );
+}
+
+#[test]
+fn a_different_file_name_never_matches() {
+    let entries = vec![AppEntry {
+        id: "c:/a/notes.lnk".into(),
+        display_name: "Notes".into(),
+        target: Some("C:/A/notes.exe".into()),
+    }];
+    let windows = vec![WindowRef {
+        process_path: "C:/A/other.exe".into(),
+        minimized: false,
+    }];
+    assert!(!reconcile(&entries, &windows)[0].running);
+}
+
+#[test]
+fn file_name_fallback_still_counts_minimized_windows() {
+    let entries = vec![AppEntry {
+        id: "c:/a/browser.lnk".into(),
+        display_name: "Browser".into(),
+        target: Some("C:/A/browser.exe".into()),
+    }];
+    let windows = vec![
+        WindowRef {
+            process_path: "C:/A/app/browser.exe".into(),
+            minimized: true,
+        },
+        WindowRef {
+            process_path: "C:/A/app/browser.exe".into(),
+            minimized: true,
+        },
+    ];
+    let running = reconcile(&entries, &windows);
+    assert!(running[0].running);
+    assert_eq!(running[0].minimized, 2);
+}
