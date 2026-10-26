@@ -63,4 +63,8 @@ path = "tests/unit/settings.rs"
 name = "platform_monitor"
 path = "tests/unit/platform_monitor.rs"
 
+[[test]]
+name = "dpi_manifest"
+path = "tests/unit/dpi_manifest.rs"
+
 [workspace]
