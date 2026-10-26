@@ -2579,6 +2579,7 @@ git commit -m "feat: add shell icon extraction with disk cache"
 ## Task 8: Python sidecar with stdio JSON-RPC
 
 **Files:**
+- Create: `dock-tauri/backend/run_sidecar.py`
 - Create: `dock-tauri/backend/monitor/__init__.py`
 - Create: `dock-tauri/backend/monitor/main.py`
 - Create: `dock-tauri/backend/monitor/sampler.py`
@@ -2818,6 +2819,20 @@ if __name__ == "__main__":
     main()
 ```
 
+`dock-tauri/backend/run_sidecar.py` — launcher that keeps `monitor` importable regardless of the working directory the supervisor uses:
+
+```python
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+from monitor.main import main  # noqa: E402
+
+if __name__ == "__main__":
+    main()
+```
+
 `dock-tauri/backend/monitor/requirements.txt`:
 
 ```text
@@ -2846,7 +2861,8 @@ Expected: one JSON line containing `"t": "sample"` and a plausible `cpu` value.
 
 ```bash
 cd D:/dockyh
-git add dock-tauri/backend/monitor/__init__.py dock-tauri/backend/monitor/main.py \
+git add dock-tauri/backend/run_sidecar.py \
+  dock-tauri/backend/monitor/__init__.py dock-tauri/backend/monitor/main.py \
   dock-tauri/backend/monitor/sampler.py dock-tauri/backend/monitor/requirements.txt \
   dock-tauri/backend/tests/fake_psutil.py dock-tauri/backend/tests/test_sampler.py \
   dock-tauri/backend/tests/test_protocol.py
@@ -3118,6 +3134,152 @@ impl Drop for SampleRpc {
 }
 ```
 
+- [ ] **Step 5b: Implement the restart policy**
+
+The steps above give a supervisor that dies permanently after one crash. The spec requires the monitor to recover, so wrap it in a `Supervisor` that respawns on demand with a cooldown.
+
+Append to `metrics.rs`:
+
+```rust
+use std::time::{Duration, Instant};
+
+/// How to launch the sidecar, plus the minimum interval between respawns.
+pub struct SidecarSpec {
+    pub program: PathBuf,
+    pub args: Vec<String>,
+    pub cooldown: Duration,
+}
+
+impl SidecarSpec {
+    pub fn new(program: PathBuf, args: Vec<String>) -> Self {
+        Self {
+            program,
+            args,
+            // Backoff floor: never spawn more than once per two seconds.
+            cooldown: Duration::from_secs(2),
+        }
+    }
+}
+
+/// Owns at most one sidecar and respawns it on demand after a failure.
+pub struct Supervisor {
+    spec: SidecarSpec,
+    rpc: Option<SampleRpc>,
+    last_attempt: Option<Instant>,
+}
+
+impl Supervisor {
+    pub fn new(spec: SidecarSpec) -> Self {
+        Self {
+            spec,
+            rpc: None,
+            last_attempt: None,
+        }
+    }
+
+    pub fn is_running(&self) -> bool {
+        self.rpc.is_some()
+    }
+
+    /// Request a sample, starting the sidecar first if needed.
+    ///
+    /// On failure the broken child is dropped so the next call can respawn it,
+    /// subject to `cooldown`.
+    pub fn sample(&mut self) -> Result<Sample, RpcError> {
+        if self.rpc.is_none() {
+            if let Some(last) = self.last_attempt {
+                if last.elapsed() < self.spec.cooldown {
+                    return Err(RpcError::Closed);
+                }
+            }
+            self.last_attempt = Some(Instant::now());
+            self.rpc = Some(SampleRpc::spawn(
+                self.spec.program.clone(),
+                self.spec.args.clone(),
+            )?);
+        }
+
+        let rpc = self.rpc.as_mut().expect("just spawned");
+        match rpc.sample() {
+            Ok(sample) => Ok(sample),
+            Err(error) => {
+                rpc.shutdown();
+                self.rpc = None;
+                Err(error)
+            }
+        }
+    }
+
+    pub fn shutdown(&mut self) {
+        if let Some(mut rpc) = self.rpc.take() {
+            rpc.shutdown();
+        }
+    }
+}
+```
+
+**Add tests** to `tests/unit/metrics_supervisor.rs`:
+
+```rust
+use dock_tauri_lib::metrics::{SidecarSpec, Supervisor};
+use std::path::PathBuf;
+use std::time::Duration;
+
+fn spec(mode: &str) -> SidecarSpec {
+    let exe = PathBuf::from(env!("CARGO_BIN_EXE_fake_sidecar"));
+    SidecarSpec::new(exe, vec![mode.to_string()])
+}
+
+#[test]
+fn supervisor_respawns_after_a_crash() {
+    let mut spec = spec("crash");
+    spec.cooldown = Duration::ZERO;
+    let mut supervisor = Supervisor::new(spec);
+
+    // First attempt: the child dies without answering.
+    assert!(supervisor.sample().is_err());
+    assert!(!supervisor.is_running(), "broken child must be dropped");
+
+    // A later attempt spawns a fresh child rather than staying dead forever.
+    assert!(supervisor.sample().is_err(), "second crash still errors");
+    supervisor.shutdown();
+}
+
+#[test]
+fn cooldown_prevents_a_spawn_storm() {
+    let mut spec = spec("crash");
+    spec.cooldown = Duration::from_secs(60);
+    let mut supervisor = Supervisor::new(spec);
+
+    assert!(supervisor.sample().is_err());
+    let started = std::time::Instant::now();
+    assert!(supervisor.sample().is_err());
+    assert!(
+        started.elapsed() < Duration::from_secs(5),
+        "cooldown must fail fast, not block"
+    );
+}
+
+#[test]
+fn a_missing_sidecar_binary_is_a_typed_spawn_error() {
+    let mut spec = SidecarSpec::new(PathBuf::from("Z:/nope/sidecar.exe"), Vec::new());
+    spec.cooldown = Duration::ZERO;
+    let mut supervisor = Supervisor::new(spec);
+    let error = supervisor.sample().unwrap_err();
+    assert!(matches!(error, RpcError::Spawn(_)));
+}
+
+#[test]
+fn supervisor_serves_repeated_samples_from_one_child() {
+    let mut supervisor = Supervisor::new(spec("ok"));
+    for _ in 0..3 {
+        assert!(supervisor.sample().is_ok());
+    }
+    assert!(supervisor.is_running());
+    supervisor.shutdown();
+}
+```
+
 - [ ] **Step 6: Export and run**
 
 Add `pub mod metrics;` to `lib.rs`, then:
@@ -3353,7 +3515,7 @@ export const api = {
   getSettings: () => invoke<Record<string, unknown>>("get_settings"),
   saveSettings: (settings: Record<string, unknown>) =>
     invoke<void>("save_settings", { settings }),
-  sampleMonitor: () => invoke<MonitorSample | null>("sample_monitor"),
+  sampleMonitor: () => invoke<MonitorSample>("sample_monitor"),
 };
 
 export function onDockState(handler: (state: DockState) => void): Promise<UnlistenFn> {
@@ -3987,7 +4149,8 @@ use tauri::{AppHandle, Emitter, Manager, State};
 pub struct Runtime {
     pub apps: Mutex<Vec<AppEntry>>,
     pub settings_path: PathBuf,
-    pub sample_rpc: Mutex<Option<crate::metrics::SampleRpc>>,
+    /// Owns at most one sidecar and respawns it after a crash.
+    pub sidecar: Mutex<crate::metrics::Supervisor>,
 }
 
 #[derive(Debug, Serialize)]
@@ -4056,23 +4219,31 @@ pub fn save_settings(runtime: State<'_, Runtime>, settings: Settings) -> Result<
 }
 
 #[tauri::command]
-pub fn sample_monitor(runtime: State<'_, Runtime>) -> Result<Option<Sample>, CommandError> {
-    let mut guard = runtime
-        .sample_rpc
+pub fn sample_monitor(runtime: State<'_, Runtime>) -> Result<Sample, CommandError> {
+    let mut supervisor = runtime
+        .sidecar
         .lock()
         .map_err(|_| CommandError::new("lock_poisoned", "sidecar lock poisoned"))?;
-    let Some(rpc) = guard.as_mut() else {
-        return Ok(None);
-    };
-    match rpc.sample() {
-        Ok(sample) => Ok(Some(sample)),
-        Err(error) => {
-            // Drop the broken child so the next request respawns it.
-            rpc.shutdown();
-            *guard = None;
-            Err(CommandError::new("sidecar_unavailable", error.to_string()))
-        }
-    }
+    // The supervisor drops a broken child and respawns on the next call, so a
+    // crashed sidecar recovers without restarting the dock.
+    supervisor
+        .sample()
+        .map_err(|error| CommandError::new("sidecar_unavailable", error.to_string()))
+}
+
+/// Resolve how to launch the Python sidecar for this build.
+///
+/// Dev builds run the interpreter directly; a packaged build will point at a
+/// frozen `monitor.exe` produced by `backend/build_sidecar.ps1` (Task 15).
+pub fn sidecar_spec() -> crate::metrics::SidecarSpec {
+    let root = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+    let launcher = root.join("../../backend/run_sidecar.py");
+
+    let python = std::env::var("DOCK_PYTHON")
+        .map(PathBuf::from)
+        .unwrap_or_else(|_| PathBuf::from("D:/jiqixuexi/anaconda/python.exe"));
+
+    crate::metrics::SidecarSpec::new(python, vec![launcher.to_string_lossy().to_string()])
 }
 
 /// Bring the window up once the first frame is ready, avoiding a white flash.
@@ -4220,7 +4391,7 @@ pub fn run() {
             app.manage(commands::Runtime {
                 apps: Mutex::new(catalog),
                 settings_path,
-                sample_rpc: Mutex::new(None),
+                sidecar: Mutex::new(metrics::Supervisor::new(commands::sidecar_spec())),
             });
 
             if let Some(window) = app.get_webview_window("dock") {
@@ -4718,10 +4889,6 @@ export function MonitorPanel({ onClose }: Props) {
       try {
         const next = await api.sampleMonitor();
         if (cancelled) return;
-        if (!next) {
-          setError("Metrics sidecar is not running.");
-          return;
-        }
         setError(null);
         setSample(next);
         setCpuHistory((history) =>
