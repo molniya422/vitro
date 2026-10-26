@@ -18,3 +18,8 @@ __pycache__/
 # 编辑器
 .vscode/
 .idea/
+
+/dock-tauri/node_modules/
+/dock-tauri/dist/
+/dock-tauri/src-tauri/target/
+/dock-tauri/src-tauri/gen/
