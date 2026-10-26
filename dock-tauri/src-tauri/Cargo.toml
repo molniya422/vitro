@@ -38,6 +38,7 @@ windows = { version = "0.61", features = [
     "Win32_Graphics_Gdi",
     "Win32_UI_HiDpi",
     "Win32_Storage_FileSystem",
+    "Win32_System_Threading",
 ] }
 
 [build-dependencies]
@@ -90,5 +91,9 @@ path = "tests/unit/icon_extract.rs"
 [[test]]
 name = "metrics_supervisor"
 path = "tests/unit/metrics_supervisor.rs"
+
+[[test]]
+name = "dock_state_view"
+path = "tests/unit/dock_state_view.rs"
 
 [workspace]
