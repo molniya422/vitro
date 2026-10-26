@@ -118,11 +118,12 @@ at `docs/superpowers/plans/2026-10-26-tauri-python-dock-implementation.md`.
 
 ## Known limitations
 
-- **Running-state identity.** An app is matched to its windows by executable path. Store/MSIX
-  apps have no classic Start Menu target, so they never show a running dot, and apps whose
-  launcher is a different binary than the shortcut target (for example Doubao runs
-  `D:\doubao\app\Doubao.exe` while its shortcut points at `D:\doubao\Doubao.exe`) are also
-  missed. Verified working for ordinary `.exe` shortcuts.
+- **Running-state identity.** An app is matched to its windows by exact executable path, then
+  by executable file name when the exact path finds nothing. The fallback fixes launchers that
+  start a differently-located binary — verified live: Doubao's shortcut targets
+  `D:\doubao\Doubao.exe` while its window runs from `D:\doubao\app\Doubao.exe`, and it now
+  shows a running dot. Store/MSIX apps still have no classic Start Menu target, so they never
+  match; adding AUMID-based identity is follow-up work.
 - **Window filter.** Windows whose only window is `WS_EX_TOOLWINDOW` are excluded from the
   snapshot by design, so a few apps can never reconcile.
 - **Auto-hide** defaults to off (per the spec). It is verified live: with `autohide: true` in
