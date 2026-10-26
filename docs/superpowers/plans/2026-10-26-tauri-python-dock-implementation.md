@@ -1526,15 +1526,16 @@ mod imp {
     pub fn primary_work_area() -> Option<MonitorRect> {
         let mut rect = RECT::default();
         // SAFETY: SPI_GETWORKAREA writes exactly one RECT into the pointer given.
-        let ok = unsafe {
+        // windows 0.61 returns core::Result<()>; pvparam is Option<*mut c_void>.
+        let result = unsafe {
             SystemParametersInfoW(
                 SPI_GETWORKAREA,
                 0,
-                Some(&mut rect as *mut RECT as *mut _),
+                Some(&mut rect as *mut RECT as *mut core::ffi::c_void),
                 SYSTEM_PARAMETERS_INFO_UPDATE_FLAGS(0),
             )
         };
-        ok.ok().ok().map(|_| rect_to_monitor(rect, system_scale()))
+        result.ok().map(|_| rect_to_monitor(rect, system_scale()))
     }
 
     pub fn primary_screen_rect() -> Option<MonitorRect> {
@@ -1592,6 +1593,179 @@ cd D:/dockyh
 git add dock-tauri/src-tauri/src/platform.rs dock-tauri/src-tauri/src/lib.rs \
   dock-tauri/src-tauri/Cargo.toml dock-tauri/src-tauri/tests/unit/platform_monitor.rs
 git commit -m "feat: add win32 monitor work area adapter"
+```
+
+---
+
+## Task 5b: Declare per-monitor DPI awareness
+
+**The problem this fixes:** the built `dock-tauri.exe` carries no DPI manifest. On a 150%-scaled display (this machine: 2560×1440 at 150%), Win32 reports **1707×960 at 96 DPI** to the process because Windows virtualizes coordinates for DPI-unaware apps. The dock would therefore be drawn at the wrong physical size and appear blurry. This is not hypothetical — it was measured on the development machine.
+
+**Files:**
+- Create: `dock-tauri/src-tauri/dock-tauri.exe.manifest`
+- Modify: `dock-tauri/src-tauri/build.rs`
+- Create: `dock-tauri/src-tauri/tests/unit/dpi_manifest.rs`
+- Modify: `dock-tauri/src-tauri/Cargo.toml`
+
+- [ ] **Step 1: Write the manifest**
+
+`dock-tauri/src-tauri/dock-tauri.exe.manifest`:
+
+```xml
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<assembly xmlns="urn:schemas-microsoft-com:asm.v1" manifestVersion="1.0">
+  <assemblyIdentity
+      version="0.1.0.0"
+      processorArchitecture="*"
+      name="DockTauri"
+      type="win32" />
+  <description>Dock Tauri</description>
+  <!-- Replaces the manifest tauri-build would otherwise emit. Because we suppress
+       that one (see build.rs), the Common-Controls v6 dependency it carried must
+       be restored here or Tauri dialog APIs and native controls fall back to v5. -->
+  <dependency>
+    <dependentAssembly>
+      <assemblyIdentity
+          type="win32"
+          name="Microsoft.Windows.Common-Controls"
+          version="6.0.0.0"
+          processorArchitecture="*"
+          publicKeyToken="6595b64144ccf1df"
+          language="*" />
+    </dependentAssembly>
+  </dependency>
+  <application xmlns="urn:schemas-microsoft-com:asm.v3">
+    <windowsSettings>
+      <dpiAware xmlns="http://schemas.microsoft.com/SMI/2005/WindowsSettings">true/pm</dpiAware>
+      <dpiAwareness xmlns="http://schemas.microsoft.com/SMI/2016/WindowsSettings">PerMonitorV2</dpiAwareness>
+    </windowsSettings>
+  </application>
+  <compatibility xmlns="urn:schemas-microsoft-com:compatibility.v1">
+    <application>
+      <supportedOS Id="{8e0f7a12-bfb3-4fe8-b9a5-48fd50a15a9a}" />
+    </application>
+  </compatibility>
+</assembly>
+```
+
+- [ ] **Step 2: Tell the linker to embed it**
+
+`dock-tauri/src-tauri/build.rs` becomes:
+
+```rust
+fn main() {
+    // Embed the DPI-awareness manifest for MSVC builds. It declares PerMonitorV2
+    // so Win32 reports physical pixels on scaled displays.
+    #[cfg(target_env = "msvc")]
+    {
+        println!("cargo:rustc-link-arg=/MANIFEST:EMBED");
+        println!("cargo:rustc-link-arg=/MANIFESTINPUT:dock-tauri.exe.manifest");
+        println!("cargo:rerun-if-changed=dock-tauri.exe.manifest");
+    }
+    tauri_build::build();
+}
+```
+
+- [ ] **Step 3: Write tests that guard the manifest**
+
+`dock-tauri/src-tauri/tests/unit/dpi_manifest.rs`:
+
+```rust
+//! Guards the DPI-awareness manifest. Without it, Win32 virtualises coordinates
+//! on scaled displays and the dock renders at the wrong physical size.
+
+#[test]
+fn the_manifest_file_declares_per_monitor_v2() {
+    let path =
+        std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("dock-tauri.exe.manifest");
+    let text = std::fs::read_to_string(&path).expect("manifest must exist");
+    assert!(text.contains("PerMonitorV2"), "missing PerMonitorV2");
+    assert!(text.contains("dpiAware"), "missing dpiAware");
+}
+
+#[test]
+fn build_script_embeds_the_manifest() {
+    let path = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("build.rs");
+    let text = std::fs::read_to_string(&path).expect("build.rs must exist");
+    assert!(
+        text.contains("/MANIFESTINPUT:dock-tauri.exe.manifest"),
+        "build.rs must pass the manifest to the linker"
+    );
+}
+```
+
+Register it:
+
+```toml
+[[test]]
+name = "dpi_manifest"
+path = "tests/unit/dpi_manifest.rs"
+```
+
+- [ ] **Step 4: Run the tests**
+
+```bash
+export CARGO_HOME='D:\rust\cargo' RUSTUP_HOME='D:\rust\rustup'
+D:/rust/cargo/bin/cargo.exe test --manifest-path D:/dockyh/dock-tauri/src-tauri/Cargo.toml --test dpi_manifest
+```
+
+Expected: 2 tests pass.
+
+- [ ] **Step 5: Prove the manifest reached the binary**
+
+Build, then check the exe bytes:
+
+```bash
+D:/rust/cargo/bin/cargo.exe build --manifest-path D:/dockyh/dock-tauri/src-tauri/Cargo.toml
+python -c "d=open(r'D:\dockyh\dock-tauri\src-tauri\target\debug\dock-tauri.exe','rb').read(); print('PerMonitorV2:', d.count(b'PerMonitorV2')); print('dpiAware:', d.count(b'dpiAware')); assert d.count(b'PerMonitorV2')>0, 'manifest NOT embedded'; print('OK: manifest embedded')"
+```
+
+Expected: both counts greater than 0 and `OK: manifest embedded`. Also confirm Common-Controls survived:
+
+```bash
+python -c "d=open(r'D:\dockyh\dock-tauri\src-tauri	arget\debug\dock-tauri.exe','rb').read(); print('Common-Controls:', b'Microsoft.Windows.Common-Controls' in d)"
+```
+
+Expected: `Common-Controls: True`.
+
+**The fallback is mandatory, not optional.** Measured: adding `/MANIFESTINPUT` alone fails to link with `CVTRES : fatal error CVT1100: 资源重复。类型: MANIFEST` because `tauri-build` emits its own `RT_MANIFEST` at resource ID 1 in `resource.rc`. Both cannot coexist. So suppress tauri-build's manifest and keep ours:
+
+```rust
+fn main() {
+    #[cfg(target_env = "msvc")]
+    {
+        println!("cargo:rustc-link-arg=/MANIFEST:EMBED");
+        println!("cargo:rustc-link-arg=/MANIFESTINPUT:dock-tauri.exe.manifest");
+        println!("cargo:rerun-if-changed=dock-tauri.exe.manifest");
+    }
+    tauri_build::try_build(
+        tauri_build::Attributes::new().windows_attributes(
+            tauri_build::WindowsAttributes::new_without_app_manifest(),
+        ),
+    )
+    .expect("failed to run tauri-build");
+}
+```
+
+Then repeat Step 5. Do not report success without Step 5 passing.
+
+**Do not omit the `<dependency>` block from the manifest.** Suppressing tauri-build's manifest also drops the `Microsoft.Windows.Common-Controls` v6 assembly dependency it declared, which Tauri's dialog APIs and native controls rely on. Step 5b checks for it explicitly.
+
+- [ ] **Step 6: Measure the corrected display metrics**
+
+```bash
+python -c "import ctypes; ctypes.windll.shcore.SetProcessDpiAwareness(2); u=ctypes.windll.user32; print('SM_CXSCREEN:', u.GetSystemMetrics(0)); print('SM_CYSCREEN:', u.GetSystemMetrics(1)); print('DPI:', u.GetDpiForSystem())"
+```
+
+Expected on this machine: about 2560×1440 and DPI 144. Record the real numbers — they are the evidence.
+
+- [ ] **Step 7: Commit**
+
+```bash
+cd D:/dockyh
+git add dock-tauri/src-tauri/dock-tauri.exe.manifest dock-tauri/src-tauri/build.rs \
+  dock-tauri/src-tauri/Cargo.toml dock-tauri/src-tauri/tests/unit/dpi_manifest.rs
+git commit -m "fix: declare per-monitor dpi awareness in the exe manifest"
 ```
 
 ---
