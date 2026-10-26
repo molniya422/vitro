@@ -61,6 +61,16 @@ impl AutoHide {
         }
     }
 
+    /// Whether auto-hide is currently active (enabled and not locked).
+    pub fn enabled(&self) -> bool {
+        self.enabled && !self.locked
+    }
+
+    /// True while a delayed transition is armed and a tick is still needed.
+    pub fn pending(&self) -> bool {
+        self.deadline.is_some()
+    }
+
     pub fn set_locked(&mut self, locked: bool) {
         self.locked = locked;
         if locked {

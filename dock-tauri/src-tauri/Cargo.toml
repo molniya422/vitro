@@ -3,6 +3,7 @@ name = "dock-tauri"
 version = "0.1.0"
 edition = "2021"
 rust-version = "1.89"
+default-run = "dock-tauri"
 
 [lib]
 name = "dock_tauri_lib"
@@ -95,5 +96,9 @@ path = "tests/unit/metrics_supervisor.rs"
 [[test]]
 name = "dock_state_view"
 path = "tests/unit/dock_state_view.rs"
+
+[[test]]
+name = "window_geom"
+path = "tests/unit/window_geom.rs"
 
 [workspace]

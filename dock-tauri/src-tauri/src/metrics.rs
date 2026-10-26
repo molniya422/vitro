@@ -6,6 +6,8 @@ use std::path::PathBuf;
 use std::process::{Child, ChildStdin, ChildStdout, Command, Stdio};
 
 #[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize)]
+// The sidecar speaks snake_case; the webview model is camelCase.
+#[serde(rename_all(serialize = "camelCase", deserialize = "snake_case"))]
 pub struct Sample {
     pub cpu: f64,
     pub mem_used: u64,

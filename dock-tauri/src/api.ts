@@ -1,6 +1,6 @@
 import { invoke } from "@tauri-apps/api/core";
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
-import type { DockState, MonitorSample } from "./types";
+import type { AutoHideState, DockState, MonitorSample } from "./types";
 
 export const api = {
   getDockState: () => invoke<DockState>("get_dock_state"),
@@ -10,6 +10,12 @@ export const api = {
   saveSettings: (settings: Record<string, unknown>) =>
     invoke<void>("save_settings", { settings }),
   sampleMonitor: () => invoke<MonitorSample>("sample_monitor"),
+  setPointerInside: (inside: boolean, nowMs: number) =>
+    invoke<AutoHideState>("set_pointer_inside", { inside, nowMs }),
+  autohideTick: (nowMs: number) =>
+    invoke<AutoHideState>("autohide_tick", { nowMs }),
+  setAutohideEnabled: (enabled: boolean) =>
+    invoke<AutoHideState>("set_autohide_enabled", { enabled }),
 };
 
 export function onDockState(handler: (state: DockState) => void): Promise<UnlistenFn> {

@@ -32,3 +32,9 @@ export interface MonitorSample {
   netRx: number;
   netTx: number;
 }
+
+export interface AutoHideState {
+  enabled: boolean;
+  visible: boolean;
+  pending: boolean;
+}

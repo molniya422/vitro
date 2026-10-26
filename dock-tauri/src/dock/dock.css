@@ -30,7 +30,10 @@ body,
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  height: 100%;
+  /* 100vh keeps the pill anchored to the window bottom even though #root has
+     no height; border-box keeps the reflection margin inside the viewport. */
+  height: 100vh;
+  box-sizing: border-box;
   padding-bottom: 40px; /* reflection margin */
 }
 
@@ -47,6 +50,11 @@ body,
     inset 0 1px 0 var(--glass-top-highlight),
     inset 0 -1px 0 var(--glass-bottom-shadow);
   /* No outer stroke, no heavy outer shadow: depth comes from the material. */
+}
+
+/* Collapsed: only the control tile stays, so the pill shrinks to a handle. */
+.dock-pill.is-collapsed .dock-item:not(.control-tile) {
+  display: none;
 }
 
 /* Tiled monochrome grain, pre-rendered as a repeating layer. */

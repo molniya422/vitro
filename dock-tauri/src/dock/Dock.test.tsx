@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react";
+import type { ComponentProps } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { Dock } from "./Dock";
 import type { DockState } from "../types";
@@ -17,9 +18,24 @@ const state: DockState = {
   ],
 };
 
+function renderDock(overrides: Partial<ComponentProps<typeof Dock>> = {}) {
+  return render(
+    <Dock
+      state={state}
+      collapsed={false}
+      onToggleCollapsed={vi.fn()}
+      onOpenSettings={vi.fn()}
+      onOpenLaunchpad={vi.fn()}
+      onOpenMonitor={vi.fn()}
+      onActivate={vi.fn()}
+      {...overrides}
+    />,
+  );
+}
+
 describe("Dock", () => {
   it("renders every tile state", () => {
-    render(<Dock state={state} onActivate={vi.fn()} />);
+    renderDock();
     expect(screen.getByLabelText("Idle")).toBeInTheDocument();
     expect(screen.getByLabelText("Running, running")).toBeInTheDocument();
     expect(screen.getByLabelText("2 minimized")).toBeInTheDocument();
