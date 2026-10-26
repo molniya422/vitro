@@ -1010,10 +1010,15 @@ pub struct AutoHide {
 
 impl AutoHide {
     pub fn new(enabled: bool) -> Self {
+        // An enabled auto-hide dock starts collapsed; a disabled one is always up.
         Self {
             enabled,
             locked: false,
-            visibility: Visibility::Visible,
+            visibility: if enabled {
+                Visibility::Hidden
+            } else {
+                Visibility::Visible
+            },
             deadline: None,
             pending: None,
         }
