@@ -29,6 +29,7 @@ windows = { version = "0.61", features = [
     "Win32_UI_WindowsAndMessaging",
     "Win32_System_Com",
     "Win32_Graphics_Gdi",
+    "Win32_UI_HiDpi",
 ] }
 
 [build-dependencies]
@@ -57,5 +58,9 @@ path = "tests/unit/autohide.rs"
 [[test]]
 name = "settings"
 path = "tests/unit/settings.rs"
+
+[[test]]
+name = "platform_monitor"
+path = "tests/unit/platform_monitor.rs"
 
 [workspace]
