@@ -1226,6 +1226,29 @@ fn unsupported_schema_is_rejected() {
 }
 
 #[test]
+fn a_newer_schema_is_not_masked_by_a_valid_backup() {
+    let dir = tempfile::tempdir().unwrap();
+    let path = dir.path().join("settings.json");
+
+    // A perfectly good backup that load_or_recover *could* fall back to.
+    save_atomic(&path, &sample()).unwrap();
+    let mut newer = sample();
+    newer.icon_size = 64;
+    save_atomic(&path, &newer).unwrap();
+    assert!(dir.path().join("settings.json.bak").exists());
+
+    // Main file is valid JSON but from a future schema version.
+    let mut future = sample();
+    future.schema_version = 999;
+    std::fs::write(&path, serde_json::to_vec(&future).unwrap()).unwrap();
+
+    // A newer schema is not corruption: it must surface, not be replaced by
+    // the older backup.
+    let err = load_or_recover(&path).unwrap_err();
+    assert!(matches!(err, SettingsError::UnsupportedSchema(999)));
+}
+
+#[test]
 fn save_leaves_no_temp_file_behind() {
     let dir = tempfile::tempdir().unwrap();
     let path = dir.path().join("settings.json");
@@ -1297,7 +1320,7 @@ impl Default for Settings {
 
 #[derive(Debug, thiserror::Error)]
 pub enum SettingsError {
-    #[error("settings file is corrupt: {0}")]
+    #[error("settings file is corrupt: {detail}")]
     Corrupt { detail: String },
     #[error("unsupported settings schema {0}")]
     UnsupportedSchema(u32),
@@ -1394,7 +1417,7 @@ Add `pub mod settings;` to `lib.rs`, then:
 D:/rust/cargo/bin/cargo.exe test --manifest-path D:/dockyh/dock-tauri/src-tauri/Cargo.toml --test settings
 ```
 
-Expected: 7 tests pass.
+Expected: 8 tests pass.
 
 `both_corrupt_returns_a_typed_error_not_a_panic` requires the `Corrupt` branch to wrap the backup error, which the `match` above does.
 
