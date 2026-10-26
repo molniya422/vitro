@@ -2178,15 +2178,20 @@ git commit -m "feat: add start menu catalog launch and reconciliation"
 
 ---
 
-## Task 7: Icon extraction with disk cache
+## Task 7: Shell icon extraction with disk cache
 
 **Files:**
 - Create: `dock-tauri/src-tauri/src/icon_cache.rs`
 - Modify: `dock-tauri/src-tauri/src/lib.rs`
 - Modify: `dock-tauri/src-tauri/Cargo.toml`
 - Test: `dock-tauri/src-tauri/tests/unit/icon_cache.rs`
+- Test: `dock-tauri/src-tauri/tests/unit/icon_extract.rs`
 
-- [ ] **Step 1: Write the failing test**
+**Why this task matters:** without it every dock tile renders a letter placeholder instead of the app's real icon. This is the most visually important backend task in the plan.
+
+**Critical trap — read before writing code:** `SHGetFileInfoW` + `SHGFI_ICON` always returns the **16 px** system icon. It has no size parameter. Using it and stretching to 48 px produces blurry mush. The correct source of large icons is `SHGetImageList(SHIL_JUMBO)` (256 px), falling back to `SHIL_EXTRALARGE` (48 px), then `SHGFI_ICON` (16 px) only as a last resort.
+
+- [ ] **Step 1: Write the failing cache tests**
 
 `dock-tauri/src-tauri/tests/unit/icon_cache.rs`:
 
@@ -2205,9 +2210,10 @@ fn cache_key_is_stable_and_size_specific() {
 
 #[test]
 fn key_is_case_insensitive_for_paths() {
-    let a = IconCache::key("C:/X/Notepad.lnk", 48);
-    let b = IconCache::key("c:/x/notepad.lnk", 48);
-    assert_eq!(a, b);
+    assert_eq!(
+        IconCache::key("C:/X/Notepad.lnk", 48),
+        IconCache::key("c:/x/notepad.lnk", 48)
+    );
 }
 
 #[test]
@@ -2226,8 +2232,7 @@ fn stores_and_reads_a_data_url() {
 fn miss_returns_none_without_error() {
     let dir = tempfile::tempdir().unwrap();
     let cache = IconCache::new(dir.path().to_path_buf());
-    let key = IconCache::key("C:/x/missing.lnk", 48);
-    assert!(cache.read(&key).is_none());
+    assert!(cache.read(&IconCache::key("C:/x/missing.lnk", 48)).is_none());
 }
 
 #[test]
@@ -2240,20 +2245,65 @@ fn empty_cache_entry_is_treated_as_a_miss() {
 }
 ```
 
-- [ ] **Step 2: Run it and confirm failure**
+- [ ] **Step 2: Write the failing extraction tests**
 
-```bash
-D:/rust/cargo/bin/cargo.exe test --manifest-path D:/dockyh/dock-tauri/src-tauri/Cargo.toml --test icon_cache
+`dock-tauri/src-tauri/tests/unit/icon_extract.rs`:
+
+```rust
+use dock_tauri_lib::icon_cache::{extract_png, IconCache};
+
+#[test]
+fn extraction_from_a_missing_path_returns_none() {
+    assert!(extract_png(std::path::Path::new("Z:/nope/missing.exe"), 48).is_none());
+}
+
+#[test]
+fn extraction_from_a_real_shortcut_produces_a_real_png() {
+    let dirs = dock_tauri_lib::apps::start_menu_dirs();
+    let entries = dock_tauri_lib::apps::catalog_from_dirs(&dirs);
+    let Some(first) = entries.first() else {
+        return;
+    };
+    let Some(png) = extract_png(std::path::Path::new(&first.id), 48) else {
+        return;
+    };
+    assert_eq!(&png[1..4], b"PNG", "output must be a PNG");
+
+    // A real icon is at least the requested size on its short edge, and is not
+    // a single flat colour. A 16 px system icon stretched to 48 px would fail
+    // the dimension check.
+    let image = image::load_from_memory(&png).expect("decoded png");
+    let (w, h) = (image.width(), image.height());
+    assert!(
+        w >= 48 && h >= 48,
+        "icon must be at least 48px, got {w}x{h} (SHGFI_ICON returns 16px — use SHGetImageList)"
+    );
+}
 ```
 
-Expected: FAIL — module missing.
+`image` is a normal dependency, so the test can use it.
 
-- [ ] **Step 3: Register the target and add dependencies**
+- [ ] **Step 3: Run both and confirm failure**
+
+```bash
+export CARGO_HOME='D:\rust\cargo' RUSTUP_HOME='D:\rust\rustup'
+D:/rust/cargo/bin/cargo.exe test --manifest-path D:/dockyh/dock-tauri/src-tauri/Cargo.toml --test icon_cache --test icon_extract
+```
+
+Expected: FAIL — `icon_cache` module does not exist.
+
+- [ ] **Step 4: Register the targets and dependencies**
+
+In `dock-tauri/src-tauri/Cargo.toml`:
 
 ```toml
 [[test]]
 name = "icon_cache"
 path = "tests/unit/icon_cache.rs"
+
+[[test]]
+name = "icon_extract"
+path = "tests/unit/icon_extract.rs"
 ```
 
 Add to `[dependencies]`:
@@ -2263,16 +2313,16 @@ sha2 = "0.10"
 base64 = "0.22"
 ```
 
-- [ ] **Step 4: Implement the cache**
+- [ ] **Step 5: Implement the cache and extraction**
 
 `dock-tauri/src-tauri/src/icon_cache.rs`:
 
 ```rust
-//! Disk cache for extracted app icons, served to the UI as data URLs.
+//! Shell icon extraction and a disk cache served to the UI as data URLs.
 
 use base64::Engine;
 use sha2::{Digest, Sha256};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 pub struct IconCache {
     dir: PathBuf,
@@ -2283,7 +2333,7 @@ impl IconCache {
         Self { dir }
     }
 
-    /// Cache key: sha256 of lowercased path plus icon size.
+    /// Cache key: sha256 of the lowercased, forward-slashed path plus icon size.
     pub fn key(path: &str, size: u32) -> String {
         let normalized = path.replace('\\', "/").to_ascii_lowercase();
         let mut hasher = Sha256::new();
@@ -2312,193 +2362,11 @@ impl IconCache {
         Some(format!("data:image/png;base64,{encoded}"))
     }
 }
-```
 
-- [ ] **Step 5: Implement Shell icon extraction**
-
-Append to `dock-tauri/src-tauri/src/icon_cache.rs`:
-
-```rust
-/// Extract an icon for `path` as PNG bytes at `size` pixels.
-#[cfg(windows)]
-pub fn extract_png(path: &std::path::Path, size: u32) -> Option<Vec<u8>> {
-    use std::os::windows::ffi::OsStrExt;
-    use windows::core::PCWSTR;
-    use windows::Win32::UI::Shell::{
-        SHGetFileInfoW, SHFILEINFOW, SHGFI_ICON, SHGFI_USEFILEATTRIBUTES,
-    };
-    use windows::Win32::UI::WindowsAndMessaging::DestroyIcon;
-
-    let wide: Vec<u16> = path
-        .as_os_str()
-        .encode_wide()
-        .chain(std::iter::once(0))
-        .collect();
-
-    let mut info = SHFILEINFOW::default();
-    // SAFETY: `wide` is NUL-terminated and outlives the call; `info` is a local
-    // out-parameter. The returned HICON is destroyed before returning.
-    let ok = unsafe {
-        SHGetFileInfoW(
-            PCWSTR(wide.as_ptr()),
-            windows::Win32::Storage::FileSystem::FILE_ATTRIBUTE_NORMAL,
-            Some(&mut info),
-            std::mem::size_of::<SHFILEINFOW>() as u32,
-            SHGFI_ICON | SHGFI_USEFILEATTRIBUTES,
-        )
-    };
-    if ok == 0 || info.hIcon.is_invalid() {
-        return None;
-    }
-
-    let png = hicon_to_png(info.hIcon, size);
-    // SAFETY: the icon handle came from SHGetFileInfoW and is no longer used.
-    unsafe {
-        let _ = DestroyIcon(info.hIcon);
-    }
-    png
-}
-
-#[cfg(windows)]
-fn hicon_to_png(icon: windows::Win32::UI::WindowsAndMessaging::HICON, size: u32) -> Option<Vec<u8>> {
-    use windows::Win32::Graphics::Gdi::{
-        DeleteObject, GetDC, GetDIBits, ReleaseDC, BITMAPINFO, BITMAPINFOHEADER, BI_RGB,
-        DIB_RGB_COLORS, HGDIOBJ,
-    };
-    use windows::Win32::UI::WindowsAndMessaging::{GetIconInfo, ICONINFO};
-
-    // SAFETY: every GDI object created here is released before returning.
-    unsafe {
-        let mut icon_info = ICONINFO::default();
-        if GetIconInfo(icon, &mut icon_info).is_err() {
-            return None;
-        }
-
-        let header = BITMAPINFOHEADER {
-            biSize: std::mem::size_of::<BITMAPINFOHEADER>() as u32,
-            biWidth: size as i32,
-            biHeight: -(size as i32), // negative height = top-down rows
-            biPlanes: 1,
-            biBitCount: 32,
-            biCompression: BI_RGB.0,
-            ..Default::default()
-        };
-        let mut bitmap_info = BITMAPINFO {
-            bmiHeader: header,
-            ..Default::default()
-        };
-
-        let dc = GetDC(None);
-        if dc.is_invalid() {
-            let _ = DeleteObject(HGDIOBJ(icon_info.hbmMask.0));
-            let _ = DeleteObject(HGDIOBJ(icon_info.hbmColor.0));
-            return None;
-        }
-
-        let mut buffer = vec![0u8; (size * size * 4) as usize];
-        let lines = GetDIBits(
-            dc,
-            icon_info.hbmColor,
-            0,
-            size,
-            Some(buffer.as_mut_ptr() as *mut _),
-            &mut bitmap_info,
-            DIB_RGB_COLORS,
-        );
-        ReleaseDC(None, dc);
-        let _ = DeleteObject(HGDIOBJ(icon_info.hbmMask.0));
-        let _ = DeleteObject(HGDIOBJ(icon_info.hbmColor.0));
-
-        if lines == 0 {
-            return None;
-        }
-
-        // Shell icons come back as BGRA; `image` expects RGBA.
-        for pixel in buffer.chunks_exact_mut(4) {
-            pixel.swap(0, 2);
-        }
-
-        let image = image::RgbaImage::from_raw(size, size, buffer)?;
-        let mut png = std::io::Cursor::new(Vec::new());
-        image.write_to(&mut png, image::ImageFormat::Png).ok()?;
-        Some(png.into_inner())
-    }
-}
-
-#[cfg(not(windows))]
-pub fn extract_png(_path: &std::path::Path, _size: u32) -> Option<Vec<u8>> {
-    None
-}
-```
-
-Add `Win32_Storage_FileSystem` to the `windows` feature list in `src-tauri/Cargo.toml`:
-
-```toml
-    "Win32_Storage_FileSystem",
-```
-
-- [ ] **Step 6: Write extraction tests**
-
-`dock-tauri/src-tauri/tests/unit/icon_extract.rs`:
-
-```rust
-use dock_tauri_lib::icon_cache::{extract_png, IconCache};
-
-#[test]
-fn extraction_from_a_missing_path_returns_none() {
-    assert!(extract_png(std::path::Path::new("Z:/nope/missing.exe"), 48).is_none());
-}
-
-#[test]
-fn extraction_never_panics_and_returns_png_when_the_shell_cooperates() {
-    let dirs = dock_tauri_lib::apps::start_menu_dirs();
-    let entries = dock_tauri_lib::apps::catalog_from_dirs(&dirs);
-    let Some(first) = entries.first() else {
-        return;
-    };
-    if let Some(png) = extract_png(std::path::Path::new(&first.id), 48) {
-        assert!(png.len() > 8);
-        assert_eq!(&png[1..4], b"PNG");
-    }
-}
-
-#[test]
-fn extract_store_then_read_round_trips() {
-    let dirs = dock_tauri_lib::apps::start_menu_dirs();
-    let entries = dock_tauri_lib::apps::catalog_from_dirs(&dirs);
-    let Some(first) = entries.first() else {
-        return;
-    };
-    let Some(png) = extract_png(std::path::Path::new(&first.id), 48) else {
-        return;
-    };
-    let tmp = tempfile::tempdir().unwrap();
-    let cache = IconCache::new(tmp.path().to_path_buf());
-    let key = IconCache::key(&first.id, 48);
-    cache.store(&key, &png).unwrap();
-    assert!(cache.read(&key).unwrap().starts_with("data:image/png;base64,"));
-}
-```
-
-Register it:
-
-```toml
-[[test]]
-name = "icon_extract"
-path = "tests/unit/icon_extract.rs"
-```
-
-These tests tolerate the Shell returning nothing, but must never panic.
-
-- [ ] **Step 6b: Add the `icons_for` helper**
-
-Append to `dock-tauri/src-tauri/src/icon_cache.rs`:
-
-```rust
 /// Data URLs for every app, extracting and caching on first use.
 pub fn icons_for(apps: &[crate::apps::AppEntry], size: u32) -> Vec<Option<String>> {
     let dir = std::env::var("APPDATA")
-        .map(|base| std::path::PathBuf::from(base).join("DockApp/icons"))
+        .map(|base| PathBuf::from(base).join("DockApp/icons"))
         .unwrap_or_else(|_| std::env::temp_dir().join("dockapp-icons"));
     let cache = IconCache::new(dir);
     apps.iter()
@@ -2507,17 +2375,162 @@ pub fn icons_for(apps: &[crate::apps::AppEntry], size: u32) -> Vec<Option<String
             if let Some(url) = cache.read(&key) {
                 return Some(url);
             }
-            let png = extract_png(std::path::Path::new(&app.id), size)?;
+            let png = extract_png(Path::new(&app.id), size)?;
             cache.store(&key, &png).ok()?;
             cache.read(&key)
         })
         .collect()
 }
+
+/// Extract an icon for `path` as a PNG sized to `size` pixels.
+///
+/// Prefers the 256 px jumbo image list, then 48 px, then the 16 px system icon,
+/// upscaling only as a last resort.
+#[cfg(windows)]
+pub fn extract_png(path: &Path, size: u32) -> Option<Vec<u8>> {
+    extract::extract_icon(path, size)
+}
+
+#[cfg(not(windows))]
+pub fn extract_png(_path: &Path, _size: u32) -> Option<Vec<u8>> {
+    None
+}
+
+#[cfg(windows)]
+mod extract {
+    use super::*;
+    use std::os::windows::ffi::OsStrExt;
+    use windows::core::{Interface, PCWSTR};
+    use windows::Win32::Graphics::Gdi::{
+        DeleteObject, GetDC, GetDIBits, ReleaseDC, BITMAPINFO, BITMAPINFOHEADER, BI_RGB,
+        DIB_RGB_COLORS, HGDIOBJ,
+    };
+    use windows::Win32::UI::Shell::{
+        SHGetFileInfoW, SHGetImageList, SHFILEINFOW, SHGFI_ICON, SHGFI_SYSICONINDEX, SHIL_EXTRALARGE,
+        SHIL_JUMBO,
+    };
+    use windows::Win32::UI::WindowsAndMessaging::{DestroyIcon, GetIconInfo, HICON, ICONINFO};
+
+    fn wide(path: &Path) -> Vec<u16> {
+        path.as_os_str()
+            .encode_wide()
+            .chain(std::iter::once(0))
+            .collect()
+    }
+
+    fn file_info(path: &Path, flags: u32) -> Option<SHFILEINFOW> {
+        let name = wide(path);
+        let mut info = SHFILEINFOW::default();
+        // SAFETY: `name` is NUL-terminated and outlives the call; `info` is a
+        // local out-parameter.
+        let ok = unsafe {
+            SHGetFileInfoW(
+                PCWSTR(name.as_ptr()),
+                windows::Win32::Storage::FileSystem::FILE_ATTRIBUTE_NORMAL,
+                Some(&mut info),
+                std::mem::size_of::<SHFILEINFOW>() as u32,
+                windows::Win32::UI::Shell::SHGFI_FLAGS(flags),
+            )
+        };
+        (ok != 0).then_some(info)
+    }
+
+    /// Best available HICON: jumbo -> extra large -> small.
+    fn best_icon(path: &Path) -> Option<HICON> {
+        // System image-list index, then borrow the large lists from the Shell.
+        if let Some(info) = file_info(path, SHGFI_SYSICONINDEX.0) {
+            for shil in [SHIL_JUMBO, SHIL_EXTRALARGE] {
+                // SAFETY: SHGetImageList returns a borrowed Shell-owned list.
+                if let Ok(list) =
+                    unsafe { SHGetImageList(shil.0 as i32) }
+                {
+                    // SAFETY: index came from the Shell; the HICON is ours to free.
+                    if let Ok(icon) = unsafe { list.GetIcon(info.iIcon, 0x1 /* ILD_TRANSPARENT */) } {
+                        return Some(icon);
+                    }
+                }
+            }
+        }
+        // Last resort: the small system icon.
+        file_info(path, SHGFI_ICON.0).map(|info| info.hIcon)
+    }
+
+    fn hicon_to_png(icon: HICON, size: u32) -> Option<Vec<u8>> {
+        // SAFETY: every GDI object created here is released before returning.
+        unsafe {
+            let mut icon_info = ICONINFO::default();
+            if GetIconInfo(icon, &mut icon_info).is_err() {
+                return None;
+            }
+
+            let header = BITMAPINFOHEADER {
+                biSize: std::mem::size_of::<BITMAPINFOHEADER>() as u32,
+                biWidth: size as i32,
+                biHeight: -(size as i32), // negative = top-down rows
+                biPlanes: 1,
+                biBitCount: 32,
+                biCompression: BI_RGB.0,
+                ..Default::default()
+            };
+            let mut bitmap_info = BITMAPINFO {
+                bmiHeader: header,
+                ..Default::default()
+            };
+
+            let dc = GetDC(None);
+            if dc.is_invalid() {
+                let _ = DeleteObject(HGDIOBJ(icon_info.hbmMask.0));
+                let _ = DeleteObject(HGDIOBJ(icon_info.hbmColor.0));
+                return None;
+            }
+
+            let mut buffer = vec![0u8; (size * size * 4) as usize];
+            let lines = GetDIBits(
+                dc,
+                icon_info.hbmColor,
+                0,
+                size,
+                Some(buffer.as_mut_ptr() as *mut _),
+                &mut bitmap_info,
+                DIB_RGB_COLORS,
+            );
+            ReleaseDC(None, dc);
+            let _ = DeleteObject(HGDIOBJ(icon_info.hbmMask.0));
+            let _ = DeleteObject(HGDIOBJ(icon_info.hbmColor.0));
+
+            if lines == 0 {
+                return None;
+            }
+
+            // Shell icons are BGRA; `image` expects RGBA.
+            for pixel in buffer.chunks_exact_mut(4) {
+                pixel.swap(0, 2);
+            }
+
+            let rgba = image::RgbaImage::from_raw(size, size, buffer)?;
+            let mut png = std::io::Cursor::new(Vec::new());
+            rgba.write_to(&mut png, image::ImageFormat::Png).ok()?;
+            Some(png.into_inner())
+        }
+    }
+
+    pub fn extract_icon(path: &Path, size: u32) -> Option<Vec<u8>> {
+        let icon = best_icon(path)?;
+        // HICONs are reference-counted by the Shell image list; DestroyIcon is
+        // still correct for handles we own from GetIcon / SHGFI_ICON.
+        let png = hicon_to_png(icon, size);
+        // SAFETY: the handle is no longer used after this point.
+        unsafe {
+            let _ = DestroyIcon(icon);
+        }
+        png
+    }
+}
 ```
 
-This is what puts real icons on tiles. Without it every tile renders the fallback glyph.
+**Note on `SHGetImageList` in windows 0.61:** the function signature and the `IImageList` cast may differ. Verify against `D:/rust/cargo/registry/src/*/windows-0.61.3/src/Windows/Win32/UI/Shell/mod.rs`. If `SHGetImageList` is not exposed, use `SHGetFileInfoW` with `SHGFI_SYSICONINDEX` plus `IImageList` from `SHGetImageList`, or fall back to requesting `SHGFI_ICON` and accept 16 px only as the documented last resort. Do **not** claim large icons work unless the test's `>= 48` assertion passes.
 
-- [ ] **Step 7: Export and run**
+- [ ] **Step 6: Export and run**
 
 Add `pub mod icon_cache;` to `lib.rs`, then:
 
@@ -2525,15 +2538,27 @@ Add `pub mod icon_cache;` to `lib.rs`, then:
 D:/rust/cargo/bin/cargo.exe test --manifest-path D:/dockyh/dock-tauri/src-tauri/Cargo.toml --test icon_cache --test icon_extract
 ```
 
-Expected: 5 cache tests pass; 3 extraction tests pass.
+Expected: 5 cache tests and 2 extraction tests pass. If `extraction_from_a_real_shortcut_produces_a_real_png` fails on the `>= 48` assertion, the jumbo image list is not being used — fix the extraction, do not lower the assertion.
 
-- [ ] **Step 8: Commit**
+- [ ] **Step 7: Probe three real icons (do not commit the probe)**
+
+Write a temporary test or example that takes the first 3 entries from `catalog_from_dirs(&start_menu_dirs())`, extracts each at 48 px, and prints per icon: width, height, byte length, and the number of distinct pixel values (to prove it is not blank). Report those numbers.
+
+- [ ] **Step 8: Run the full gates and commit**
+
+```bash
+D:/rust/cargo/bin/cargo.exe test --manifest-path D:/dockyh/dock-tauri/src-tauri/Cargo.toml
+D:/rust/cargo/bin/cargo.exe clippy --manifest-path D:/dockyh/dock-tauri/src-tauri/Cargo.toml --all-targets -- -D warnings
+D:/rust/cargo/bin/cargo.exe fmt --manifest-path D:/dockyh/dock-tauri/src-tauri/Cargo.toml -- --check
+```
+
+Then:
 
 ```bash
 cd D:/dockyh
 git add dock-tauri/src-tauri/src/icon_cache.rs dock-tauri/src-tauri/src/lib.rs \
-  dock-tauri/src-tauri/Cargo.toml dock-tauri/src-tauri/tests/unit/icon_cache.rs \
-  dock-tauri/src-tauri/tests/unit/icon_extract.rs
+  dock-tauri/src-tauri/Cargo.toml dock-tauri/src-tauri/Cargo.lock \
+  dock-tauri/src-tauri/tests/unit/icon_cache.rs dock-tauri/src-tauri/tests/unit/icon_extract.rs
 git commit -m "feat: add shell icon extraction with disk cache"
 ```
 
@@ -5680,7 +5705,7 @@ git commit -m "perf: add memory gates and release profile, document measured res
 
 ### Items that were gaps and are now covered
 
-- **Icon extraction** — Task 7 steps 5–6b implement `SHGetFileInfoW` → BGRA→RGBA → PNG, plus `icons_for` to populate `DockItemView.icon`. Without this the dock would show letter placeholders.
+- **Icon extraction** — Task 7 implements `SHGetImageList(SHIL_JUMBO)` → BGRA→RGBA → PNG (`SHGetImageList` gives 256 px; `SHGetFileInfoW`/`SHGFI_ICON` alone only ever returns 16 px), plus `icons_for` to populate `DockItemView.icon`. The extraction test asserts the result is at least 48 px, which fails if the small-icon path is used.
 - **Icon wiring into the view** — `build_dock_state` takes an `icons: &[Option<String>]` parameter (Task 12) and every call site in Tasks 12 and 14 passes it.
 
 ### Type-consistency notes for the implementer
