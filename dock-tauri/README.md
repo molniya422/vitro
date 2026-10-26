@@ -125,9 +125,10 @@ at `docs/superpowers/plans/2026-10-26-tauri-python-dock-implementation.md`.
   missed. Verified working for ordinary `.exe` shortcuts.
 - **Window filter.** Windows whose only window is `WS_EX_TOOLWINDOW` are excluded from the
   snapshot by design, so a few apps can never reconcile.
-- **Auto-hide** is implemented and unit-tested as a state machine, and wired through the
-  `set_pointer_inside` / `autohide_tick` commands, but the live collapse-to-strip behaviour has
-  not been visually signed off. It defaults to off.
+- **Auto-hide** defaults to off (per the spec). It is verified live: with `autohide: true` in
+  settings, startup collapses the window to a 2560x2 strip at the bottom edge, pointer contact
+  expands it to the full dock within about a second, and leaving collapses it again. The
+  trigger strip overlaps the taskbar's lowest 2 px, which is why it ships disabled.
 - **Glass material** is painted (fill + noise + inner highlight/shadow). The DWM Acrylic
   upgrade described in the spec is not implemented; painted glass is the spec's fallback and is
   what ships.
