@@ -3999,10 +3999,12 @@ fn running_and_minimized_flow_into_the_view() {
 
 #[test]
 fn missing_icon_produces_a_null_not_a_placeholder_path() {
+    // Deliberately resolvable target: this test isolates the icon field, while
+    // the next test covers the no-target case.
     let apps = vec![AppEntry {
         id: "c:/x/notepad.lnk".into(),
         display_name: "Notepad".into(),
-        target: None,
+        target: Some("C:/Windows/notepad.exe".into()),
     }];
     let running = vec![RunningInfo { running: false, minimized: 0 }];
     let state = build_dock_state(&apps, &running, &[], &config());
@@ -4241,7 +4243,8 @@ pub fn sample_monitor(runtime: State<'_, Runtime>) -> Result<Sample, CommandErro
 /// frozen `monitor.exe` produced by `backend/build_sidecar.ps1` (Task 15).
 pub fn sidecar_spec() -> crate::metrics::SidecarSpec {
     let root = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-    let launcher = root.join("../../backend/run_sidecar.py");
+    // CARGO_MANIFEST_DIR is .../dock-tauri/src-tauri, so ../backend is correct.
+    let launcher = root.join("../backend/run_sidecar.py");
 
     let python = std::env::var("DOCK_PYTHON")
         .map(PathBuf::from)
@@ -4270,7 +4273,8 @@ use crate::apps::{self, AppEntry, RunningInfo, WindowRef};
 #[cfg(windows)]
 pub fn snapshot_windows() -> Vec<WindowRef> {
     use std::os::windows::ffi::OsStringExt;
-    use windows::Win32::Foundation::{BOOL, HWND, LPARAM, MAX_PATH};
+    use windows::core::BOOL; // windows 0.61: BOOL lives in windows::core, not Foundation
+    use windows::Win32::Foundation::{HWND, LPARAM, MAX_PATH};
     use windows::Win32::UI::WindowsAndMessaging::{
         EnumWindows, GetWindowLongW, GetWindowTextLengthW, GetWindowThreadProcessId, IsIconic,
         IsWindowVisible, GWL_EXSTYLE, WS_EX_TOOLWINDOW,
@@ -5885,6 +5889,16 @@ git commit -m "perf: add memory gates and release profile, document measured res
 1. **DWM Acrylic probe** (spec §7.1) — Task 11 ships painted glass only. The spec's fallback contract is satisfied (glass is always painted), but the acrylic *upgrade* is absent. Contained follow-up: call `window_vibrancy::apply_acrylic`, screenshot the pill corners, compare against the painted baseline, disable acrylic on mismatch.
 2. **Auto-hide needs real edge-trigger wiring** (spec §7.3) — Task 3 implements and tests the timing state machine. Shrinking the live window to a 2 px strip and driving reveal from mouse-enter needs a geometry path like Task 14's; it is not written here. Because of this, auto-hide stays **off by default**, which the spec already requires.
 3. **Playwright E2E** (spec §10) — no task exists. The Rust settings tests cover persistence across restart, but the cross-surface browser flows in the spec are not automated.
+
+### Known limitation: running-state matching
+
+Measured after Task 12: on a machine with 5 visible title-bearing windows and 27 catalog entries, **0** apps matched. Reasons found:
+
+- MSIX / Store apps (Windows Terminal, Settings) have no classic Start Menu `.lnk` target, so `AppEntry.target` is `None` and they can never match.
+- Shell-folder shortcuts (`File Explorer`) resolve to no executable path.
+- Apps whose main window is `WS_EX_TOOLWINDOW` are excluded by the tracker's filter.
+
+Reconciliation works for ordinary packaged `.exe` shortcuts (verified: `ZCode`, `豆包` resolve to real targets). This is acceptable for v1 — the dock shows a running dot for apps it can identify — but the README must state it, and improving identity for MSIX apps (AUMID-based matching) is follow-up work, not a bug in the current task.
 
 ### Items that were gaps and are now covered
 
