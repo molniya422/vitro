@@ -1,5 +1,6 @@
 //! Dock Tauri host: window geometry, app catalog, metrics sidecar, settings.
 
+pub mod apps;
 pub mod autohide;
 pub mod geometry;
 pub mod platform;
