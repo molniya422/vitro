@@ -2530,6 +2530,18 @@ mod extract {
 
 **Note on `SHGetImageList` in windows 0.61:** the function signature and the `IImageList` cast may differ. Verify against `D:/rust/cargo/registry/src/*/windows-0.61.3/src/Windows/Win32/UI/Shell/mod.rs`. If `SHGetImageList` is not exposed, use `SHGetFileInfoW` with `SHGFI_SYSICONINDEX` plus `IImageList` from `SHGetImageList`, or fall back to requesting `SHGFI_ICON` and accept 16 px only as the documented last resort. Do **not** claim large icons work unless the test's `>= 48` assertion passes.
 
+### Implementation notes verified on this machine (windows 0.61.3)
+
+These corrections were required; a later re-run should apply them directly.
+
+- `SHGetImageList::<IImageList>(SHIL_JUMBO)` is generic and needs the turbofish. `SHIL_*` constants are plain `u32`, not newtypes — use `SHIL_JUMBO as i32`.
+- `IImageList` lives in `Win32::UI::Controls`, not `Win32::UI::Shell`. Add the `Win32_UI_Controls` feature.
+- `IImageList::GetIcon(index, flags) -> Result<HICON>` with `ILD_TRANSPARENT.0` as flags.
+- **`SHGetFileInfoW` fails on forward-slash paths.** `AppEntry.id` is normalised to `C:/x/y.lnk`, but the Shell API requires backslashes. Convert with `path.replace('/', "\\")` before calling, exactly like `apps::launch` does. Without this, **every** extraction returns `None` while the image list works fine — the failure looks like an icon-list problem but is a path problem.
+- **`GetDIBits` does not scale.** Passing the requested 48 px against a 256 px icon bitmap fails. Read at the bitmap's native size (`GetObjectW` -> `BITMAP`), then downscale to the target with `image::imageops::resize(..., FilterType::Lanczos3)`. Never upscale: that keeps the 16 px fallback at 16 px so the `>= 48` test can catch it.
+- Many 32 bpp colour bitmaps carry no alpha; use the AND mask (`hbmMask`) for transparency, defaulting to opaque when there is no mask.
+- Clippy 1.99 flags `chunks_exact(4)` in favour of `as_chunks::<4>()`.
+
 - [ ] **Step 6: Export and run**
 
 Add `pub mod icon_cache;` to `lib.rs`, then:
