@@ -114,3 +114,79 @@ impl Drop for SampleRpc {
         self.shutdown();
     }
 }
+
+use std::time::{Duration, Instant};
+
+/// How to launch the sidecar, plus the minimum interval between respawns.
+pub struct SidecarSpec {
+    pub program: PathBuf,
+    pub args: Vec<String>,
+    pub cooldown: Duration,
+}
+
+impl SidecarSpec {
+    pub fn new(program: PathBuf, args: Vec<String>) -> Self {
+        Self {
+            program,
+            args,
+            // Backoff floor: never spawn more than once per two seconds.
+            cooldown: Duration::from_secs(2),
+        }
+    }
+}
+
+/// Owns at most one sidecar and respawns it on demand after a failure.
+pub struct Supervisor {
+    spec: SidecarSpec,
+    rpc: Option<SampleRpc>,
+    last_attempt: Option<Instant>,
+}
+
+impl Supervisor {
+    pub fn new(spec: SidecarSpec) -> Self {
+        Self {
+            spec,
+            rpc: None,
+            last_attempt: None,
+        }
+    }
+
+    pub fn is_running(&self) -> bool {
+        self.rpc.is_some()
+    }
+
+    /// Request a sample, starting the sidecar first if needed.
+    ///
+    /// On failure the broken child is dropped so the next call can respawn it,
+    /// subject to `cooldown`.
+    pub fn sample(&mut self) -> Result<Sample, RpcError> {
+        if self.rpc.is_none() {
+            if let Some(last) = self.last_attempt {
+                if last.elapsed() < self.spec.cooldown {
+                    return Err(RpcError::Closed);
+                }
+            }
+            self.last_attempt = Some(Instant::now());
+            self.rpc = Some(SampleRpc::spawn(
+                self.spec.program.clone(),
+                self.spec.args.clone(),
+            )?);
+        }
+
+        let rpc = self.rpc.as_mut().expect("just spawned");
+        match rpc.sample() {
+            Ok(sample) => Ok(sample),
+            Err(error) => {
+                rpc.shutdown();
+                self.rpc = None;
+                Err(error)
+            }
+        }
+    }
+
+    pub fn shutdown(&mut self) {
+        if let Some(mut rpc) = self.rpc.take() {
+            rpc.shutdown();
+        }
+    }
+}
