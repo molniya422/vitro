@@ -27,13 +27,37 @@ export const TAURI_MOCK = `
     { id: "files-app", kind: "app", name: "Files", icon: null, running: false, minimized: 0, disabledReason: null }
   ];
 
+  const APPEARANCE = {
+    iconSize: 48,
+    iconGap: 8,
+    paddingH: 16,
+    paddingV: 10,
+    pillRadius: 34,
+    tint: "#161a26",
+    fillOpacity: 0.62,
+    iconRadius: 22,
+    reflection: true,
+    reflectionStrength: 0.25,
+    reflectionSpace: 40,
+    magnify: true,
+    magnifyPeak: 1.6,
+    magnifyRadius: 123.2,
+    reducedMotion: false,
+    profile: "vitro",
+    tooltips: true,
+    tooltipDelayMs: 500,
+    showRunningDots: true,
+    showBadges: true,
+    showLaunchpadEntry: true,
+    showMonitorEntry: true,
+    showShelfEntry: true,
+    leadingTiles: 4
+  };
+
   const DOCK_STATE = {
     items: DOCK_ITEMS,
     edge: "bottom",
-    autohide: false,
-    magnify: true,
-    reducedMotion: false,
-    profile: "vitro"
+    appearance: APPEARANCE
   };
 
   const CATALOG = [
@@ -46,15 +70,84 @@ export const TAURI_MOCK = `
   ];
 
   const SETTINGS = {
-    schema_version: 1,
-    icon_size: 48,
+    iconSize: 48,
+    iconGap: 8,
+    paddingH: 16,
+    paddingV: 10,
+    pillRadius: 34,
+    tint: "#161a26",
+    fillOpacity: 0.62,
+    iconRadius: 22,
+    reflection: true,
+    reflectionStrength: 0.25,
     magnify: true,
-    autohide: false,
-    reduced_motion: false,
+    magnifyPeak: 1.6,
+    magnifyRadiusIcons: 2.2,
     profile: "vitro",
-    show_monitor: false,
-    pinned: []
+    reducedMotion: false,
+    tooltips: true,
+    tooltipDelayMs: 500,
+    showRunningDots: true,
+    showBadges: true,
+    autohide: false,
+    showDelayMs: 300,
+    hideDelayMs: 500,
+    yieldFullscreen: true,
+    showLaunchpadEntry: true,
+    showMonitorEntry: true,
+    showShelfEntry: true
   };
+
+  function syncAppearance() {
+    const a = DOCK_STATE.appearance;
+    a.iconSize = SETTINGS.iconSize;
+    a.iconGap = SETTINGS.iconGap;
+    a.paddingH = SETTINGS.paddingH;
+    a.paddingV = SETTINGS.paddingV;
+    a.pillRadius = SETTINGS.pillRadius;
+    a.tint = SETTINGS.tint;
+    a.fillOpacity = SETTINGS.fillOpacity;
+    a.iconRadius = SETTINGS.iconRadius;
+    a.reflection = SETTINGS.reflection;
+    a.reflectionStrength = SETTINGS.reflectionStrength;
+    a.reflectionSpace = SETTINGS.reflection
+      ? Math.round((SETTINGS.iconSize * 5) / 6)
+      : 0;
+    a.magnify = SETTINGS.magnify;
+    a.magnifyPeak = SETTINGS.magnifyPeak;
+    a.magnifyRadius =
+      Math.round(
+        SETTINGS.magnifyRadiusIcons * (SETTINGS.iconSize + SETTINGS.iconGap) * 100
+      ) / 100;
+    a.reducedMotion = SETTINGS.reducedMotion;
+    a.profile = SETTINGS.profile;
+    a.tooltips = SETTINGS.tooltips;
+    a.tooltipDelayMs = SETTINGS.tooltipDelayMs;
+    a.showRunningDots = SETTINGS.showRunningDots;
+    a.showBadges = SETTINGS.showBadges;
+    a.showLaunchpadEntry = SETTINGS.showLaunchpadEntry;
+    a.showMonitorEntry = SETTINGS.showMonitorEntry;
+    a.showShelfEntry = SETTINGS.showShelfEntry;
+    a.leadingTiles =
+      1 +
+      (SETTINGS.showLaunchpadEntry ? 1 : 0) +
+      (SETTINGS.showMonitorEntry ? 1 : 0) +
+      (SETTINGS.showShelfEntry ? 1 : 0);
+  }
+
+  let SHELF = [];
+
+  function shelfItem(path) {
+    // Split on a backslash built from its code point: this source lives inside
+    // a template literal, so a literal escape would collapse before it runs.
+    const parts = String(path)
+      .split(String.fromCharCode(92))
+      .join("/")
+      .split("/")
+      .filter(Boolean);
+    const name = parts.pop() || String(path);
+    return { id: path, name: name, path: path, isDir: false, missing: false, icon: null };
+  }
 
   const MONITOR_SAMPLE = {
     cpu: 42.5,
@@ -140,6 +233,42 @@ export const TAURI_MOCK = `
           return clone(CATALOG);
         case "get_settings":
           return clone(SETTINGS);
+        case "save_settings": {
+          if (payload.settings) {
+            Object.assign(SETTINGS, payload.settings);
+            syncAppearance();
+            window.__MOCK_EMIT__("dock://state", clone(DOCK_STATE));
+          }
+          return null;
+        }
+        case "pin_app": {
+          const id = payload.id;
+          if (!DOCK_STATE.items.some((item) => item.id === id)) {
+            const found = CATALOG.find((item) => item.id === id);
+            if (found && DOCK_STATE.items.length < 10) {
+              DOCK_STATE.items.push(clone(found));
+            }
+          }
+          window.__MOCK_EMIT__("dock://state", clone(DOCK_STATE));
+          return null;
+        }
+        case "unpin_app": {
+          const index = DOCK_STATE.items.findIndex((item) => item.id === payload.id);
+          if (index >= 0) DOCK_STATE.items.splice(index, 1);
+          window.__MOCK_EMIT__("dock://state", clone(DOCK_STATE));
+          return null;
+        }
+        case "reorder_pins": {
+          const byId = new Map(DOCK_STATE.items.map((item) => [item.id, item]));
+          const next = (payload.ids || [])
+            .map((id) => byId.get(id))
+            .filter(Boolean);
+          if (next.length === DOCK_STATE.items.length) {
+            DOCK_STATE.items = next;
+          }
+          window.__MOCK_EMIT__("dock://state", clone(DOCK_STATE));
+          return null;
+        }
         case "sample_monitor":
           return clone(MONITOR_SAMPLE);
         case "plugin:event|listen": {
@@ -154,10 +283,27 @@ export const TAURI_MOCK = `
           callbacks.delete(payload.eventId);
           return null;
         }
-        case "set_pointer_inside":
-        case "autohide_tick":
-        case "set_autohide_enabled":
-          return { enabled: false, visible: true, pending: false };
+        case "set_hit_rects":
+          return null;
+        case "get_shelf":
+          return clone(SHELF);
+        case "shelf_add": {
+          for (const path of payload.paths || []) {
+            const known = SHELF.some(
+              (item) => item.path.toLowerCase() === String(path).toLowerCase(),
+            );
+            if (!known && SHELF.length < 12) SHELF.push(shelfItem(path));
+          }
+          return clone(SHELF);
+        }
+        case "shelf_remove":
+          SHELF = SHELF.filter((item) => item.path !== payload.path);
+          return clone(SHELF);
+        case "shelf_clear":
+          SHELF = [];
+          return clone(SHELF);
+        case "open_shelf_item":
+          return null;
         default:
           return null;
       }

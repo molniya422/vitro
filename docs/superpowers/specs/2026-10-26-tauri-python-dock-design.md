@@ -178,7 +178,7 @@ Two memory gates, because one honest number does not exist for this stack.
 
 | Gate | Target | Measurement |
 |---|---:|---|
-| Tauri host private bytes | **< 30 MB** | 60 s after cold start, no input, median of 3 runs |
+| Tauri host private bytes | **< 30 MB** | 60 s after showing the dock once, pointer away, median of 3 runs |
 | Host + all WebView2 children | **< 200 MB** | Same instant, full process-tree sum |
 | Idle CPU | **< 1%** | 60 s idle, no animation, no active sampling |
 | Hover frame time | p95 ≤ 16.7 ms | Automated hover loop, requestAnimationFrame deltas |
@@ -188,10 +188,14 @@ The measurement script reports host / browser / GPU / utility processes separate
 
 **Optimization commitments that make the gates plausible:**
 - One renderer, always (section 3).
-- No timers at rest: metrics sampling exists only while the monitor route is open; Python blocks on stdin otherwise.
+- No timers at rest: metrics sampling exists only while the monitor route is open. The
+  Python sidecar is stopped after 45 s without a sample and re-warmed on the monitor
+  route, so a closed monitor carries no resident interpreter.
 - 1 Hz window reconciliation, never per-frame enumeration.
 - Icon PNGs cached on disk and served as data URLs, decoded once per session.
 - Reflections and noise pre-rendered, not per-frame.
+- The gate is measured after one reveal: WebView2 only rasterizes the full pill once it
+  has been shown, so a never-revealed measurement under-reports the idle footprint.
 
 ---
 
@@ -253,3 +257,202 @@ This product adds two constraints of its own:
 ## 13. Acceptance definition
 
 A feature is complete only when the platform action, state update, persistence, error path, and accessible interaction all work — not when the icon renders. The v1 release additionally requires both memory gates, the idle-CPU gate, and the cold-start gate to be measured and recorded in the README.
+
+---
+
+## 14. Phase 3 — configurable appearance and native input
+
+This section supersedes the schema-1 persistence detail in §9 and records the product
+requirement that **every dock parameter is user-configurable from a dedicated settings
+page** (icon size, spacing, padding, radius, tint, opacity, reflection, magnification,
+auto-hide, entry visibility, and app membership), plus the input fixes found in live use.
+
+### 14.1 One configuration path
+
+`Settings` (schema 3 since §16, snake_case on disk) → `DockMetrics` / `DockAppearance`
+(pure, logical pixels) → window geometry and React CSS variables. React receives the
+derived appearance in every `dock://state`; it never invents geometry defaults. The
+settings IPC is a camelCase `SettingsView`; pins and the schema version remain owned by
+Rust.
+
+Ranges and defaults live in Phase 3 plan §“The settings model”, mirrored by
+`src/settings/validate.ts`. Rust sanitises values on load and before save so a hand-edited
+file cannot send the window invalid sizes. Schema 1 files load with defaults for new
+fields; a stored `autohide` value is preserved, while new installs default to on.
+
+Height is derived as `icon_size + 2 * padding_v`; width is derived from item count,
+spacing, padding, and the enabled leading tiles. There is no separate fixed width to
+drift from the rendered pill.
+
+### 14.2 Input model
+
+The window is larger than the visible pill (magnify headroom + reflection), so pixels,
+not DOM regions, decide input:
+
+- React reports the measured pill **width** in CSS pixels. The watcher derives the pill
+  rect's position and height from the window rect and the same metrics that sized it, so
+  auto-hide geometry changes cannot stale the hit region. A context menu is reported as
+  an extra overlay rect.
+- The native watcher polls `GetCursorPos` at 16 ms near the dock and 100 ms away, and
+  toggles `set_ignore_cursor_events`. Clicks in the headroom or reflection band reach the
+  application underneath; clicks on the pill and an open menu do not.
+- Auto-hide is scoped to the pill. The reflection band counts as pointer presence so a
+  reveal from the edge does not immediately hide, but it remains click-through. Leaving
+  the pill upward starts the hide delay even while the pointer is still inside the
+  window — the original defect where the window-sized hot zone kept the dock visible.
+- Fullscreen yield compares the foreground window rect to the monitor **screen** rect
+  (maximised windows stop at the work area and do not count). Suppression hides the native
+  window and disables hit testing; exiting fullscreen restores the edge strip.
+
+### 14.3 Icons and startup cost
+
+Icons are extracted at `round(icon_size * monitor.scale)` device pixels (clamped to the
+Shell jumbo 256 px), so a 48 CSS px icon at 150 % uses a 72 px source instead of an
+upscaled 48 px one. The runtime keeps a lazy `IconSnapshot` parallel to the catalog:
+the dock loads pinned icons, Launchpad loads the rest on first open, failures are not
+retried, and the snapshot resets only when the device size or catalog length changes.
+The 1 Hz sync emits only when the running set, pins, or settings change, and it no longer
+touches icon files. The Python sidecar is pre-warmed 500 ms after startup.
+
+### 14.4 Settings and app management
+
+The settings window is an opaque, tabbed surface (Appearance / Behaviour / Apps /
+Advanced) with a live preview. Edits are debounced 300 ms, validated, saved atomically,
+and applied to the running window; closing the panel flushes the last edit. The Apps tab
+adds/removes/reorders pinned apps; the dock's right-click menu removes non-system tiles.
+All actions emit a fresh `dock://state`, so Launchpad, Settings, and the dock agree
+without bespoke refreshes.
+
+### 14.5 Measured result
+
+Release build, 60 s settle, median of three: **5.1 MB host**, **179.2 MB total** including
+WebView2, the Python sidecar, and `conhost`, **0.04 % idle CPU**. Both memory gates and
+the CPU gate pass with more headroom than Phase 1. Click-through, pill-scoped hide, and
+fullscreen suppression were verified live on the development desktop.
+
+> Phase 4 superseded this measurement. That figure was taken without revealing the dock
+> first, so WebView2 had not rasterized the full pill. The current gate, method, and
+> numbers (**5.9 / 186.6 / 0.03**) are in §8.
+
+### 14.6 Still open
+
+- Real desktop blur remains blocked by the whole-window acrylic limitation in §7.1/T18.
+  The settings page controls painted-glass tint and opacity only.
+- Tray mirroring, Docklets, MSIX/AUMID identity, and custom icon files remain later work.
+  Drag-to-reorder and Launchpad drag-in were added in §15; the shelf is in §16; the launch
+  pulse is part of the tile state machine (a 700 ms bounce, suppressed by reduced motion).
+  A true squircle mask still needs an `iconShape` decision because it would replace the
+  configurable corner radius.
+- The dock cap is 10 items; the 2 px collapsed hot strip still overlaps the taskbar's
+  lowest pixels (mitigated by fullscreen yield and configurable delays).
+
+## 15. Phase 4 — drag to reorder and Launchpad drag-in
+
+### 15.1 Gesture model
+
+Dock reorder is pointer-driven rather than HTML5 drag-and-drop: the tiles already own
+pointer events for magnification and the context menu, and window-level listeners let the
+gesture survive leaving the pressed tile. A press becomes a drag after 4 CSS px; below
+that threshold it is still a click. The dragged tile follows the pointer with
+`translateX`, the tiles between the source and target slots shift one pitch, and the DOM
+order is untouched until the drop. Magnification is suspended for the gesture so the
+layout the maths reads is the resting one.
+
+The index maths lives in `src/dock/drag.ts` (`reorderIds`, `targetIndex`, `shiftFor`,
+`placeAt`) and is unit-tested without a layout.
+
+### 15.2 Native cooperation
+
+`set_drag_active(true | false)` tells Rust that a drag owns the pointer. While active:
+
+- auto-hide is locked (`Event::SetLocked`), so the dock cannot collapse under the gesture;
+- the pointer watcher keeps the whole window interactive instead of passing clicks
+  through the headroom, so the webview keeps receiving moves above the pill;
+- on release the watcher resumes normal presence and click-through handling; if the
+  pointer ended outside the pill, the first frame emits `PointerLeft` and arms the
+  configured hide delay.
+
+The command is fire-and-forget from React. A window blur cancels the drag and clears the
+flag, so a lost `pointerup` cannot leave the dock locked.
+
+### 15.3 Drop semantics
+
+- Reordering commits `reorder_pins` with the full permutation and shows the new order
+  optimistically until the matching `dock://state` arrives.
+- Dragging from Launchpad cannot target the dock window directly: the single window is on
+  the Launchpad route, so the dock is not on screen. Dragging a tile therefore reveals a
+  dock strip at the bottom edge. The strip previews the current dock with the app already
+  inserted at the hovered gap. Releasing inside the bottom 140 px pins at that gap
+  (`pin_app` then `reorder_pins`); an app that is already pinned is moved instead.
+  Releasing elsewhere cancels. Keyboard reordering remains available in Settings, so the
+  gesture is not the only way to manage order.
+
+### 15.4 Tests
+
+Vitest covers the pure maths and both gestures (pointer down/move/up, click suppression,
+cancel outside the drop band). Playwright drags with real mouse events and asserts
+`reorder_pins` / `pin_app` and the absence of `launch_item`. The Rust command is compiled
+into the invoke handler; the watcher branch shares the existing poll loop and is a few
+lines, verified manually by the owner.
+
+## 16. Phase 5 — session shelf, schema 3, and art assets
+
+### 16.1 Why a session shelf
+
+The shelf is a scratch space, not a file manager. It holds up to 12 paths for the current
+session, deduplicated case-insensitively, and drops them on exit. That keeps the window
+small, avoids a second persistence format, and matches the macOS shelf's role.
+
+### 16.2 Input path
+
+Tauri's webview drag-drop event (`tauri://drag-drop`) is the only input. It fires only
+where the window is interactive, which is the visible pill or an open panel; the
+transparent headroom stays click-through. A drop calls `shelf_add`, stores the paths in
+`Runtime`, switches to the `shelf` route, and resizes the window to the panel geometry
+(shared with the monitor). Icons are extracted through the existing Shell pipeline at
+`round(64 × DPI)` and cached under `%APPDATA%\DockApp\icons` like dock icons.
+
+With auto-hide on, the collapsed 2 px strip is a poor drop target: the user reveals the
+dock first, then drops on the pill, or drops onto an already-open shelf panel.
+
+### 16.3 Commands and safety
+
+`get_shelf`, `shelf_add`, `shelf_remove`, and `shelf_clear` return the updated view so the
+React state never derives from a stale copy. `open_shelf_item` only accepts a path that is
+already on the shelf, so a compromised webview cannot turn it into a general launcher.
+
+### 16.4 Schema 3
+
+`show_shelf_entry` joins the dock-entry toggles. It is a bool defaulting to true; schema 1
+and 2 files load with the default and are rewritten as schema 3 on the next save. The dock
+width and `leading_tiles` include the shelf whenever the toggle is on.
+
+### 16.5 Art assets
+
+The application icon is `design-art/icons/dock.ico` with the matching PNG sizes; the shelf
+entry uses `design-art/art/dock-glyphs.svg#g-tray` (24 grid, 1.7 stroke). The rest of the
+art pack (glass/bare/frost themes, squircle clip, token scales, light theme, 3D samples) is
+a reference for later P0/P1 work, not part of this phase.
+
+### 16.6 Tests
+
+Rust covers the pure path list (dedupe, cap, removal, names). Vitest covers the panel
+states and callbacks. Playwright opens the empty shelf, emits a `tauri://drag-drop` event,
+and asserts `shelf_add`, `open_shelf_item`, removal, and the absence of a launch.
+
+## 17. Running-app activation
+
+Clicking a dock tile resolves the app's entry, snapshots the visible top-level windows,
+and matches them exactly by process path, then by executable file name (the same rule as
+the running indicators). A visible match is focused; if only minimized matches exist, the
+first is restored and then focused. ShellExecute is used only when no window matches, so a
+click on a running app no longer opens a second instance. The focus is best-effort:
+Windows can refuse a foreground change, in which case the window is still restored.
+
+`WindowRef` carries the HWND, and `apps::focus_handle` is pure and unit-tested; the Win32
+calls (`ShowWindow(SW_RESTORE)`, `SetForegroundWindow`) are verified live.
+
+The window snapshot excludes the desktop (`Progman`/`WorkerW`) and the taskbar
+(`Shell_TrayWnd`). Both are owned by explorer.exe and are visible, so without the
+exclusion the desktop window wins the "prefer a visible window" rule and a minimized
+Explorer window never comes back.

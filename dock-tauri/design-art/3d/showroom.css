@@ -1,0 +1,121 @@
+/* 三维资产展厅的覆盖层。场景本身承担全部视觉，文字只做说明。 */
+
+html, body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  background: #06090f;
+  color: var(--n-100);
+  font-family: "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+#scene {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  touch-action: none;
+  cursor: grab;
+}
+#scene:active { cursor: grabbing; }
+
+.hud {
+  position: fixed;
+  left: 48px;
+  top: 44px;
+  max-width: 470px;
+  pointer-events: none;
+  user-select: none;
+}
+
+.eyebrow {
+  margin: 0 0 18px;
+  font-family: "Cascadia Mono", Consolas, monospace;
+  font-size: 10.5px;
+  letter-spacing: 0.17em;
+  color: var(--accent-400);
+}
+
+.hud h1 {
+  margin: 0;
+  font-family: "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif;
+  font-size: clamp(30px, 3.5vw, 46px);
+  line-height: 1.08;
+  font-weight: 600;
+  letter-spacing: -0.032em;
+  max-width: 22ch;
+}
+
+.lede {
+  margin: 20px 0 0;
+  max-width: 34ch;
+  font-size: 13.5px;
+  line-height: 1.75;
+  color: var(--n-400);
+}
+
+.controls {
+  position: fixed;
+  right: 36px;
+  top: 36px;
+  display: flex;
+  gap: 8px;
+}
+
+.controls button {
+  height: 34px;
+  padding: 0 14px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 9px;
+  background: rgba(20, 24, 38, 0.62);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  color: var(--n-300);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 140ms var(--ease-signature), color 140ms var(--ease-signature);
+}
+.controls button:hover { color: var(--n-100); background: rgba(32, 38, 54, 0.78); }
+.controls button:active { transform: scale(0.98); }
+.controls button:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--focus-ring), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+.controls button[aria-pressed="true"] {
+  color: var(--accent-300);
+  border-color: rgba(124, 155, 224, 0.45);
+  background: rgba(124, 155, 224, 0.16);
+}
+
+.hint {
+  position: fixed;
+  left: 48px;
+  bottom: 34px;
+  margin: 0;
+  font-size: 12px;
+  color: var(--n-500);
+  pointer-events: none;
+}
+
+.meta {
+  position: fixed;
+  right: 36px;
+  bottom: 34px;
+  font-family: "Cascadia Mono", Consolas, monospace;
+  font-size: 10px;
+  color: var(--n-600);
+  pointer-events: none;
+}
+
+@media (max-width: 900px) {
+  .hud { left: 24px; top: 24px; max-width: 300px; }
+  .hud h1 { font-size: clamp(26px, 7vw, 36px); }
+  .lede { font-size: 12px; margin-top: 14px; }
+  .controls { right: 16px; top: 16px; }
+  .hint { left: 24px; bottom: 22px; }
+  .meta { display: none; }
+}

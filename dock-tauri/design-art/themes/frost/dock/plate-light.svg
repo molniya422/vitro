@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-24 -24 468 116" width="560" height="139" role="img" aria-label="Dock plate, frost, light">
+  <title>Dock plate, frost, light</title>
+  <desc>Light theme acrylic. Keep fill at 18 percent minimum so text contrast does not collapse on white wallpapers. 预览底仅用于单独打开时观察，接入时删除 id=preview-stage 的整组即可得到透明资产。</desc>
+  <!-- 预览底：单独打开时的观察背景，接入时删除本组 -->
+  <g id="preview-stage">
+    <defs>
+      <linearGradient id="preview-bg" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stop-color="#b9c2d2"/>
+        <stop offset="1" stop-color="#8892a6"/>
+      </linearGradient>
+      <radialGradient id="preview-glow" cx=".22" cy=".12" r=".85">
+        <stop offset="0" stop-color="#ffe6c9" stop-opacity=".35"/>
+        <stop offset="1" stop-color="#ffd9b0" stop-opacity="0"/>
+      </radialGradient>
+    </defs>
+    <rect x="-24" y="-24" width="468" height="116" fill="url(#preview-bg)"/>
+    <rect x="-24" y="-24" width="468" height="116" fill="url(#preview-glow)"/>
+  </g>
+  <g id="asset">
+
+  <defs>
+    <linearGradient id="sheen" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity=".3"/>
+      <stop offset=".46" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="ambient" x1="0" y1="0" x2="0" y2="1">
+      <stop offset=".62" stop-color="#000000" stop-opacity="0"/>
+      <stop offset="1" stop-color="#000000" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <g id="plate">
+    <rect id="fill" width="420" height="68" rx="34" fill="#ffffff" fill-opacity=".18"/>
+    <rect id="sheen" width="420" height="68" rx="34" fill="url(#sheen)"/>
+    <rect id="ambient" width="420" height="68" rx="34" fill="url(#ambient)"/>
+    <rect id="edge" x=".5" y=".5" width="419" height="67" rx="33.5" fill="none" stroke="#121724" stroke-opacity=".08" stroke-width="1"/>
+    <path id="bottom-line" d="M34 67.5H386" stroke="#121724" stroke-opacity=".1" stroke-width="1"/>
+  </g>
+  </g>
+</svg>

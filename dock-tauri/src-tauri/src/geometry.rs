@@ -1,5 +1,7 @@
 //! Pure per-monitor window geometry. No Win32 calls — inputs are plain numbers.
 
+use crate::appearance::DockMetrics;
+
 /// A monitor's work area in physical pixels plus its DPI scale.
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct MonitorRect {
@@ -10,12 +12,6 @@ pub struct MonitorRect {
     /// DPI scale factor: 1.0 at 96 DPI, 1.5 at 144 DPI.
     pub scale: f64,
 }
-
-pub const MAGNIFY_HEADROOM: f64 = 84.0;
-pub const REFLECTION_MARGIN: f64 = 40.0;
-pub const PADDING_H: f64 = 16.0;
-pub const PADDING_V: f64 = 10.0;
-pub const ICON_GAP: f64 = 8.0;
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct DockGeometry {
@@ -34,33 +30,29 @@ pub struct DockGeometry {
 impl DockGeometry {
     /// Compute the dock window rect for the bottom edge of `monitor`.
     ///
-    /// `item_count` counts app tiles only; the control tile is added separately.
-    /// `icon_size` and `control_width` are logical pixels before DPI scaling.
-    pub fn compute(
-        monitor: MonitorRect,
-        item_count: usize,
-        icon_size: f64,
-        control_width: f64,
-    ) -> Self {
-        let scale = if monitor.scale > 0.0 {
+    /// `item_count` counts app tiles only; the control tile and the enabled
+    /// route entries are in [`DockMetrics::leading_tiles`].
+    pub fn compute(monitor: MonitorRect, item_count: usize, metrics: DockMetrics) -> Self {
+        let scale = if monitor.scale > 0.0 && monitor.scale.is_finite() {
             monitor.scale
         } else {
             1.0
         };
-        let work_width = (monitor.right - monitor.left) as f64;
-        let work_height = (monitor.bottom - monitor.top) as f64;
+        let work_width = ((monitor.right - monitor.left) as f64).max(0.0);
+        let work_height = ((monitor.bottom - monitor.top) as f64).max(0.0);
 
-        let gaps = if item_count == 0 {
-            0.0
-        } else {
-            (item_count - 1) as f64 * ICON_GAP
-        };
-        let content = control_width + item_count as f64 * icon_size + gaps + PADDING_H * 2.0;
+        // Every visible tile has the same width and one gap sits between each
+        // pair. The control tile is always present, so `children >= 1`.
+        let children = metrics.leading_tiles.max(1) + item_count;
+        let gaps = children.saturating_sub(1) as f64;
+        let content = metrics.padding_h * 2.0
+            + children as f64 * metrics.icon_size
+            + gaps * metrics.icon_gap;
         let mut width = content * scale;
 
-        let headroom = MAGNIFY_HEADROOM * scale;
-        let reflection = REFLECTION_MARGIN * scale;
-        let mut pill_height = (icon_size + PADDING_V * 2.0) * scale;
+        let headroom = metrics.headroom * scale;
+        let reflection = metrics.reflection_space * scale;
+        let mut pill_height = metrics.pill_height() * scale;
         let mut height = headroom + pill_height + reflection;
 
         // Clamp to the work area. Width must be clamped before centering so the

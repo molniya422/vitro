@@ -37,6 +37,8 @@ pub fn system_entry(id: &str) -> Option<AppEntry> {
 pub struct WindowRef {
     pub process_path: String,
     pub minimized: bool,
+    /// Raw top-level window handle; used to bring a running app forward.
+    pub hwnd: isize,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -82,48 +84,56 @@ pub fn dedup_entries(entries: Vec<AppEntry>) -> Vec<AppEntry> {
     unique
 }
 
-/// Matches are by exact executable path first, then by executable file name.
+/// Windows that belong to `app`: exact executable path first, then file name.
 ///
 /// The file-name fallback exists because launchers frequently start a binary
 /// from a different directory than the shortcut points at (Doubao runs
 /// `D:\doubao\app\Doubao.exe` while its shortcut resolves to
 /// `D:\doubao\Doubao.exe`). Falling back only when the exact path finds nothing
 /// keeps same-named binaries in different directories from merging.
+fn matching_windows<'a>(app: &AppEntry, windows: &'a [WindowRef]) -> Vec<&'a WindowRef> {
+    let Some(target) = app.target.as_deref() else {
+        return Vec::new();
+    };
+    let target = normalize(target);
+
+    let exact: Vec<&WindowRef> = windows
+        .iter()
+        .filter(|window| normalize(&window.process_path) == target)
+        .collect();
+    if !exact.is_empty() {
+        return exact;
+    }
+    match file_name_of(&target) {
+        Some(name) => windows
+            .iter()
+            .filter(|window| file_name_of(&normalize(&window.process_path)) == Some(name))
+            .collect(),
+        None => Vec::new(),
+    }
+}
+
 pub fn reconcile(apps: &[AppEntry], windows: &[WindowRef]) -> Vec<RunningInfo> {
     apps.iter()
         .map(|app| {
-            let mut running = false;
-            let mut minimized = 0;
-            if let Some(target) = app.target.as_deref() {
-                let target = normalize(target);
-
-                let exact: Vec<&WindowRef> = windows
-                    .iter()
-                    .filter(|w| normalize(&w.process_path) == target)
-                    .collect();
-
-                let matches: Vec<&WindowRef> = if exact.is_empty() {
-                    match file_name_of(&target) {
-                        Some(name) => windows
-                            .iter()
-                            .filter(|w| file_name_of(&normalize(&w.process_path)) == Some(name))
-                            .collect(),
-                        None => Vec::new(),
-                    }
-                } else {
-                    exact
-                };
-
-                for window in matches {
-                    running = true;
-                    if window.minimized {
-                        minimized += 1;
-                    }
-                }
+            let matches = matching_windows(app, windows);
+            RunningInfo {
+                running: !matches.is_empty(),
+                minimized: matches.iter().filter(|window| window.minimized).count() as u32,
             }
-            RunningInfo { running, minimized }
         })
         .collect()
+}
+
+/// Handle to bring forward when the user clicks a running app. Prefers a
+/// visible window over a minimized one; the OS restores it before focusing.
+pub fn focus_handle(app: &AppEntry, windows: &[WindowRef]) -> Option<isize> {
+    let matches = matching_windows(app, windows);
+    matches
+        .iter()
+        .find(|window| !window.minimized)
+        .or_else(|| matches.first())
+        .map(|window| window.hwnd)
 }
 
 /// Last segment of a normalised (forward-slash, lowercase) path.

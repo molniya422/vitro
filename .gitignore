@@ -23,4 +23,6 @@ __pycache__/
 /dock-tauri/dist/
 /dock-tauri/src-tauri/target/
 /dock-tauri/src-tauri/gen/
+/dock-tauri/src-tauri/binaries/monitor-*.exe
 /dock-tauri/target/
+/dock-tauri/build/

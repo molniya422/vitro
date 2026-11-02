@@ -1,0 +1,236 @@
+/* ==========================================================================
+   Dock 美术资源包 · 材质令牌 v1
+   用途：玻璃材质、中性色阶、语义色、阴影、纹理。
+   用法：与现有 dock.css 的变量同名，可直接作为默认值层叠加；
+        主题通过 [data-theme] 切换，风格通过 [data-style] 切换。
+   约束：唯一强调色（221° 蓝，饱和 62%）；无纯黑；无常驻外发光。
+   ========================================================================== */
+
+:root {
+  color-scheme: dark;
+
+  /* ---- 中性色阶 · 冷调 slate（全局唯一色相族，不与暖灰混用） ---- */
+  --n-950: #0f131c;
+  --n-900: #141826;
+  --n-850: #161a26;
+  --n-800: #1c2130;
+  --n-700: #262c3d;
+  --n-600: #394157;
+  --n-500: #5a6480;
+  --n-400: #7d879f;
+  --n-300: #98a1b6;
+  --n-200: #c3cad9;
+  --n-100: #e9edf7;
+  --n-050: #f4f6fb;
+
+  /* ---- 唯一强调色（electric blue, 221deg / 62% / 68%） ---- */
+  --accent-300: #a9bff0;
+  --accent-400: #92adea;
+  --accent-500: #7c9be0;
+  --accent-600: #6a87c9;
+  --accent-700: #5871ad;
+
+  /* ---- 语义色 · 只用于阈值与告警，不参与品牌表达 ---- */
+  --ok-500: #6fa896;
+  --warn-500: #d9a45c;
+  --crit-500: #d46a62;
+  --badge-top: #e2605a;
+  --badge-bottom: #c8433d;
+
+  /* ---- 语义别名 · 与现有 dock.css / settings.css 同名 ---- */
+  --text: var(--n-100);
+  --muted: var(--n-300);
+  --accent: var(--accent-500);
+  --accent-text: var(--accent-400);
+
+  --line-1: rgba(255, 255, 255, 0.16);
+  --line-2: rgba(255, 255, 255, 0.08);
+  --line-3: rgba(255, 255, 255, 0.05);
+
+  /* ---- 玻璃 · 四层结构 ------------------------------------------------
+     1 基础填充 tint @ alpha
+     2 顶部高光 sheen
+     3 颗粒纹理 grain
+     4 边缘光 top-highlight / bottom-shadow
+     ---------------------------------------------------------------------- */
+  --glass-tint: #161a26;
+  --glass-fill-alpha: 0.62;
+  --glass-fill: rgba(22, 26, 38, 0.62);
+  --glass-sheen: rgba(255, 255, 255, 0.045);
+  --glass-top-highlight: rgba(255, 255, 255, 0.15);
+  --glass-bottom-shadow: rgba(0, 0, 0, 0.15);
+  --glass-bottom-inner: rgba(0, 0, 0, 0.08);
+  --glass-grain-opacity: 0.0025;
+  /* 原生亚克力专用；浏览器 backdrop-filter 无法模糊桌面，见 README §6 */
+  --glass-blur: 0px;
+  --glass-saturate: 1;
+
+  /* ---- 图标与磁贴 ---- */
+  --icon-shadow: 0 3px 5px rgba(0, 0, 0, 0.35);
+  --icon-shadow-pressed: 0 1px 2px rgba(0, 0, 0, 0.28);
+  --tile-bg-top: rgba(255, 255, 255, 0.16);
+  --tile-bg-bottom: rgba(255, 255, 255, 0.07);
+  --tile-inner-top: rgba(255, 255, 255, 0.22);
+
+  /* ---- 状态件 ---- */
+  --running-dot: rgba(255, 255, 255, 0.6);
+  --running-dot-ring: rgba(0, 0, 0, 0.35);
+  --ring-track: rgba(255, 255, 255, 0.12);
+
+  /* ---- 浮层 ---- */
+  --tooltip-bg: rgba(24, 28, 40, 0.95);
+  --tooltip-line: rgba(255, 255, 255, 0.08);
+  --menu-bg: rgba(28, 32, 44, 0.97);
+  --menu-line: rgba(255, 255, 255, 0.08);
+  --menu-hover: rgba(124, 155, 224, 0.18);
+  --menu-danger: #e8a0a0;
+  --menu-danger-bg: rgba(212, 106, 98, 0.14);
+
+  /* ---- 面板（设置 / Launchpad / 监控） ---- */
+  --panel-fill: var(--n-900);
+  --panel-wash: rgba(124, 155, 224, 0.08);
+  --panel-highlight: rgba(255, 255, 255, 0.15);
+  --panel-radius: 18px;
+
+  /* ---- 焦点环 — 全局唯一，勿再发明第二种 ---- */
+  --focus-ring: rgba(124, 155, 224, 0.7);
+  --focus-ring-width: 2px;
+
+  /* ---- 阴影：一律带色相，不用纯黑扩散 ---- */
+  --shadow-tooltip: 0 6px 18px rgba(8, 11, 18, 0.32);
+  --shadow-menu: 0 10px 26px rgba(8, 11, 18, 0.4);
+  --shadow-lifted: 0 12px 28px rgba(8, 11, 18, 0.46);
+
+  /* ---- 纹理：颗粒。0.25% 透明度，仅用于 ::after，不用于滚动容器 ---- */
+  --grain-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='64' height='64' filter='url(%23n)'/%3E%3C/svg%3E");
+  --grain-dots: radial-gradient(#fff 0.5px, transparent 0.5px);
+}
+
+/* ==========================================================================
+   浅色主题
+   规则：玻璃底色接近白、填充更低、边缘光更亮；运行点改深色 + 浅色描边。
+   ========================================================================== */
+[data-theme="light"] {
+  color-scheme: light;
+
+  --text: #1a1f2c;
+  --muted: #5f6779;
+  --accent: #5f7fd0;
+  --accent-text: #44619f;
+
+  --line-1: rgba(18, 23, 36, 0.14);
+  --line-2: rgba(18, 23, 36, 0.09);
+  --line-3: rgba(18, 23, 36, 0.06);
+
+  --glass-tint: #f7f9fd;
+  --glass-fill-alpha: 0.72;
+  --glass-fill: rgba(247, 249, 253, 0.72);
+  --glass-sheen: rgba(255, 255, 255, 0.55);
+  --glass-top-highlight: rgba(255, 255, 255, 0.9);
+  --glass-bottom-shadow: rgba(18, 23, 36, 0.1);
+  --glass-bottom-inner: rgba(18, 23, 36, 0.05);
+  --glass-grain-opacity: 0.003;
+
+  --icon-shadow: 0 3px 5px rgba(18, 23, 36, 0.22);
+  --icon-shadow-pressed: 0 1px 2px rgba(18, 23, 36, 0.18);
+  --tile-bg-top: rgba(255, 255, 255, 0.85);
+  --tile-bg-bottom: rgba(255, 255, 255, 0.45);
+  --tile-inner-top: rgba(255, 255, 255, 0.95);
+
+  --running-dot: rgba(18, 23, 36, 0.45);
+  --running-dot-ring: rgba(255, 255, 255, 0.55);
+  --ring-track: rgba(18, 23, 36, 0.1);
+
+  --tooltip-bg: rgba(255, 255, 255, 0.96);
+  --tooltip-line: rgba(18, 23, 36, 0.1);
+  --menu-bg: rgba(255, 255, 255, 0.98);
+  --menu-line: rgba(18, 23, 36, 0.09);
+  --menu-hover: rgba(95, 127, 208, 0.14);
+  --menu-danger: #a83a36;
+  --menu-danger-bg: rgba(212, 106, 98, 0.1);
+
+  --panel-fill: #fbfcfe;
+  --panel-wash: rgba(95, 127, 208, 0.06);
+  --panel-highlight: rgba(255, 255, 255, 0.95);
+
+  --focus-ring: rgba(95, 127, 208, 0.75);
+
+  --shadow-tooltip: 0 6px 18px rgba(18, 23, 36, 0.14);
+  --shadow-menu: 0 10px 26px rgba(18, 23, 36, 0.18);
+  --shadow-lifted: 0 12px 28px rgba(18, 23, 36, 0.22);
+}
+
+/* ==========================================================================
+   风格层 v1
+   三套随包发布，用户可自由切换。切换只允许改变这些令牌：
+   底板颗粒、倒影、图标投影、外缘光环、模糊。
+   图标形状、字形、放大曲线、状态语义不随风格变化。
+   选择器同时写 [data-style] 与 html[data-style]：
+   前者供任意容器（规范页样张）使用，后者用更高优先级压过 icon.css 的 :root。
+   ========================================================================== */
+
+/* A 冷调玻璃（默认） */
+[data-style="glass"],
+html[data-style="glass"] {
+  --plate-grain: var(--glass-grain-opacity);
+  --reflection-opacity: 0.25;
+  --icon-shadow: 0 3px 5px rgba(0, 0, 0, 0.35);
+  --halo-color: transparent;
+  --glass-blur: 0px;
+}
+
+/* B 裸排版：无底板，靠图标投影与外缘光环区隔 */
+[data-style="bare"],
+html[data-style="bare"] {
+  --plate-grain: 0;
+  --reflection-opacity: 0;
+  --icon-shadow: 0 2px 6px rgba(0, 0, 0, 0.32);
+  --halo-color: rgba(255, 255, 255, 0.3);
+  --glass-blur: 0px;
+}
+
+/* C 磨砂亚克力：真实桌面模糊，必须裁成药丸形状 */
+[data-style="frost"],
+html[data-style="frost"] {
+  --plate-grain: var(--glass-grain-opacity);
+  --reflection-opacity: 0.25;
+  --icon-shadow: 0 3px 5px rgba(0, 0, 0, 0.35);
+  --halo-color: transparent;
+  --frost-blur: 22px;
+  --frost-sat: 1.08;
+  --frost-fill: rgba(7, 9, 14, 0.25);
+  --frost-ring: rgba(255, 255, 255, 0.08);
+  --frost-top: rgba(255, 255, 255, 0.15);
+}
+
+[data-theme="light"][data-style="bare"],
+html[data-theme="light"][data-style="bare"] {
+  --icon-shadow: 0 2px 6px rgba(18, 23, 36, 0.22);
+  --halo-color: rgba(18, 23, 36, 0.28);
+}
+
+[data-theme="light"][data-style="frost"],
+html[data-theme="light"][data-style="frost"] {
+  --frost-blur: 20px;
+  --frost-sat: 1.04;
+  --frost-fill: rgba(255, 255, 255, 0.18);
+  --frost-ring: rgba(18, 23, 36, 0.08);
+  --frost-top: rgba(255, 255, 255, 0.9);
+}
+
+/* ==========================================================================
+   对比度守卫
+   玻璃背后的壁纸不可知，因此文字对比按「合成亮度」分档。
+   实测法见 README §6.3：L < 0.35 白字；L > 0.6 深字。
+   ========================================================================== */
+[data-contrast="protected"] {
+  --text: #ffffff;
+  --muted: rgba(255, 255, 255, 0.72);
+  text-shadow: 0 1px 1px rgba(8, 11, 18, 0.45);
+}
+
+[data-contrast="on-light"] {
+  --text: #20242e;
+  --muted: rgba(32, 36, 46, 0.66);
+  text-shadow: none;
+}

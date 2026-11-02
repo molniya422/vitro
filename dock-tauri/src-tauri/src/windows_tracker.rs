@@ -12,8 +12,8 @@ pub fn snapshot_windows() -> Vec<WindowRef> {
         PROCESS_QUERY_LIMITED_INFORMATION,
     };
     use windows::Win32::UI::WindowsAndMessaging::{
-        EnumWindows, GetWindowLongW, GetWindowTextLengthW, GetWindowThreadProcessId, IsIconic,
-        IsWindowVisible, GWL_EXSTYLE, WS_EX_TOOLWINDOW,
+        EnumWindows, GetClassNameW, GetWindowLongW, GetWindowTextLengthW,
+        GetWindowThreadProcessId, IsIconic, IsWindowVisible, GWL_EXSTYLE, WS_EX_TOOLWINDOW,
     };
 
     struct Collector {
@@ -33,6 +33,15 @@ pub fn snapshot_windows() -> Vec<WindowRef> {
         }
         // Skip untitled windows (splash screens, shell internals).
         if GetWindowTextLengthW(hwnd) == 0 {
+            return BOOL(1);
+        }
+        // The desktop (`Program Manager`, `WorkerW`) is owned by explorer.exe but
+        // is not an app window: including it would make click-to-activate focus
+        // the desktop instead of a minimized Explorer window.
+        let mut class = [0u16; 64];
+        let len = GetClassNameW(hwnd, &mut class).max(0) as usize;
+        let class = String::from_utf16_lossy(&class[..len.min(class.len())]);
+        if class == "Progman" || class == "WorkerW" || class == "Shell_TrayWnd" {
             return BOOL(1);
         }
 
@@ -64,6 +73,7 @@ pub fn snapshot_windows() -> Vec<WindowRef> {
         collector.windows.push(WindowRef {
             process_path: path,
             minimized: IsIconic(hwnd).as_bool(),
+            hwnd: hwnd.0 as isize,
         });
         BOOL(1)
     }

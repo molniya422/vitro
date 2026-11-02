@@ -1,0 +1,150 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 560" width="720" height="560" role="img" aria-label="Dock shape primitives: squircle, ring gauge, status pills, separator, reflection mask, drop slot">
+  <title>Dock shape primitives v1</title>
+  <desc>Squircle (superellipse n=5), ring gauge arcs, numeric pill, badge, running dot, separator, reflection mask, drop slot.</desc>
+
+  <defs>
+    <!-- Squircle, superellipse n=5, 120x120, 48 cubic segments -->
+    <symbol id="squircle-120" viewBox="0 0 120 120"><path d="M120 60C120 68.857 119.932 80.749 119.794 86.572C119.656 92.396 119.451 92.561 119.174 94.942C118.896 97.323 118.551 99.104 118.13 100.859C117.708 102.614 117.218 104.082 116.645 105.471C116.073 106.861 115.429 108.069 114.694 109.196C113.958 110.323 113.149 111.317 112.233 112.233C111.317 113.149 110.323 113.958 109.196 114.694C108.069 115.429 106.861 116.073 105.471 116.645C104.082 117.218 102.614 117.708 100.859 118.13C99.104 118.551 97.323 118.896 94.942 119.174C92.561 119.451 92.396 119.656 86.572 119.794C80.749 119.932 68.857 120 60 120C51.143 120 39.251 119.932 33.428 119.794C27.604 119.656 27.439 119.451 25.058 119.174C22.677 118.896 20.896 118.551 19.141 118.13C17.386 117.708 15.918 117.218 14.529 116.645C13.139 116.073 11.931 115.429 10.804 114.694C9.677 113.958 8.683 113.149 7.767 112.233C6.851 111.317 6.042 110.323 5.306 109.196C4.571 108.069 3.927 106.861 3.355 105.471C2.782 104.082 2.292 102.614 1.87 100.859C1.449 99.104 1.104 97.323 0.826 94.942C0.549 92.561 0.344 92.396 0.206 86.572C0.068 80.749 0 68.857 0 60C0 51.143 0.068 39.251 0.206 33.428C0.344 27.604 0.549 27.439 0.826 25.058C1.104 22.677 1.449 20.896 1.87 19.141C2.292 17.386 2.782 15.918 3.355 14.529C3.927 13.139 4.571 11.931 5.306 10.804C6.042 9.677 6.851 8.683 7.767 7.767C8.683 6.851 9.677 6.042 10.804 5.306C11.931 4.571 13.139 3.927 14.529 3.355C15.918 2.782 17.386 2.292 19.141 1.87C20.896 1.449 22.677 1.104 25.058 0.826C27.439 0.549 27.604 0.344 33.428 0.206C39.251 0.068 51.143 0 60 0C68.857 0 80.749 0.068 86.572 0.206C92.396 0.344 92.561 0.549 94.942 0.826C97.323 1.104 99.104 1.449 100.859 1.87C102.614 2.292 104.082 2.782 105.471 3.355C106.861 3.927 108.069 4.571 109.196 5.306C110.323 6.042 111.317 6.851 112.233 7.767C113.149 8.683 113.958 9.677 114.694 10.804C115.429 11.931 116.073 13.139 116.645 14.529C117.218 15.918 117.708 17.386 118.13 19.141C118.551 20.896 118.896 22.677 119.174 25.058C119.451 27.439 119.656 27.604 119.794 33.428C119.932 39.251 120 51.143 120 60Z"/></symbol>
+
+    <!-- Ring gauge, 48 box, start at 12 o'clock, clockwise -->
+    <circle id="ring-track" cx="24" cy="24" r="21" fill="none" stroke-width="4.6"/>
+    <path id="ring-25"  d="M24 3A21 21 0 0 1 45 24"          fill="none" stroke-width="4.6" stroke-linecap="round"/>
+    <path id="ring-62"  d="M24 3A21 21 0 1 1 9.62 39.31"      fill="none" stroke-width="4.6" stroke-linecap="round"/>
+    <path id="ring-85"  d="M24 3A21 21 0 1 1 7.01 11.66"      fill="none" stroke-width="4.6" stroke-linecap="round"/>
+
+    <linearGradient id="badge-grad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#e2605a"/>
+      <stop offset="1" stop-color="#c8433d"/>
+    </linearGradient>
+
+    <linearGradient id="fade-down" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="0.55" stop-color="#ffffff" stop-opacity="0.35"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+
+    <mask id="reflection-fade" maskContentUnits="objectBoundingBox">
+      <rect width="1" height="1" fill="url(#fade-down)"/>
+    </mask>
+  </defs>
+
+  <style>
+    .label { fill: #98a1b6; font-family: "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif; font-size: 11px; }
+    .lead { fill: none; stroke: rgba(255,255,255,0.04); stroke-width: 1; }
+    .num { fill: #ffffff; font-family: "Cascadia Mono", Consolas, monospace; font-size: 13px; font-weight: 600; text-anchor: middle; }
+    .num-s > * { font-size: 11px; }
+  </style>
+
+  <rect width="720" height="560" fill="#0f131c"/>
+
+  <!-- guides -->
+  <g class="lead">
+    <path d="M0 128h720M0 268h720M0 408h720M0 500h720"/>
+  </g>
+
+  <!-- 1. squircle -->
+  <g transform="translate(40 24)">
+    <use href="#squircle-120" x="0" y="0" width="80" height="80" fill="rgba(255,255,255,0.06)"/>
+    <use href="#squircle-120" x="0" y="0" width="80" height="80" fill="none" stroke="rgba(255,255,255,0.22)" stroke-width="1"/>
+    <text class="label" x="0" y="104">squircle n=5</text>
+
+    <g transform="translate(120)">
+      <use href="#squircle-120" x="0" y="0" width="80" height="80" fill="url(#badge-grad)" opacity="0.9"/>
+      <use href="#squircle-120" x="0" y="0" width="80" height="80" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="1"/>
+      <text class="label" x="0" y="104">icon container</text>
+    </g>
+
+    <g transform="translate(240)">
+      <rect x="0" y="0" width="80" height="80" rx="22.37%" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.22)"/>
+      <text class="label" x="0" y="104">border-radius 22.37% (legacy)</text>
+    </g>
+  </g>
+
+  <!-- 2. ring gauge -->
+  <g transform="translate(40 152)">
+    <g transform="translate(0 0)">
+      <use href="#ring-track" stroke="rgba(255,255,255,0.12)"/>
+      <text class="num" x="24" y="28">25</text>
+      <text class="label" x="0" y="72">track only</text>
+    </g>
+    <g transform="translate(96 0)">
+      <use href="#ring-track" stroke="rgba(255,255,255,0.12)"/>
+      <use href="#ring-25" stroke="#6fa896"/>
+      <text class="num" x="24" y="28">25</text>
+      <text class="label" x="0" y="72">25% ok</text>
+    </g>
+    <g transform="translate(192 0)">
+      <use href="#ring-track" stroke="rgba(255,255,255,0.12)"/>
+      <use href="#ring-62" stroke="#7c9be0"/>
+      <text class="num" x="24" y="28">62</text>
+      <text class="label" x="0" y="72">62% accent</text>
+    </g>
+    <g transform="translate(288 0)">
+      <use href="#ring-track" stroke="rgba(255,255,255,0.12)"/>
+      <use href="#ring-85" stroke="#d46a62"/>
+      <text class="num" x="24" y="28">85</text>
+      <text class="label" x="0" y="72">85% critical</text>
+    </g>
+
+    <!-- mini pill -->
+    <g transform="translate(400 -4)">
+      <rect x="0" y="14" width="58" height="22" rx="11" fill="rgba(8,11,18,0.45)"/>
+      <text class="num" x="29" y="29">21:07</text>
+      <text class="label" x="0" y="72">numeric pill</text>
+    </g>
+
+    <!-- badge -->
+    <g transform="translate(500 -4)">
+      <circle cx="16" cy="24" r="16" fill="url(#badge-grad)"/>
+      <path d="M0 24a16 16 0 0 1 32 0" fill="none" stroke="rgba(255,255,255,0.45)" stroke-width="1"/>
+      <text class="num" x="16" y="29">3</text>
+      <text class="label" x="0" y="72">badge 16px</text>
+    </g>
+
+    <!-- running dot -->
+    <g transform="translate(590 -4)">
+      <circle cx="16" cy="24" r="5" fill="rgba(255,255,255,0.6)"/>
+      <circle cx="16" cy="24" r="5" fill="none" stroke="rgba(0,0,0,0.35)" stroke-width="1"/>
+      <text class="label" x="0" y="72">running dot 4px</text>
+    </g>
+  </g>
+
+  <!-- 3. separator / reflection / drop slot -->
+  <g transform="translate(40 292)">
+    <g>
+      <rect x="31" y="0" width="1" height="64" rx="1" fill="rgba(255,255,255,0.16)"/>
+      <text class="label" x="0" y="88">separator 1px</text>
+    </g>
+
+    <g transform="translate(120)">
+      <rect x="0" y="0" width="64" height="64" rx="14" fill="rgba(124,155,224,0.18)"/>
+      <rect x="0" y="0" width="64" height="64" rx="14" fill="none" stroke="rgba(255,255,255,0.1)"/>
+      <g mask="url(#reflection-fade)">
+        <rect x="0" y="64" width="64" height="64" rx="14" fill="rgba(255,255,255,0.3)"/>
+      </g>
+      <text class="label" x="0" y="152">reflection band</text>
+    </g>
+
+    <g transform="translate(240)">
+      <rect x="0" y="0" width="64" height="64" rx="14" fill="rgba(124,155,224,0.06)" stroke="rgba(124,155,224,0.55)" stroke-width="1" stroke-dasharray="4 4"/>
+      <text class="label" x="0" y="88">drop slot</text>
+    </g>
+
+    <g transform="translate(360)">
+      <rect x="0" y="0" width="120" height="64" rx="32" fill="rgba(22,26,38,0.62)" stroke="rgba(255,255,255,0.15)"/>
+      <text class="label" x="0" y="88">pill, radius = height / 2</text>
+    </g>
+
+    <g transform="translate(520)">
+      <rect x="0" y="0" width="120" height="64" rx="32" fill="rgba(22,26,38,0.62)" stroke="rgba(255,255,255,0.15)"/>
+      <rect x="1" y="1" width="118" height="1" rx="0.5" fill="rgba(255,255,255,0.15)"/>
+      <text class="label" x="0" y="88">top highlight 1px</text>
+    </g>
+  </g>
+
+  <g transform="translate(40 502)">
+    <text class="label" x="0" y="0">Squircle path is also available as --squircle-clip in tokens/icon.css (percent polygon, size independent).</text>
+    <text class="label" x="0" y="20">Ring geometry: thickness = radius x 0.22, start at -90deg, clockwise, round caps.</text>
+    <text class="label" x="0" y="40">Reflection: scaleY(-0.45) + fade mask to 0 at 55 percent of the band.</text>
+  </g>
+</svg>

@@ -70,6 +70,30 @@ name = "settings"
 path = "tests/unit/settings.rs"
 
 [[test]]
+name = "appearance"
+path = "tests/unit/appearance.rs"
+
+[[test]]
+name = "settings_view"
+path = "tests/unit/settings_view.rs"
+
+[[test]]
+name = "hit_test"
+path = "tests/unit/hit_test.rs"
+
+[[test]]
+name = "foreground"
+path = "tests/unit/foreground.rs"
+
+[[test]]
+name = "pins"
+path = "tests/unit/pins.rs"
+
+[[test]]
+name = "shelf"
+path = "tests/unit/shelf.rs"
+
+[[test]]
 name = "platform_monitor"
 path = "tests/unit/platform_monitor.rs"
 
@@ -100,6 +124,10 @@ path = "tests/unit/dock_state_view.rs"
 [[test]]
 name = "window_geom"
 path = "tests/unit/window_geom.rs"
+
+[[test]]
+name = "sidecar_path"
+path = "tests/unit/sidecar_path.rs"
 
 [workspace]
 

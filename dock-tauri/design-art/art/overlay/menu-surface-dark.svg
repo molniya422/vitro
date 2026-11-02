@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-40 -40 276 200" width="497" height="360" role="img" aria-label="Menu surface, dark">
+  <title>Menu surface, dark</title>
+  <desc>9-slice menu surface. Slice 10 on all sides; the centre must stay a flat fill. 预览底仅用于单独打开时观察，接入时删除 id=preview-stage 的整组即可得到透明资产。</desc>
+  <!-- 预览底：单独打开时的观察背景，接入时删除本组 -->
+  <g id="preview-stage">
+    <defs>
+      <linearGradient id="preview-bg" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stop-color="#1b2434"/>
+        <stop offset="1" stop-color="#0d1119"/>
+      </linearGradient>
+      <radialGradient id="preview-glow" cx=".22" cy=".12" r=".85">
+        <stop offset="0" stop-color="#7c9be0" stop-opacity=".18"/>
+        <stop offset="1" stop-color="#7c9be0" stop-opacity="0"/>
+      </radialGradient>
+    </defs>
+    <rect x="-40" y="-40" width="276" height="200" fill="url(#preview-bg)"/>
+    <rect x="-40" y="-40" width="276" height="200" fill="url(#preview-glow)"/>
+  </g>
+  <g id="asset">
+
+  <rect width="196" height="120" rx="10" fill="#1c202c" fill-opacity=".97"/>
+  <path d="M1 9a8 8 0 0 1 8-8h178a8 8 0 0 1 8 8" fill="none" stroke="#ffffff" stroke-opacity=".12" stroke-width="1"/>
+  </g>
+</svg>

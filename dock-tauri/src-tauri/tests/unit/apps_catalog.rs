@@ -1,4 +1,4 @@
-use dock_tauri_lib::apps::{catalog_from_dirs, reconcile, AppEntry, WindowRef};
+use dock_tauri_lib::apps::{catalog_from_dirs, focus_handle, reconcile, AppEntry, WindowRef};
 
 fn write_lnk(dir: &std::path::Path, name: &str) {
     std::fs::write(dir.join(format!("{name}.lnk")), b"L\0\0\0fake").unwrap();
@@ -62,6 +62,7 @@ fn reconciliation_matches_windows_to_apps_by_process_path() {
     let windows = vec![WindowRef {
         process_path: "C:/Windows/notepad.exe".into(),
         minimized: false,
+        hwnd: 0,
     }];
     let running = reconcile(&entries, &windows);
     assert!(running[0].running);
@@ -79,10 +80,12 @@ fn reconciliation_counts_minimized_windows_case_insensitively() {
         WindowRef {
             process_path: "C:/Windows/notepad.exe".into(),
             minimized: true,
+            hwnd: 0,
         },
         WindowRef {
             process_path: "c:/windows/NOTEPAD.exe".into(),
             minimized: true,
+            hwnd: 0,
         },
     ];
     let running = reconcile(&entries, &windows);
@@ -100,6 +103,7 @@ fn app_without_a_target_is_never_running() {
     let windows = vec![WindowRef {
         process_path: "C:/Windows/notepad.exe".into(),
         minimized: false,
+        hwnd: 0,
     }];
     let running = reconcile(&entries, &windows);
     assert!(!running[0].running);
@@ -157,6 +161,7 @@ fn running_window_in_a_different_directory_matches_by_file_name() {
     let windows = vec![WindowRef {
         process_path: "D:/doubao/app/Doubao.exe".into(),
         minimized: false,
+        hwnd: 0,
     }];
     let running = reconcile(&entries, &windows);
     assert!(running[0].running, "file-name fallback should match");
@@ -174,10 +179,12 @@ fn exact_path_wins_over_a_same_named_binary_elsewhere() {
         WindowRef {
             process_path: "D:/B/editor.exe".into(),
             minimized: true,
+            hwnd: 0,
         },
         WindowRef {
             process_path: "C:/A/editor.exe".into(),
             minimized: false,
+            hwnd: 0,
         },
     ];
     let running = reconcile(&entries, &windows);
@@ -198,8 +205,71 @@ fn a_different_file_name_never_matches() {
     let windows = vec![WindowRef {
         process_path: "C:/A/other.exe".into(),
         minimized: false,
+        hwnd: 0,
     }];
     assert!(!reconcile(&entries, &windows)[0].running);
+}
+
+#[test]
+fn focus_prefers_a_visible_window_and_restores_a_minimized_one() {
+    let app = AppEntry {
+        id: "c:/a/editor.lnk".into(),
+        display_name: "Editor".into(),
+        target: Some("C:/A/editor.exe".into()),
+    };
+    let windows = vec![
+        WindowRef {
+            process_path: "C:/A/editor.exe".into(),
+            minimized: true,
+            hwnd: 11,
+        },
+        WindowRef {
+            process_path: "C:/A/editor.exe".into(),
+            minimized: false,
+            hwnd: 22,
+        },
+    ];
+    assert_eq!(focus_handle(&app, &windows), Some(22));
+
+    // Only a minimized window: still return it so the OS can restore it.
+    assert_eq!(focus_handle(&app, &windows[..1]), Some(11));
+}
+
+#[test]
+fn focus_uses_the_same_exact_then_file_name_matching() {
+    let app = AppEntry {
+        id: "c:/a/editor.lnk".into(),
+        display_name: "Editor".into(),
+        target: Some("C:/A/editor.exe".into()),
+    };
+    let windows = vec![
+        WindowRef {
+            process_path: "D:/B/editor.exe".into(),
+            minimized: false,
+            hwnd: 11,
+        },
+        WindowRef {
+            process_path: "C:/A/editor.exe".into(),
+            minimized: true,
+            hwnd: 22,
+        },
+    ];
+    // The exact path wins even though the same-named binary is visible.
+    assert_eq!(focus_handle(&app, &windows), Some(22));
+
+    let fallback = vec![WindowRef {
+        process_path: "C:/A/app/editor.exe".into(),
+        minimized: false,
+        hwnd: 33,
+    }];
+    assert_eq!(focus_handle(&app, &fallback), Some(33));
+
+    let unrelated = vec![WindowRef {
+        process_path: "C:/A/other.exe".into(),
+        minimized: false,
+        hwnd: 44,
+    }];
+    assert_eq!(focus_handle(&app, &unrelated), None);
 }
 
 #[test]
@@ -213,10 +283,12 @@ fn file_name_fallback_still_counts_minimized_windows() {
         WindowRef {
             process_path: "C:/A/app/browser.exe".into(),
             minimized: true,
+            hwnd: 0,
         },
         WindowRef {
             process_path: "C:/A/app/browser.exe".into(),
             minimized: true,
+            hwnd: 0,
         },
     ];
     let running = reconcile(&entries, &windows);

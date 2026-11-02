@@ -137,11 +137,17 @@ impl SidecarSpec {
     }
 }
 
+/// The sidecar is stopped after this long without a sample. The monitor route
+/// re-warms it on open, so the first sample stays fast without paying for a
+/// Python process while the dock is idle.
+pub const IDLE_TIMEOUT: Duration = Duration::from_secs(45);
+
 /// Owns at most one sidecar and respawns it on demand after a failure.
 pub struct Supervisor {
     spec: SidecarSpec,
     rpc: Option<SampleRpc>,
     last_attempt: Option<Instant>,
+    last_used: Option<Instant>,
 }
 
 impl Supervisor {
@@ -150,6 +156,7 @@ impl Supervisor {
             spec,
             rpc: None,
             last_attempt: None,
+            last_used: None,
         }
     }
 
@@ -157,25 +164,40 @@ impl Supervisor {
         self.rpc.is_some()
     }
 
+    /// Start the child without sampling, so the first monitor open does not
+    /// pay the PyInstaller boot cost.
+    pub fn warm(&mut self) {
+        if self.ensure_started().is_ok() {
+            self.last_used = Some(Instant::now());
+        }
+    }
+
+    fn ensure_started(&mut self) -> Result<(), RpcError> {
+        if self.rpc.is_some() {
+            return Ok(());
+        }
+        if let Some(last) = self.last_attempt {
+            if last.elapsed() < self.spec.cooldown {
+                return Err(RpcError::Closed);
+            }
+        }
+        self.last_attempt = Some(Instant::now());
+        self.rpc = Some(SampleRpc::spawn(
+            self.spec.program.clone(),
+            self.spec.args.clone(),
+        )?);
+        Ok(())
+    }
+
     /// Request a sample, starting the sidecar first if needed.
     ///
     /// On failure the broken child is dropped so the next call can respawn it,
     /// subject to `cooldown`.
     pub fn sample(&mut self) -> Result<Sample, RpcError> {
-        if self.rpc.is_none() {
-            if let Some(last) = self.last_attempt {
-                if last.elapsed() < self.spec.cooldown {
-                    return Err(RpcError::Closed);
-                }
-            }
-            self.last_attempt = Some(Instant::now());
-            self.rpc = Some(SampleRpc::spawn(
-                self.spec.program.clone(),
-                self.spec.args.clone(),
-            )?);
-        }
+        self.ensure_started()?;
+        self.last_used = Some(Instant::now());
 
-        let rpc = self.rpc.as_mut().expect("just spawned");
+        let rpc = self.rpc.as_mut().expect("just started");
         match rpc.sample() {
             Ok(sample) => Ok(sample),
             Err(error) => {
@@ -184,6 +206,23 @@ impl Supervisor {
                 Err(error)
             }
         }
+    }
+
+    /// Stop the child after `IDLE_TIMEOUT` without use. Returns whether a
+    /// process was stopped.
+    pub fn reap_if_idle(&mut self) -> bool {
+        if self.rpc.is_none() {
+            return false;
+        }
+        let idle = self
+            .last_used
+            .map(|last| last.elapsed())
+            .unwrap_or_default();
+        if idle < IDLE_TIMEOUT {
+            return false;
+        }
+        self.shutdown();
+        true
     }
 
     pub fn shutdown(&mut self) {

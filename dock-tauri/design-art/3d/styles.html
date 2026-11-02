@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dock · 三维风格对照</title>
+  <link rel="stylesheet" href="../tokens/material.css">
+  <link rel="stylesheet" href="./showroom.css">
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <canvas id="scene" aria-label="三种 Dock 风格的三维对照：Glass、Bare、Frost"></canvas>
+
+  <header class="hud">
+    <p class="eyebrow">DOCK · 3D STYLES</p>
+    <h1>三种风格，同一套构件。</h1>
+    <p class="lede">
+      Glass 用半透明药丸，Bare 去掉药丸并放大间距、给图标加一圈光环，Frost 换成高粗糙度的磨砂药丸。
+      图标、字形、运行点、角标四者完全一致。
+    </p>
+  </header>
+
+  <div class="controls">
+    <button id="rotate" type="button" aria-pressed="true">自动旋转</button>
+    <button id="reset" type="button">重置视角</button>
+  </div>
+
+  <p class="hint">拖动旋转 · 滚轮缩放</p>
+  <footer class="meta">three.js r160 · 设计稿，非运行时</footer>
+
+  <script src="./styles.bundle.js"></script>
+</body>
+</html>

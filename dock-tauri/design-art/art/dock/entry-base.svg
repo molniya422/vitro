@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-12 -12 144 28" width="560" height="109" role="img" aria-label="Entry base">
+  <title>Entry base</title>
+  <desc>4 unit shelf under trash and folder entries. Width is 60 percent of the icon. 预览底仅用于单独打开时观察，接入时删除 id=preview-stage 的整组即可得到透明资产。</desc>
+  <!-- 预览底：单独打开时的观察背景，接入时删除本组 -->
+  <g id="preview-stage">
+    <defs>
+      <linearGradient id="preview-bg" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stop-color="#1b2434"/>
+        <stop offset="1" stop-color="#0d1119"/>
+      </linearGradient>
+      <radialGradient id="preview-glow" cx=".22" cy=".12" r=".85">
+        <stop offset="0" stop-color="#7c9be0" stop-opacity=".18"/>
+        <stop offset="1" stop-color="#7c9be0" stop-opacity="0"/>
+      </radialGradient>
+    </defs>
+    <rect x="-12" y="-12" width="144" height="28" fill="url(#preview-bg)"/>
+    <rect x="-12" y="-12" width="144" height="28" fill="url(#preview-glow)"/>
+  </g>
+  <g id="asset">
+
+  <rect width="120" height="4" rx="2" fill="#ffffff" fill-opacity=".1"/>
+  </g>
+</svg>

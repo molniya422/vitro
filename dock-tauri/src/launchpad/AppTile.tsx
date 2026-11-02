@@ -3,6 +3,10 @@ interface Props {
   icon: string | null;
   disabledReason: string | null;
   pinned?: boolean;
+  /** Unpinned tiles can be dragged onto the dock drop target. */
+  draggable?: boolean;
+  dragging?: boolean;
+  onPointerDown?: (event: React.PointerEvent<HTMLButtonElement>) => void;
   onPin?: () => void;
   onLaunch: () => void;
 }
@@ -12,14 +16,26 @@ export function AppTile({
   icon,
   disabledReason,
   pinned = false,
+  draggable = false,
+  dragging = false,
+  onPointerDown,
   onPin,
   onLaunch,
 }: Props) {
+  const className = [
+    "launchpad-launch",
+    draggable ? "is-draggable" : "",
+    dragging ? "is-dragging" : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+
   return (
     <div className="launchpad-tile">
       <button
         type="button"
-        className="launchpad-launch"
+        className={className}
+        onPointerDown={draggable ? onPointerDown : undefined}
         onClick={onLaunch}
         disabled={Boolean(disabledReason)}
         aria-label={name}

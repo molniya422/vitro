@@ -1,0 +1,169 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 420" width="720" height="420" role="img" aria-label="Docklet tile set: six 48px plugin tiles in dark and light theme">
+  <title>Docklet tiles v1</title>
+  <desc>Tile = squircle body (48) + 24 glyph + one status element (ring, numeric pill, badge or window dots). Never two status elements on one tile. Glyph paths mirror art/dock-glyphs.svg.</desc>
+
+  <defs>
+    <g id="sq96">
+      <path transform="scale(0.8)" d="M120 60C120 68.857 119.932 80.749 119.794 86.572C119.656 92.396 119.451 92.561 119.174 94.942C118.896 97.323 118.551 99.104 118.13 100.859C117.708 102.614 117.218 104.082 116.645 105.471C116.073 106.861 115.429 108.069 114.694 109.196C113.958 110.323 113.149 111.317 112.233 112.233C111.317 113.149 110.323 113.958 109.196 114.694C108.069 115.429 106.861 116.073 105.471 116.645C104.082 117.218 102.614 117.708 100.859 118.13C99.104 118.551 97.323 118.896 94.942 119.174C92.561 119.451 92.396 119.656 86.572 119.794C80.749 119.932 68.857 120 60 120C51.143 120 39.251 119.932 33.428 119.794C27.604 119.656 27.439 119.451 25.058 119.174C22.677 118.896 20.896 118.551 19.141 118.13C17.386 117.708 15.918 117.218 14.529 116.645C13.139 116.073 11.931 115.429 10.804 114.694C9.677 113.958 8.683 113.149 7.767 112.233C6.851 111.317 6.042 110.323 5.306 109.196C4.571 108.069 3.927 106.861 3.355 105.471C2.782 104.082 2.292 102.614 1.87 100.859C1.449 99.104 1.104 97.323 0.826 94.942C0.549 92.561 0.344 92.396 0.206 86.572C0.068 80.749 0 68.857 0 60C0 51.143 0.068 39.251 0.206 33.428C0.344 27.604 0.549 27.439 0.826 25.058C1.104 22.677 1.449 20.896 1.87 19.141C2.292 17.386 2.782 15.918 3.355 14.529C3.927 13.139 4.571 11.931 5.306 10.804C6.042 9.677 6.851 8.683 7.767 7.767C8.683 6.851 9.677 6.042 10.804 5.306C11.931 4.571 13.139 3.927 14.529 3.355C15.918 2.782 17.386 2.292 19.141 1.87C20.896 1.449 22.677 1.104 25.058 0.826C27.439 0.549 27.604 0.344 33.428 0.206C39.251 0.068 51.143 0 60 0C68.857 0 80.749 0.068 86.572 0.206C92.396 0.344 92.561 0.549 94.942 0.826C97.323 1.104 99.104 1.449 100.859 1.87C102.614 2.292 104.082 2.782 105.471 3.355C106.861 3.927 108.069 4.571 109.196 5.306C110.323 6.042 111.317 6.851 112.233 7.767C113.149 8.683 113.958 9.677 114.694 10.804C115.429 11.931 116.073 13.139 116.645 14.529C117.218 15.918 117.708 17.386 118.13 19.141C118.551 20.896 118.896 22.677 119.174 25.058C119.451 27.439 119.656 27.604 119.794 33.428C119.932 39.251 120 51.143 120 60Z"/>
+    </g>
+
+    <linearGradient id="g-tile-dark" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.18"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0.06"/>
+    </linearGradient>
+
+    <linearGradient id="g-tile-light" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.92"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0.55"/>
+    </linearGradient>
+
+    <linearGradient id="g-badge" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#e2605a"/>
+      <stop offset="1" stop-color="#c8433d"/>
+    </linearGradient>
+
+    <!-- glyphs (mirror of dock-glyphs.svg, 24 grid) -->
+    <symbol id="ic-clock" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.2"/><path d="M12 7.4v4.9l3.2 1.9"/></g></symbol>
+    <symbol id="ic-cpu" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="7" width="10" height="10" rx="2.2"/><rect x="10.2" y="10.2" width="3.6" height="3.6" rx="1"/><path d="M10 3.6v2.6M14 3.6v2.6M10 17.8v2.6M14 17.8v2.6M3.6 10h2.6M3.6 14h2.6M17.8 10h2.6M17.8 14h2.6"/></g></symbol>
+    <symbol id="ic-battery" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="2.8" y="8" width="16.4" height="8" rx="2.4"/><path d="M21.2 10.6v2.8"/><path stroke-width="2.2" d="M6.2 10.6v2.8M9.2 10.6v2.8M12.2 10.6v2.8"/></g></symbol>
+    <symbol id="ic-mail" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3.2" y="5.6" width="17.6" height="12.8" rx="2.4"/><path d="M4.6 7.6 12 12.9l7.4-5.3"/></g></symbol>
+    <symbol id="ic-network" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M8 19V5.2M8 5.2 5 8.4M8 5.2l3 3.2"/><path d="M16 5v13.8M16 18.8l-3-3.2M16 18.8l3-3.2"/></g></symbol>
+    <symbol id="ic-tasks" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3.4" y="5.6" width="11.6" height="9.2" rx="2.2"/><rect x="9" y="9.4" width="11.6" height="9.2" rx="2.2"/></g></symbol>
+  </defs>
+
+  <style>
+    .label { fill: #98a1b6; font-family: "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif; font-size: 11px; text-anchor: middle; }
+    .title { fill: #e9edf7; font-family: "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif; font-size: 13px; font-weight: 600; }
+    .num { font-family: "Cascadia Mono", Consolas, monospace; font-size: 15px; font-weight: 600; text-anchor: middle; }
+    .tile text { fill: #ffffff; fill-opacity: 0.92; }
+    .tile.light text { fill: #1a1f2c; fill-opacity: 0.86; }
+    .bg { fill: url(#g-tile-dark); }
+    .light .bg { fill: url(#g-tile-light); }
+    .tile .glyph { color: #e9edf7; }
+    .tile.light .glyph { color: #1a1f2c; }
+    .pill-bg { fill: rgba(8, 11, 18, 0.45); }
+    .light .pill-bg { fill: rgba(255, 255, 255, 0.62); }
+  </style>
+
+  <rect width="720" height="420" fill="#0f131c"/>
+  <rect x="0" y="196" width="720" height="176" fill="#eef1f8"/>
+
+  <text class="title" x="40" y="32">Docklet tiles · dark</text>
+  <text class="title" x="40" y="216" style="fill:#1a1f2c">Docklet tiles · light</text>
+
+  <!-- ============ dark row ============ -->
+  <g class="tile">
+    <g transform="translate(40 52)">
+      <use href="#sq96" class="bg"/>
+      <use href="#ic-clock" class="glyph" x="24" y="24" width="48" height="48"/>
+      <rect class="pill-bg" x="18" y="64" width="60" height="26" rx="13"/>
+      <text class="num" x="48" y="82">21:07</text>
+    </g>
+
+    <g transform="translate(152 52)">
+      <use href="#sq96" class="bg"/>
+      <use href="#ic-cpu" class="glyph" x="24" y="24" width="48" height="48"/>
+      <circle cx="48" cy="48" r="36" fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="8"/>
+      <path d="M48 12A36 36 0 1 1 23.36 74.24" fill="none" stroke="#7c9be0" stroke-width="8" stroke-linecap="round"/>
+    </g>
+
+    <g transform="translate(264 52)">
+      <use href="#sq96" class="bg"/>
+      <use href="#ic-battery" class="glyph" x="24" y="24" width="48" height="48"/>
+      <circle cx="48" cy="48" r="36" fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="8"/>
+      <path d="M48 12A36 36 0 0 1 84 48" fill="none" stroke="#6fa896" stroke-width="8" stroke-linecap="round"/>
+    </g>
+
+    <g transform="translate(376 52)">
+      <use href="#sq96" class="bg"/>
+      <use href="#ic-mail" class="glyph" x="24" y="24" width="48" height="48"/>
+      <circle cx="78" cy="18" r="16" fill="url(#g-badge)"/>
+      <path d="M62 18a16 16 0 0 1 32 0" fill="none" stroke="rgba(255,255,255,0.45)" stroke-width="1.6"/>
+      <text class="num" x="78" y="24">3</text>
+    </g>
+
+    <g transform="translate(488 52)">
+      <use href="#sq96" class="bg"/>
+      <use href="#ic-network" class="glyph" x="24" y="24" width="48" height="48"/>
+      <rect class="pill-bg" x="26" y="64" width="44" height="26" rx="13"/>
+      <text class="num" x="48" y="82">8.2</text>
+    </g>
+
+    <g transform="translate(600 52)">
+      <use href="#sq96" class="bg"/>
+      <use href="#ic-tasks" class="glyph" x="24" y="24" width="48" height="48"/>
+      <circle cx="34" cy="82" r="4" fill="rgba(255,255,255,0.72)"/>
+      <circle cx="48" cy="82" r="4" fill="rgba(255,255,255,0.72)"/>
+      <circle cx="62" cy="82" r="4" fill="rgba(255,255,255,0.72)"/>
+    </g>
+  </g>
+
+  <g class="label">
+    <text x="88" y="180">clock · pill</text>
+    <text x="200" y="180">cpu · ring 62</text>
+    <text x="312" y="180">battery · ring 25</text>
+    <text x="424" y="180">mail · badge</text>
+    <text x="536" y="180">network · pill</text>
+    <text x="648" y="180">tasks · 3 windows</text>
+  </g>
+
+  <!-- ============ light row ============ -->
+  <g class="tile light">
+    <g transform="translate(40 232)">
+      <use href="#sq96" class="bg"/>
+      <use href="#ic-clock" class="glyph" x="24" y="24" width="48" height="48"/>
+      <rect class="pill-bg" x="18" y="64" width="60" height="26" rx="13"/>
+      <text class="num" x="48" y="82">21:07</text>
+    </g>
+
+    <g transform="translate(152 232)">
+      <use href="#sq96" class="bg"/>
+      <use href="#ic-cpu" class="glyph" x="24" y="24" width="48" height="48"/>
+      <circle cx="48" cy="48" r="36" fill="none" stroke="rgba(18,23,36,0.1)" stroke-width="8"/>
+      <path d="M48 12A36 36 0 1 1 23.36 74.24" fill="none" stroke="#5f7fd0" stroke-width="8" stroke-linecap="round"/>
+    </g>
+
+    <g transform="translate(264 232)">
+      <use href="#sq96" class="bg"/>
+      <use href="#ic-battery" class="glyph" x="24" y="24" width="48" height="48"/>
+      <circle cx="48" cy="48" r="36" fill="none" stroke="rgba(18,23,36,0.1)" stroke-width="8"/>
+      <path d="M48 12A36 36 0 0 1 84 48" fill="none" stroke="#4f8f7c" stroke-width="8" stroke-linecap="round"/>
+    </g>
+
+    <g transform="translate(376 232)">
+      <use href="#sq96" class="bg"/>
+      <use href="#ic-mail" class="glyph" x="24" y="24" width="48" height="48"/>
+      <circle cx="78" cy="18" r="16" fill="url(#g-badge)"/>
+      <path d="M62 18a16 16 0 0 1 32 0" fill="none" stroke="rgba(255,255,255,0.45)" stroke-width="1.6"/>
+      <text class="num" x="78" y="24" fill="#ffffff" fill-opacity="0.95">3</text>
+    </g>
+
+    <g transform="translate(488 232)">
+      <use href="#sq96" class="bg"/>
+      <use href="#ic-network" class="glyph" x="24" y="24" width="48" height="48"/>
+      <rect class="pill-bg" x="26" y="64" width="44" height="26" rx="13"/>
+      <text class="num" x="48" y="82">8.2</text>
+    </g>
+
+    <g transform="translate(600 232)">
+      <use href="#sq96" class="bg"/>
+      <use href="#ic-tasks" class="glyph" x="24" y="24" width="48" height="48"/>
+      <circle cx="34" cy="82" r="4" fill="rgba(18,23,36,0.55)"/>
+      <circle cx="48" cy="82" r="4" fill="rgba(18,23,36,0.55)"/>
+      <circle cx="62" cy="82" r="4" fill="rgba(18,23,36,0.55)"/>
+    </g>
+  </g>
+
+  <g class="label">
+    <text x="88" y="352" fill="#5f6779">clock · pill</text>
+    <text x="200" y="352" fill="#5f6779">cpu · ring 62</text>
+    <text x="312" y="352" fill="#5f6779">battery · ring 25</text>
+    <text x="424" y="352" fill="#5f6779">mail · badge</text>
+    <text x="536" y="352" fill="#5f6779">network · pill</text>
+    <text x="648" y="352" fill="#5f6779">tasks · 3 windows</text>
+  </g>
+
+  <g class="label">
+    <text x="40" y="404" text-anchor="start">Rule: one status element per tile. Ring replaces pill; badge may sit on top of either. Numerals are tabular.</text>
+  </g>
+</svg>

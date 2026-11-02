@@ -1,18 +1,12 @@
 //! The serialisable snapshot React renders. Pure: no Win32, no IO.
 
+use crate::appearance::DockAppearance;
 use crate::apps::{self, AppEntry, RunningInfo};
 use serde::Serialize;
 
 /// The dock never shows more app tiles than this. First-run seeding spends the
 /// budget on two system tiles plus up to eight catalog apps.
 pub const DOCK_ITEM_CAP: usize = 10;
-
-pub struct DockConfig {
-    pub autohide: bool,
-    pub magnify: bool,
-    pub reduced_motion: bool,
-    pub profile: String,
-}
 
 #[derive(Clone, Debug, Serialize, PartialEq)]
 #[serde(rename_all = "camelCase")]
@@ -31,10 +25,30 @@ pub struct DockItemView {
 pub struct DockStateView {
     pub items: Vec<DockItemView>,
     pub edge: String,
-    pub autohide: bool,
-    pub magnify: bool,
-    pub reduced_motion: bool,
-    pub profile: String,
+    /// Everything React needs to style and lay out the dock. Duplicating these
+    /// values as top-level fields invited them to drift from the geometry.
+    pub appearance: DockAppearance,
+}
+
+/// Validate a requested dock order against the current pins.
+///
+/// The settings page sends the full list, so the request must be an exact
+/// permutation: silently dropping or duplicating an app would lose a pin.
+pub fn apply_order(current: &[String], requested: &[String]) -> Result<Vec<String>, String> {
+    if requested.len() != current.len() {
+        return Err("the new order must list every pinned app".to_string());
+    }
+    let mut seen = vec![false; current.len()];
+    for id in requested {
+        let Some(index) = current.iter().position(|current_id| current_id == id) else {
+            return Err(format!("{id} is not pinned"));
+        };
+        if seen[index] {
+            return Err(format!("{id} appears more than once"));
+        }
+        seen[index] = true;
+    }
+    Ok(requested.to_vec())
 }
 
 /// First-run pins: Explorer and Settings as system tiles, then catalog apps in
@@ -104,7 +118,7 @@ pub fn build_dock_state(
     pinned: &[String],
     running: &[RunningInfo],
     icons: &[Option<String>],
-    config: &DockConfig,
+    appearance: &DockAppearance,
 ) -> DockStateView {
     let items = pinned
         .iter()
@@ -138,10 +152,7 @@ pub fn build_dock_state(
     DockStateView {
         items,
         edge: "bottom".to_string(),
-        autohide: config.autohide,
-        magnify: config.magnify,
-        reduced_motion: config.reduced_motion,
-        profile: config.profile.clone(),
+        appearance: appearance.clone(),
     }
 }
 

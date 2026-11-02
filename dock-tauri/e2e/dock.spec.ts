@@ -68,6 +68,85 @@ test("hovering a tile magnifies it and leaving restores it", async ({ page }) =>
   await expect.poll(() => scaleOf(tile), { timeout: 3_000 }).toBeLessThan(1.01);
 });
 
+test("right-clicking a tile offers removal and records unpin_app", async ({ page }) => {
+  await page
+    .getByRole("button", { name: "Idle App", exact: true })
+    .click({ button: "right" });
+  await expect(page.getByRole("menu")).toBeVisible();
+
+  await page.getByRole("menuitem", { name: "Remove from Dock" }).click();
+
+  await expect
+    .poll(() =>
+      page.evaluate(() => {
+        const calls = (window as unknown as { __MOCK_CALLS__: Array<{ cmd: string; args: { id?: string } }> })
+          .__MOCK_CALLS__;
+        return calls.find((call) => call.cmd === "unpin_app")?.args.id ?? null;
+      }),
+    )
+    .toBe("idle-app");
+  await expect(page.getByRole("button", { name: "Idle App", exact: true })).toHaveCount(0);
+});
+
+test("dragging a tile reorders the dock and does not launch it", async ({ page }) => {
+  const source = page.getByRole("button", { name: "Idle App", exact: true });
+  const target = page.getByRole("button", {
+    name: "Minimized App, running",
+    exact: true,
+  });
+  const from = await source.boundingBox();
+  const to = await target.boundingBox();
+  if (!from || !to) throw new Error("dock tiles have no bounding box");
+
+  await page.mouse.move(from.x + from.width / 2, from.y + from.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(to.x + to.width / 2, to.y + to.height / 2, {
+    steps: 12,
+  });
+  await page.mouse.up();
+
+  await expect
+    .poll(() =>
+      page.evaluate(() => {
+        const calls = (
+          window as unknown as {
+            __MOCK_CALLS__: Array<{ cmd: string; args: { ids?: string[] } }>;
+          }
+        ).__MOCK_CALLS__;
+        const reorder = [...calls]
+          .reverse()
+          .find((call) => call.cmd === "reorder_pins");
+        return reorder?.args.ids ?? null;
+      }),
+    )
+    .toEqual([
+      "running-app",
+      "minimized-app",
+      "idle-app",
+      "broken-app",
+      "mail-app",
+      "browser-app",
+      "notes-app",
+      "media-app",
+      "terminal-app",
+      "files-app",
+    ]);
+
+  // Dropping a tile must never launch it.
+  expect(
+    await page.evaluate(() => {
+      const calls = (
+        window as unknown as {
+          __MOCK_CALLS__: Array<{ cmd: string; args: { id?: string } }>;
+        }
+      ).__MOCK_CALLS__;
+      return calls.some(
+        (call) => call.cmd === "launch_item" && call.args.id === "idle-app",
+      );
+    }),
+  ).toBe(false);
+});
+
 test("tooltip appears only after a dwell and shows the app name", async ({ page }) => {
   const tile = page.getByRole("button", { name: "Idle App", exact: true });
 

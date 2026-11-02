@@ -1,0 +1,624 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="dark" data-style="glass">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dock 美术规范 v1</title>
+  <link rel="stylesheet" href="../tokens/material.css">
+  <link rel="stylesheet" href="../tokens/motion.css">
+  <link rel="stylesheet" href="../tokens/icon.css">
+  <link rel="stylesheet" href="sheet.css">
+</head>
+<body>
+
+<!-- 内联字形：仅规格页用到的 10 个；完整 37 个见 art/dock-glyphs.svg -->
+<svg class="sprite" aria-hidden="true" focusable="false">
+  <defs>
+    <symbol id="g-sliders" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8.4h8.4M17.2 8.4H20"/><circle cx="14.6" cy="8.4" r="2.2"/><path d="M4 15.6h2.8M11.6 15.6H20"/><circle cx="9.4" cy="15.6" r="2.2"/></g></symbol>
+    <symbol id="g-grid" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="6.5" height="6.5" rx="1.6"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.6"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.6"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.6"/></g></symbol>
+    <symbol id="g-folder" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7.5A2.5 2.5 0 0 1 5.5 5h3.2c.5 0 1 .2 1.4.6l1.1 1.1c.3.3.8.5 1.2.5h5.9A2.5 2.5 0 0 1 21 9.7v7.8A2.5 2.5 0 0 1 18.5 20h-13A2.5 2.5 0 0 1 3 17.5z"/></g></symbol>
+    <symbol id="g-trash" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4.4 7.2h15.2"/><path d="M9.6 7.2V5.6A1.6 1.6 0 0 1 11.2 4h1.6a1.6 1.6 0 0 1 1.6 1.6v1.6"/><path d="M6.4 7.2l.8 11.1a2.2 2.2 0 0 0 2.2 2.05h5.2a2.2 2.2 0 0 0 2.2-2.05l.8-11.1"/><path d="M10.4 10.8v5.6M13.6 10.8v5.6"/></g></symbol>
+    <symbol id="g-chart" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.2h16"/><path d="M7.2 19.2v-5.4M11.6 19.2V8.2M16 19.2v-7.6"/></g></symbol>
+    <symbol id="g-clock" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.2"/><path d="M12 7.4v4.9l3.2 1.9"/></g></symbol>
+    <symbol id="g-mail" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3.2" y="5.6" width="17.6" height="12.8" rx="2.4"/><path d="M4.6 7.6 12 12.9l7.4-5.3"/></g></symbol>
+    <symbol id="g-plugin" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.4 19.4 7.7v8.6L12 20.6 4.6 16.3V7.7z"/><circle cx="12" cy="12" r="2.1"/></g></symbol>
+  </defs>
+</svg>
+
+<div class="shell">
+
+  <!-- ================= 侧栏 ================= -->
+  <aside class="rail">
+    <div class="rail-brand">
+      <svg viewBox="0 0 32 32" width="28" height="28" aria-hidden="true">
+        <rect x="1" y="1" width="30" height="30" rx="9" fill="#1b2233" stroke="rgba(255,255,255,0.1)"/>
+        <rect x="5" y="20" width="22" height="7" rx="3.5" fill="#fff" fill-opacity="0.09"/>
+        <rect x="12" y="11" width="8" height="8" rx="2.6" fill="#7c9be0"/>
+      </svg>
+      <div>
+        <strong>Dock Art</strong>
+        <span>v1 · 2026-10-26</span>
+      </div>
+    </div>
+
+    <nav class="rail-nav" aria-label="目录">
+      <a href="#materials"><span>01</span>风格</a>
+      <a href="#color"><span>02</span>色与字</a>
+      <a href="#shapes"><span>03</span>形状</a>
+      <a href="#glyphs"><span>04</span>字形</a>
+      <a href="#anatomy"><span>05</span>解剖</a>
+      <a href="#states"><span>06</span>状态</a>
+      <a href="#docklets"><span>07</span>插件磁贴</a>
+      <a href="#motion"><span>08</span>动效</a>
+      <a href="#settings"><span>09</span>设置面板</a>
+      <a href="#edges"><span>10</span>边缘</a>
+      <a href="#handoff"><span>11</span>交付</a>
+    </nav>
+
+    <div class="rail-foot">
+      <a class="rail-cta" href="../preview/dock.html">打开实时预览</a>
+      <p>本目录只含美术资源，不改动现有代码。</p>
+    </div>
+  </aside>
+
+  <!-- ================= 主栏 ================= -->
+  <main class="main">
+
+    <!-- ---------- 封面 ---------- -->
+    <header class="cover" id="top">
+      <p class="eyebrow">DOCK · ART SYSTEM · v1</p>
+      <h1>玻璃是一条架子，<br>不是一张贴图。</h1>
+      <p class="lede">
+        这套资源定义 Dock 的材质、形状、字形、状态与动效参数。所有数值取自当前
+        Tauri 实现的真实几何（48 px 图标、62% 填充、1.6 倍放大），因此设计稿与
+        运行结果不会各说各话。
+      </p>
+
+      <dl class="meta">
+        <div><dt>基线</dt><dd>Tauri + React 19 · WebView2</dd></div>
+        <div><dt>资产格式</dt><dd>SVG · CSS 变量 · 无构建</dd></div>
+        <div><dt>主题</dt><dd>深色优先 · 浅色同构</dd></div>
+        <div><dt>强调色</dt><dd>#7c9be0 · 唯一</dd></div>
+      </dl>
+
+      <ul class="stats">
+        <li><b>48</b><span>icon px</span></li>
+        <li><b>1.6×</b><span>magnify peak</span></li>
+        <li><b>0.45</b><span>falloff</span></li>
+        <li><b>62%</b><span>glass fill</span></li>
+        <li><b>4</b><span>running dot px</span></li>
+        <li><b>22.37%</b><span>squircle</span></li>
+      </ul>
+    </header>
+
+    <!-- ---------- 01 材质 ---------- -->
+    <section id="materials" class="sec">
+      <div class="sec-head">
+        <span class="idx">01</span>
+        <h2>风格</h2>
+        <p>三套全部随包发布，用户可自由切换。切换只换视觉令牌，不换图标形状、字形与放大曲线。</p>
+      </div>
+
+      <div class="style-grid">
+        <article class="style-card">
+          <div class="style-pair">
+            <div class="style-stage wall-busy" data-theme="dark" data-style="glass">
+              <span class="style-tag">Dark</span>
+              <div class="mini-dock"><i></i><i></i><i></i><i></i></div>
+            </div>
+            <div class="style-stage wall-light" data-theme="light" data-style="glass">
+              <span class="style-tag">Light</span>
+              <div class="mini-dock"><i></i><i></i><i></i><i></i></div>
+            </div>
+          </div>
+          <h3>A 冷调玻璃 <span class="tag">默认</span></h3>
+          <p>绘制玻璃，零原生依赖。深色壁纸与长时间驻留的首选，任何 Windows 版本观感一致。</p>
+          <ul class="style-facts">
+            <li><span>填充</span><b>62%</b></li>
+            <li><span>模糊</span><b>0</b></li>
+            <li><span>倒影</span><b>25%</b></li>
+          </ul>
+        </article>
+
+        <article class="style-card">
+          <div class="style-pair">
+            <div class="style-stage wall-busy" data-theme="dark" data-style="bare">
+              <span class="style-tag">Dark</span>
+              <div class="mini-dock"><i></i><i></i><i></i><i></i></div>
+            </div>
+            <div class="style-stage wall-light" data-theme="light" data-style="bare">
+              <span class="style-tag">Light</span>
+              <div class="mini-dock"><i></i><i></i><i></i><i></i></div>
+            </div>
+          </div>
+          <h3>B 裸排版</h3>
+          <p>没有底板，图标直接浮在壁纸上。间距放大到 12，浅色壁纸自动加 1 px 反色光环。</p>
+          <ul class="style-facts">
+            <li><span>底板</span><b>无</b></li>
+            <li><span>间距</span><b>12</b></li>
+            <li><span>光环</span><b>1px</b></li>
+          </ul>
+        </article>
+
+        <article class="style-card">
+          <div class="style-pair">
+            <div class="style-stage wall-busy" data-theme="dark" data-style="frost">
+              <span class="style-tag">Dark</span>
+              <div class="mini-dock"><i></i><i></i><i></i><i></i></div>
+            </div>
+            <div class="style-stage wall-light" data-theme="light" data-style="frost">
+              <span class="style-tag">Light</span>
+              <div class="mini-dock"><i></i><i></i><i></i><i></i></div>
+            </div>
+          </div>
+          <h3>C 磨砂亚克力</h3>
+          <p>真实桌面模糊。模糊区必须裁成药丸，否则会把图标上方留白一起糊掉，比不做更脏。</p>
+          <ul class="style-facts">
+            <li><span>填充</span><b>25%</b></li>
+            <li><span>模糊</span><b>22</b></li>
+            <li><span>勾边</span><b>1px</b></li>
+          </ul>
+        </article>
+      </div>
+
+      <div class="split split-58">
+        <div>
+          <h3 class="sub">A 的四层结构</h3>
+          <div class="stack">
+            <div class="stack-row"><span class="stack-key">4</span><div class="stack-bar" style="--i:0">边缘光 inset 0 ±1px</div></div>
+            <div class="stack-row"><span class="stack-key">3</span><div class="stack-bar" style="--i:1">颗粒 noise 0.25%</div></div>
+            <div class="stack-row"><span class="stack-key">2</span><div class="stack-bar" style="--i:2">顶部高光 white 15%</div></div>
+            <div class="stack-row"><span class="stack-key">1</span><div class="stack-bar" style="--i:3">基础填充 tint 62%</div></div>
+          </div>
+          <p class="note">顺序按绘制先后从下往上。颗粒必须是 <code>::after</code> 且 <code>pointer-events:none</code>，不能挂在滚动容器上。</p>
+        </div>
+        <div>
+          <h3 class="sub">不做什么</h3>
+          <ul class="rules">
+            <li>不加外描边：层级由材质表达，不由线框表达。</li>
+            <li>不加外发光：过亮的光晕会压过图标本身。</li>
+            <li>不用纯黑：最深处到 <code>#0f131c</code> 为止。</li>
+            <li>不让设置页透明：控件背后有 App 内容时会读不清。</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- ---------- 02 色与字 ---------- -->
+    <section id="color" class="sec">
+      <div class="sec-head">
+        <span class="idx">02</span>
+        <h2>色与字</h2>
+        <p>一个强调色，一条冷灰阶。语义色只用于阈值和告警，不参与品牌表达。</p>
+      </div>
+
+      <h3 class="sub">中性阶</h3>
+      <div class="ramp">
+        <div class="swatch" style="--c:#0f131c"><span>950</span><code>#0f131c</code></div>
+        <div class="swatch" style="--c:#141826"><span>900</span><code>#141826</code></div>
+        <div class="swatch" style="--c:#1c2130"><span>800</span><code>#1c2130</code></div>
+        <div class="swatch" style="--c:#262c3d"><span>700</span><code>#262c3d</code></div>
+        <div class="swatch" style="--c:#394157"><span>600</span><code>#394157</code></div>
+        <div class="swatch" style="--c:#5a6480"><span>500</span><code>#5a6480</code></div>
+        <div class="swatch" style="--c:#7d879f"><span>400</span><code>#7d879f</code></div>
+        <div class="swatch" style="--c:#98a1b6"><span>300</span><code>#98a1b6</code></div>
+        <div class="swatch" style="--c:#c3cad9"><span>200</span><code>#c3cad9</code></div>
+        <div class="swatch" style="--c:#e9edf7"><span>100</span><code>#e9edf7</code></div>
+        <div class="swatch" style="--c:#f4f6fb"><span>050</span><code>#f4f6fb</code></div>
+      </div>
+
+      <div class="split split-46">
+        <div>
+          <h3 class="sub">强调与语义</h3>
+          <div class="ramp ramp-accent">
+            <div class="swatch" style="--c:#a9bff0"><span>300</span><code>#a9bff0</code></div>
+            <div class="swatch" style="--c:#92adea"><span>400</span><code>#92adea</code></div>
+            <div class="swatch" style="--c:#7c9be0"><span>500</span><code>#7c9be0</code></div>
+            <div class="swatch" style="--c:#6a87c9"><span>600</span><code>#6a87c9</code></div>
+            <div class="swatch" style="--c:#5871ad"><span>700</span><code>#5871ad</code></div>
+          </div>
+          <div class="ramp ramp-semantic">
+            <div class="swatch" style="--c:#6fa896"><span>ok</span><code>#6fa896</code></div>
+            <div class="swatch" style="--c:#d9a45c"><span>warn</span><code>#d9a45c</code></div>
+            <div class="swatch" style="--c:#d46a62"><span>crit</span><code>#d46a62</code></div>
+          </div>
+          <p class="note">亮度阈值：L &lt; 0.35 用白字；0.35–0.6 白字 + 1 px 柔影；&gt; 0.6 用 <code>#20242e</code> 深字。</p>
+        </div>
+
+        <div>
+          <h3 class="sub">字阶</h3>
+          <table class="tbl">
+            <thead><tr><th>用途</th><th>字号 / 行高</th><th>字重</th></tr></thead>
+            <tbody>
+              <tr><td>提示气泡</td><td>13 / 16</td><td>500</td></tr>
+              <tr><td>面板正文</td><td>14 / 20</td><td>400</td></tr>
+              <tr><td>面板强调</td><td>14 / 20</td><td>600</td></tr>
+              <tr><td>数值</td><td>18 / 24</td><td>400 · 等宽数字</td></tr>
+              <tr><td>面板标题</td><td>28 / 36</td><td>600 · -0.01em</td></tr>
+            </tbody>
+          </table>
+          <p class="note">
+            字体用系统 <code>Segoe UI Variable</code>（标题 Display / 正文 Text），数字用
+            <code>Cascadia Mono</code>。不打包字体：3 个标签不值得为它增加 200 KB 和一次
+            字体加载。
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ---------- 03 形状 ---------- -->
+    <section id="shapes" class="sec">
+      <div class="sec-head">
+        <span class="idx">03</span>
+        <h2>形状</h2>
+        <p>图标容器用超椭圆 n=5；Dock 药丸半径 = 高度 / 2。两者都是连续曲率，没有切线折点。</p>
+      </div>
+
+      <div class="shape-grid">
+        <div class="shape-demo">
+          <div class="sq sq-super"></div>
+          <p><b>squircle</b><span>n = 5 · clip-path</span></p>
+        </div>
+        <div class="shape-demo">
+          <div class="sq sq-legacy"></div>
+          <p><b>border-radius</b><span>22.37% · 旧实现</span></p>
+        </div>
+        <div class="shape-demo">
+          <svg viewBox="0 0 48 48" width="96" height="96" aria-label="Ring gauge 62 percent">
+            <circle cx="24" cy="24" r="21" fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="4.6"/>
+            <path d="M24 3A21 21 0 1 1 9.62 39.31" fill="none" stroke="#7c9be0" stroke-width="4.6" stroke-linecap="round"/>
+            <text x="24" y="28" text-anchor="middle" fill="#fff" font-family="Cascadia Mono, monospace" font-size="12" font-weight="600">62</text>
+          </svg>
+          <p><b>ring gauge</b><span>厚 = R × 0.22</span></p>
+        </div>
+        <div class="shape-demo">
+          <div class="status-stack">
+            <span class="dot"></span>
+            <span class="badge">3</span>
+            <span class="sep-demo"></span>
+          </div>
+          <p><b>状态件</b><span>dot 4 · badge 16 · sep 1</span></p>
+        </div>
+      </div>
+
+      <p class="note">
+        左侧两块的差异不在 45° 处（两者几乎重合），而在贴边段：squircle 一直保持近直线，
+        到很靠近转角才开始加速弯曲，这就是「不内切」的观感来源。
+        <code>clip-path</code> 会裁掉 <code>drop-shadow</code>，所以阴影必须先画在父层。
+      </p>
+    </section>
+
+    <!-- ---------- 04 字形 ---------- -->
+    <section id="glyphs" class="sec">
+      <div class="sec-head">
+        <span class="idx">04</span>
+        <h2>字形</h2>
+        <p>24 网格，1.7 描边，圆头圆角。系统入口与插件磁贴共用同一套，不引入第三方图标包。</p>
+      </div>
+      <div class="board">
+        <img src="../art/dock-glyphs.svg" alt="37 个线性字形总览" width="720" height="736">
+      </div>
+      <ul class="rules rules-cols">
+        <li><b>网格</b> 24 × 24，安全区 3 单位。</li>
+        <li><b>描边</b> 1.7，圆头，圆角连接。</li>
+        <li><b>比例</b> 磁贴内字形占 50–58%。</li>
+        <li><b>颜色</b> <code>currentColor</code>，不写死。</li>
+        <li><b>填充</b> 只用于点、针脚等小面积。</li>
+        <li><b>命名</b> <code>g-&lt;名词&gt;</code>，状态写 <code>-full</code> 后缀。</li>
+      </ul>
+    </section>
+
+    <!-- ---------- 05 解剖 ---------- -->
+    <section id="anatomy" class="sec">
+      <div class="sec-head">
+        <span class="idx">05</span>
+        <h2>解剖</h2>
+        <p>默认 48 px 图标下的全部关键尺寸。改任何一个，窗口几何都要跟着改。</p>
+      </div>
+
+      <div class="anatomy">
+        <div class="anatomy-stage">
+          <div class="anatomy-dock">
+            <div class="an-tile an-control" aria-hidden="true"><svg width="26" height="26"><use href="#g-sliders"/></svg></div>
+            <div class="an-tile an-system" aria-hidden="true"><svg width="26" height="26"><use href="#g-grid"/></svg></div>
+            <div class="an-sep" aria-hidden="true"></div>
+            <div class="an-tile an-app" aria-hidden="true"></div>
+            <div class="an-tile an-app alt" aria-hidden="true"></div>
+            <div class="an-slot" aria-hidden="true">
+              <div class="an-tile an-app third"></div>
+              <span class="an-dot"></span>
+            </div>
+            <div class="an-sep" aria-hidden="true"></div>
+            <div class="an-tile an-trash" aria-hidden="true"><svg width="26" height="26"><use href="#g-trash"/></svg></div>
+          </div>
+
+          <ul class="an-ruler" aria-label="关键尺寸">
+            <li><b>16</b>pad-h</li>
+            <li><b>48</b>icon</li>
+            <li><b>8</b>gap</li>
+            <li><b>68</b>bar height</li>
+            <li><b>34</b>radius</li>
+            <li><b>4</b>dot</li>
+            <li><b>40</b>reflection</li>
+          </ul>
+        </div>
+
+        <ol class="anatomy-list">
+          <li><b>padding-h</b><span>16 px · 左右内边距</span></li>
+          <li><b>icon</b><span>48 px · 容器严格等于图标，无额外留白</span></li>
+          <li><b>gap</b><span>8 px · 图标间距</span></li>
+          <li><b>bar height</b><span>icon + 2 × padding-v = 68 px</span></li>
+          <li><b>radius</b><span>高度 / 2 = 34 px，两端完整半圆</span></li>
+          <li><b>running dot</b><span>4 px，图标底边下 6 px，带 1 px 深色描边</span></li>
+          <li><b>separator</b><span>1 × 72% 图标高，白 16%</span></li>
+          <li><b>reflection</b><span>40 px 带，scaleY(-0.38)，60% 处淡出</span></li>
+        </ol>
+      </div>
+    </section>
+
+    <!-- ---------- 06 状态 ---------- -->
+    <section id="states" class="sec">
+      <div class="sec-head">
+        <span class="idx">06</span>
+        <h2>状态</h2>
+        <p>状态写在图标本体上，不新增容器。同一时刻只允许一个状态叠加层。</p>
+      </div>
+
+      <div class="state-grid">
+        <figure class="state"><div class="st-tile"><span class="st-app"></span></div><figcaption>default</figcaption></figure>
+        <figure class="state"><div class="st-tile is-hover"><span class="st-app"></span><span class="st-tooltip">Files</span></div><figcaption>hover</figcaption></figure>
+        <figure class="state"><div class="st-tile is-pressed"><span class="st-app"></span></div><figcaption>pressed</figcaption></figure>
+        <figure class="state"><div class="st-tile"><span class="st-app"></span><span class="st-dot"></span></div><figcaption>running</figcaption></figure>
+        <figure class="state"><div class="st-tile"><span class="st-app"></span><span class="st-badge">3</span></div><figcaption>minimized</figcaption></figure>
+        <figure class="state"><div class="st-tile is-disabled"><span class="st-app"></span></div><figcaption>disabled</figcaption></figure>
+        <figure class="state"><div class="st-tile is-dragging"><span class="st-app"></span></div><figcaption>dragging</figcaption></figure>
+        <figure class="state"><div class="st-tile is-target"><span class="st-slot"></span></div><figcaption>drop slot</figcaption></figure>
+      </div>
+
+      <table class="tbl tbl-wide">
+        <thead><tr><th>状态</th><th>视觉</th><th>不要做</th></tr></thead>
+        <tbody>
+          <tr><td>hover</td><td>放大 + 500 ms 后气泡；图标不变色</td><td>不加底框、不加描边</td></tr>
+          <tr><td>pressed</td><td>内部图像 scale(0.9)、阴影收短 90 ms</td><td>不缩放整个磁贴</td></tr>
+          <tr><td>running</td><td>底部 4 px 点，白 60% + 1 px 深环</td><td>不把图标改成彩色</td></tr>
+          <tr><td>disabled</td><td>去饱和 + 70% 不透明</td><td>不隐藏图标</td></tr>
+          <tr><td>dragging</td><td>scale 1.08 / rotate -1.5° / 阴影抬起</td><td>不改变 DOM 顺序</td></tr>
+          <tr><td>drop slot</td><td>虚线 accent 16% 底 + 55% 边</td><td>不留空白无提示</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- ---------- 07 插件磁贴 ---------- -->
+    <section id="docklets" class="sec">
+      <div class="sec-head">
+        <span class="idx">07</span>
+        <h2>插件磁贴</h2>
+        <p>一个磁贴只回答一个问题。答案要么是数字药丸，要么是形状（环 / 线），不同时给两个。</p>
+      </div>
+
+      <div class="board">
+        <img src="../art/docklet-tiles.svg" alt="深色与浅色下的六个插件磁贴" width="720" height="420">
+      </div>
+
+      <div class="split split-58">
+        <div>
+          <h3 class="sub">槽位规则</h3>
+          <table class="tbl">
+            <thead><tr><th>槽位</th><th>占用</th><th>互斥</th></tr></thead>
+            <tbody>
+              <tr><td>glyph</td><td>24 单位，居中，50%</td><td>—</td></tr>
+              <tr><td>ring</td><td>外圈 R = 21，厚 4.6</td><td>与 pill 互斥</td></tr>
+              <tr><td>pill</td><td>高 16，底边贴齐</td><td>与 ring 互斥</td></tr>
+              <tr><td>badge</td><td>16，右上 (−4, −4)</td><td>可叠加</td></tr>
+              <tr><td>dots</td><td>3 × 4 px，底边下方</td><td>可叠加</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div>
+          <h3 class="sub">插件在 Dock 里的 Item 抽象</h3>
+          <pre class="code"><code>type DockItem =
+  | { kind: "app";      id; name; icon; running; minimized }
+  | { kind: "folder";   id; name; items: DockItem[] }
+  | { kind: "plugin";   id; name; glyph; value?; unit?;
+      status?: "ok" | "warn" | "crit"; menu?: MenuItem[] }
+  | { kind: "separator" }
+  | { kind: "trash";    full: boolean };</code></pre>
+          <p class="note">插件不拥有自己的背景：它的背景永远是 Dock 的玻璃，所以对比度必须按合成亮度算。</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ---------- 08 动效 ---------- -->
+    <section id="motion" class="sec">
+      <div class="sec-head">
+        <span class="idx">08</span>
+        <h2>动效</h2>
+        <p>只动 transform 与 opacity。放大跟随用 160 ms，离开用 320 ms 回弹——进入要跟手，退出要有质量。</p>
+      </div>
+
+      <div class="split split-58">
+        <div>
+          <h3 class="sub">放大传播</h3>
+          <figure class="chart-wrap">
+            <svg id="magnify-chart" viewBox="0 0 420 180" width="100%" role="img" aria-label="放大倍率随距离衰减曲线"></svg>
+            <figcaption>peak 1.6 · falloff 0.45 · radius 2.2 图标</figcaption>
+          </figure>
+          <pre class="code"><code>scale(i) = 1 + (peak − 1) × exp(−((d / radius) / falloff)⁴)</code></pre>
+        </div>
+        <div>
+          <h3 class="sub">距离 → 倍率</h3>
+          <table class="tbl">
+            <thead><tr><th>距离</th><th>倍率</th><th>观感</th></tr></thead>
+            <tbody>
+              <tr><td>0.0 格</td><td>1.600</td><td>指针所在</td></tr>
+              <tr><td>0.5 格</td><td>1.562</td><td>仍在峰顶</td></tr>
+              <tr><td>1.0 格</td><td>1.212</td><td>邻接抬升</td></tr>
+              <tr><td>1.5 格</td><td>1.003</td><td>几乎归位</td></tr>
+              <tr><td>2.2 格</td><td>1.000</td><td>完全静止</td></tr>
+            </tbody>
+          </table>
+          <p class="note">想让联动更宽，改 <code>magnifyRadiusIcons</code> 到 3.0；改 falloff 会影响峰形，属于行为变更。</p>
+        </div>
+      </div>
+
+      <h3 class="sub">时长表</h3>
+      <table class="tbl tbl-wide">
+        <thead><tr><th>动作</th><th>属性</th><th>时长</th><th>曲线</th></tr></thead>
+        <tbody>
+          <tr><td>放大跟随</td><td>transform: scale</td><td>160 ms</td><td>signature</td></tr>
+          <tr><td>离开复位</td><td>transform: scale</td><td>320 ms</td><td>spring（过冲 ≤ 3%）</td></tr>
+          <tr><td>按下 / 松开</td><td>scale 0.9 → 1</td><td>90 / 120 ms</td><td>signature / spring</td></tr>
+          <tr><td>提示气泡</td><td>opacity + translateY 6 → 0</td><td>150 / 50 ms</td><td>signature / linear</td></tr>
+          <tr><td>右键菜单</td><td>opacity + scale 0.97 → 1</td><td>250 / 150 ms</td><td>signature</td></tr>
+          <tr><td>自动隐藏</td><td>translateY 100% → 0</td><td>200 ms</td><td>ease-out</td></tr>
+          <tr><td>角标弹入</td><td>scale 0.4 → 1 + opacity</td><td>500 ms</td><td>spring</td></tr>
+          <tr><td>启动弹跳</td><td>translateY 0 → −34 → 0 ×2</td><td>600 ms</td><td>spring</td></tr>
+          <tr><td>拖拽让位</td><td>translateX ±pitch</td><td>200 ms</td><td>signature</td></tr>
+          <tr><td>拖出移除</td><td>opacity 1 → 0 + scale 0.86</td><td>160 ms</td><td>ease-in</td></tr>
+        </tbody>
+      </table>
+      <p class="note">
+        <code>prefers-reduced-motion</code> 时全部替换为 0 ms 或纯 opacity，放大关闭。
+        这条守卫的优先级高于任何单个效果：新加动画必须先在 <code>tokens/motion.css</code> 里被它覆盖。
+      </p>
+    </section>
+
+    <!-- ---------- 09 设置面板 ---------- -->
+    <section id="settings" class="sec">
+      <div class="sec-head">
+        <span class="idx">09</span>
+        <h2>设置面板</h2>
+        <p>实色面板，不用玻璃。分成五栏；外观改动即时预览，300 ms 防抖落盘。</p>
+      </div>
+
+      <div class="settings-mock" aria-label="设置面板外观示意">
+        <div class="sm-head">
+          <h3>Settings</h3>
+          <span class="sm-status">Saved.</span>
+          <button type="button" class="sm-primary">Save</button>
+          <button type="button" class="sm-ghost">Close</button>
+        </div>
+
+        <div class="sm-tabs">
+          <span>General</span>
+          <span class="is-active">Appearance</span>
+          <span>Behaviour</span>
+          <span>Extensions</span>
+          <span>About</span>
+        </div>
+
+        <div class="sm-body">
+          <div class="sm-group">
+            <h4>Bar</h4>
+            <div class="sm-field"><label>Icon size</label><span class="sm-slider"><i style="--v:48%"></i></span><output>48 px</output></div>
+            <div class="sm-field"><label>Icon spacing</label><span class="sm-slider"><i style="--v:33%"></i></span><output>8 px</output></div>
+            <div class="sm-field"><label>Bar radius</label><span class="sm-slider"><i style="--v:53%"></i></span><output>34 px</output></div>
+          </div>
+
+          <div class="sm-group">
+            <h4>Glass</h4>
+            <div class="sm-field"><label>Style</label><span class="sm-seg"><i class="is-active">Glass</i><i>Bare</i><i>Frost</i></span><output></output></div>
+            <div class="sm-field"><label>Fill opacity</label><span class="sm-slider"><i style="--v:62%"></i></span><output>62%</output></div>
+            <div class="sm-field"><label>Glass tint</label><span class="sm-color"><i style="background:#161a26"></i></span><output>#161a26</output></div>
+            <div class="sm-field"><label>Icon shape</label><span class="sm-seg"><i class="is-active">Squircle</i><i>Rounded</i></span><output></output></div>
+          </div>
+
+          <div class="sm-group">
+            <h4>Motion</h4>
+            <div class="sm-field"><label>Magnify peak</label><span class="sm-slider"><i style="--v:60%"></i></span><output>1.60×</output></div>
+            <div class="sm-field"><label>Magnify reach</label><span class="sm-slider"><i style="--v:30%"></i></span><output>2.2 icons</output></div>
+            <div class="sm-check"><i class="sm-box is-on"></i>Show running dots</div>
+            <div class="sm-check"><i class="sm-box"></i>Reduced motion</div>
+          </div>
+        </div>
+      </div>
+
+      <p class="note">
+        现有实现的四栏是 Appearance / Behaviour / Apps / Advanced。建议拆成五栏：Apps 与
+        Extensions 并列，Advanced 里的重置与版本信息归到 About。字段映射见 <code>README.md §4</code>。
+      </p>
+    </section>
+
+    <!-- ---------- 10 边缘 ---------- -->
+    <section id="edges" class="sec">
+      <div class="sec-head">
+        <span class="idx">10</span>
+        <h2>边缘</h2>
+        <p>底部是首版唯一实现。左右两侧先给美术规格，行为未实现前不要放出设置项。</p>
+      </div>
+
+      <div class="edge-grid">
+        <figure class="edge">
+          <div class="edge-stage"><div class="edge-dock bottom"><span></span><span></span><span></span></div></div>
+          <figcaption>bottom · 默认</figcaption>
+        </figure>
+        <figure class="edge">
+          <div class="edge-stage"><div class="edge-dock left"><span></span><span></span><span></span></div></div>
+          <figcaption>left · 放大方向向右</figcaption>
+        </figure>
+        <figure class="edge">
+          <div class="edge-stage"><div class="edge-dock right"><span></span><span></span><span></span></div></div>
+          <figcaption>right · 放大方向向左</figcaption>
+        </figure>
+      </div>
+      <p class="note">
+        侧边时 <code>transform-origin</code> 指向屏幕内侧，放大仍然「长向桌面」而不是长向屏幕外。
+        运行点改到内侧边缘，自动隐藏的收起条变成 2 px 竖条。
+      </p>
+    </section>
+
+    <!-- ---------- 11 交付 ---------- -->
+    <section id="handoff" class="sec">
+      <div class="sec-head">
+        <span class="idx">11</span>
+        <h2>交付</h2>
+        <p>所有资产是纯文本，可直接进 git，也可单独交给设计师。</p>
+      </div>
+
+      <table class="tbl tbl-wide">
+        <thead><tr><th>文件</th><th>内容</th><th>接入方式</th></tr></thead>
+        <tbody>
+          <tr><td><code>tokens/material.css</code></td><td>色阶、玻璃四层、浅色、亚克力、阴影</td><td>作为默认值层引入</td></tr>
+          <tr><td><code>tokens/motion.css</code></td><td>时长、曲线、语义动画、降级</td><td>直接替换旧 <code>--spring</code>/<code>--signature</code></td></tr>
+          <tr><td><code>tokens/icon.css</code></td><td>几何、squircle、状态件尺寸</td><td>与 DockMetrics 对齐</td></tr>
+          <tr><td><code>art/dock-glyphs.svg</code></td><td>37 个字形 sprite</td><td>内联后 <code>&lt;use href="#g-x"&gt;</code></td></tr>
+          <tr><td><code>art/shapes.svg</code></td><td>squircle、环、药丸、遮罩</td><td>取 path 或参考</td></tr>
+          <tr><td><code>art/docklet-tiles.svg</code></td><td>六个插件磁贴，深浅两套</td><td>参考图</td></tr>
+          <tr><td><code>art/grain.svg</code></td><td>颗粒纹理与降级写法</td><td>data URI 已在 token 内</td></tr>
+          <tr><td><code>art/mark.svg</code></td><td>512 px 产品标记</td><td>导出 ico / png 用</td></tr>
+          <tr><td><code>preview/dock.html</code></td><td>可交互 Dock（真实放大公式）</td><td>设计验收</td></tr>
+        </tbody>
+      </table>
+
+      <div class="split split-58">
+        <div>
+          <h3 class="sub">接入顺序</h3>
+          <ol class="steps">
+            <li>先换 <code>tokens/icon.css</code> 的 squircle——视觉收益最大，行为零风险。</li>
+            <li>再换 <code>tokens/material.css</code> 的色阶，现有 <code>--glass-fill</code> 保持由 JS 计算。</li>
+            <li>字形按需替换，保持 <code>Glyph.tsx</code> 的 24/1.7 约定。</li>
+            <li>最后才碰 motion：它会影响测试快照与手感验收。</li>
+          </ol>
+        </div>
+        <div>
+          <h3 class="sub">不可做</h3>
+          <ul class="rules">
+            <li>不要用 <code>backdrop-filter</code> 假装亚克力——WebView 里它只能模糊 DOM，模糊不到桌面。</li>
+            <li>不要在透明区域放阴影：窗口裁切会把它们切出硬边。</li>
+            <li>不要把颗粒挂在滚动容器或每帧重绘的图层上。</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <footer class="foot">
+      <span>Dock Art System · v1 · 2026-10-26</span>
+      <span>只读资源包，未改动 src/ 或 src-tauri/</span>
+    </footer>
+
+  </main>
+</div>
+
+<script src="sheet.js"></script>
+</body>
+</html>

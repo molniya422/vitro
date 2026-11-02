@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-12 -12 40 40" width="320" height="320" role="img" aria-label="Notification badge">
+  <title>Notification badge</title>
+  <desc>16 px rounded badge. Widen to a pill with rx 8 for two or more digits. The 2 px plate colour cut-out ring is applied by the host. 预览底仅用于单独打开时观察，接入时删除 id=preview-stage 的整组即可得到透明资产。</desc>
+  <!-- 预览底：单独打开时的观察背景，接入时删除本组 -->
+  <g id="preview-stage">
+    <defs>
+      <linearGradient id="preview-bg" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stop-color="#1b2434"/>
+        <stop offset="1" stop-color="#0d1119"/>
+      </linearGradient>
+      <radialGradient id="preview-glow" cx=".22" cy=".12" r=".85">
+        <stop offset="0" stop-color="#7c9be0" stop-opacity=".18"/>
+        <stop offset="1" stop-color="#7c9be0" stop-opacity="0"/>
+      </radialGradient>
+    </defs>
+    <rect x="-12" y="-12" width="40" height="40" fill="url(#preview-bg)"/>
+    <rect x="-12" y="-12" width="40" height="40" fill="url(#preview-glow)"/>
+  </g>
+  <g id="asset">
+
+  <defs>
+    <linearGradient id="badge" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#e2605a"/>
+      <stop offset="1" stop-color="#c8433d"/>
+    </linearGradient>
+  </defs>
+  <rect width="16" height="16" rx="8" fill="url(#badge)"/>
+  <path d="M.5 8a7.5 7.5 0 0 1 15 0" fill="none" stroke="#ffffff" stroke-opacity=".45" stroke-width="1"/>
+  </g>
+</svg>

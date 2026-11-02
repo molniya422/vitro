@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dock · 三维视觉稿</title>
+  <link rel="stylesheet" href="../tokens/material.css">
+  <link rel="stylesheet" href="./scene.css">
+</head>
+<body>
+  <canvas id="stage" aria-label="Dock 三维场景"></canvas>
+
+  <header class="hud">
+    <p class="eyebrow">DOCK · 3D STUDY</p>
+    <h1>悬浮的玻璃架</h1>
+    <p class="lede">同一套参数的三维版本：22.37% 超椭圆、62% 玻璃、1.6 放大曲线。拖动可从任意角度看材质。</p>
+  </header>
+
+  <div class="controls">
+    <button id="btn-rotate" type="button" aria-pressed="true">自动旋转</button>
+    <button id="btn-reset" type="button">重置视角</button>
+  </div>
+
+  <p class="hint" id="hint">拖动旋转 · 滚轮缩放 · 悬停图标</p>
+
+  <footer class="meta">three.js r160 · 设计稿，非运行时</footer>
+
+  <div class="fallback">
+    <p>当前环境没有可用的 WebGL，无法显示三维场景。</p>
+    <p>请使用支持 WebGL 的 Edge 或 Chrome 打开。</p>
+  </div>
+
+  <script src="./dock3d.bundle.js"></script>
+</body>
+</html>

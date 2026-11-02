@@ -43,23 +43,84 @@ impl IconCache {
     }
 }
 
-/// Data URLs for every app, extracting and caching on first use.
-pub fn icons_for(apps: &[crate::apps::AppEntry], size: u32) -> Vec<Option<String>> {
-    let dir = std::env::var("APPDATA")
+fn default_cache_dir() -> PathBuf {
+    std::env::var("APPDATA")
         .map(|base| PathBuf::from(base).join("DockApp/icons"))
-        .unwrap_or_else(|_| std::env::temp_dir().join("dockapp-icons"));
-    let cache = IconCache::new(dir);
-    apps.iter()
-        .map(|app| {
-            let key = IconCache::key(&app.id, size);
-            if let Some(url) = cache.read(&key) {
-                return Some(url);
+        .unwrap_or_else(|_| std::env::temp_dir().join("dockapp-icons"))
+}
+
+/// The runtime's in-memory icon table, indexed parallel to the app catalog.
+///
+/// Extraction is lazy per index: the dock asks for its pinned apps, Launchpad
+/// later asks for the rest. `loaded` marks a failed extraction too, so a broken
+/// shortcut is not retried on every window sync. The snapshot is discarded when
+/// the device pixel size or the catalog length changes.
+pub struct IconSnapshot {
+    pub px: u32,
+    urls: Vec<Option<String>>,
+    loaded: Vec<bool>,
+    cache_dir: PathBuf,
+}
+
+impl IconSnapshot {
+    pub fn new(catalog_len: usize, px: u32) -> Self {
+        Self::with_dir(catalog_len, px, default_cache_dir())
+    }
+
+    pub fn with_dir(catalog_len: usize, px: u32, cache_dir: PathBuf) -> Self {
+        Self {
+            px,
+            urls: vec![None; catalog_len],
+            loaded: vec![false; catalog_len],
+            cache_dir,
+        }
+    }
+
+    pub fn matches(&self, catalog_len: usize, px: u32) -> bool {
+        self.px == px && self.urls.len() == catalog_len
+    }
+
+    /// Read or extract the requested catalog indices. Existing entries and
+    /// previously failed entries are left alone.
+    pub fn ensure(
+        &mut self,
+        apps: &[crate::apps::AppEntry],
+        indices: impl IntoIterator<Item = usize>,
+    ) {
+        let cache = IconCache::new(self.cache_dir.clone());
+        for index in indices {
+            if index >= apps.len() || index >= self.urls.len() || self.loaded[index] {
+                continue;
             }
-            let png = extract_png(Path::new(&app.id), size)?;
-            cache.store(&key, &png).ok()?;
-            cache.read(&key)
-        })
-        .collect()
+            let key = IconCache::key(&apps[index].id, self.px);
+            self.urls[index] = match cache.read(&key) {
+                Some(url) => Some(url),
+                None => {
+                    if let Some(png) = extract_png(Path::new(&apps[index].id), self.px) {
+                        let _ = cache.store(&key, &png);
+                        cache.read(&key)
+                    } else {
+                        None
+                    }
+                }
+            };
+            self.loaded[index] = true;
+        }
+    }
+
+    pub fn urls(&self) -> &[Option<String>] {
+        &self.urls
+    }
+}
+
+/// Data URLs for every app, extracting and caching on first use.
+///
+/// The host uses [`IconSnapshot`] so it can load a subset and reuse the table;
+/// this convenience wrapper remains for tests and one-shot callers.
+pub fn icons_for(apps: &[crate::apps::AppEntry], size: u32) -> Vec<Option<String>> {
+    let mut snapshot = IconSnapshot::new(apps.len(), size);
+    snapshot.ensure(apps, 0..apps.len());
+    snapshot.urls().to_vec()
 }
 
 /// Extract an icon for `path` as a PNG sized to `size` pixels.

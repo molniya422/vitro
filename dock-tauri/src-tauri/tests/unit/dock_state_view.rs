@@ -1,15 +1,10 @@
+use dock_tauri_lib::appearance::DockAppearance;
 use dock_tauri_lib::apps::{AppEntry, RunningInfo, SYSTEM_EXPLORER_ID, SYSTEM_SETTINGS_ID};
-use dock_tauri_lib::state::{
-    build_catalog, build_dock_state, seed_pins, DockConfig, DOCK_ITEM_CAP,
-};
+use dock_tauri_lib::settings::Settings;
+use dock_tauri_lib::state::{build_catalog, build_dock_state, seed_pins, DOCK_ITEM_CAP};
 
-fn config() -> DockConfig {
-    DockConfig {
-        autohide: false,
-        magnify: true,
-        reduced_motion: false,
-        profile: "vitro".into(),
-    }
+fn appearance() -> DockAppearance {
+    DockAppearance::from_settings(&Settings::default())
 }
 
 fn app(id: &str, name: &str) -> AppEntry {
@@ -41,7 +36,7 @@ fn running_and_minimized_flow_into_the_view() {
         },
     ];
 
-    let state = build_dock_state(&apps, &ids(&apps), &running, &[], &config());
+    let state = build_dock_state(&apps, &ids(&apps), &running, &[], &appearance());
     assert_eq!(state.items.len(), 2);
     assert!(state.items[0].running);
     assert_eq!(state.items[0].minimized, 2);
@@ -55,7 +50,7 @@ fn missing_icon_produces_a_null_not_a_placeholder_path() {
         running: false,
         minimized: 0,
     }];
-    let state = build_dock_state(&apps, &ids(&apps), &running, &[], &config());
+    let state = build_dock_state(&apps, &ids(&apps), &running, &[], &appearance());
     assert!(state.items[0].icon.is_none());
     assert!(state.items[0].disabled_reason.is_none());
 }
@@ -71,7 +66,7 @@ fn item_with_no_target_is_marked_unavailable() {
         running: false,
         minimized: 0,
     }];
-    let state = build_dock_state(&apps, &ids(&apps), &running, &[], &config());
+    let state = build_dock_state(&apps, &ids(&apps), &running, &[], &appearance());
     assert!(state.items[0].disabled_reason.is_some());
 }
 
@@ -82,7 +77,7 @@ fn fewer_running_entries_than_apps_does_not_panic() {
         running: true,
         minimized: 0,
     }];
-    let state = build_dock_state(&apps, &ids(&apps), &running, &[], &config());
+    let state = build_dock_state(&apps, &ids(&apps), &running, &[], &appearance());
     assert_eq!(state.items.len(), 2);
     assert!(state.items[1].disabled_reason.is_none());
 }
@@ -103,7 +98,7 @@ fn only_pinned_ids_reach_the_dock() {
     ];
     let pinned = vec!["c:/x/c.lnk".to_string(), "c:/x/a.lnk".to_string()];
 
-    let state = build_dock_state(&apps, &pinned, &running, &[], &config());
+    let state = build_dock_state(&apps, &pinned, &running, &[], &appearance());
     let names: Vec<_> = state.items.iter().map(|item| item.name.as_str()).collect();
     assert_eq!(names, ["Gamma", "Alpha"]);
 }
@@ -121,7 +116,7 @@ fn dock_never_shows_more_than_the_cap_even_if_pinned_is_longer() {
         12
     ];
     let pinned = ids(&apps);
-    let state = build_dock_state(&apps, &pinned, &running, &[], &config());
+    let state = build_dock_state(&apps, &pinned, &running, &[], &appearance());
     assert_eq!(state.items.len(), DOCK_ITEM_CAP);
 }
 
@@ -158,7 +153,7 @@ fn first_run_seed_is_system_tiles_plus_eight_catalog_apps() {
         ]
     );
 
-    let state = build_dock_state(&apps, &pinned, &[], &[], &config());
+    let state = build_dock_state(&apps, &pinned, &[], &[], &appearance());
     assert_eq!(state.items.len(), DOCK_ITEM_CAP);
     assert_eq!(state.items[0].kind, "system");
     assert_eq!(state.items[0].name, "Explorer");
@@ -178,7 +173,7 @@ fn seeding_a_short_catalog_keeps_the_system_tiles() {
 #[test]
 fn pinned_app_that_left_the_catalog_is_disabled_not_dropped() {
     let pinned = vec!["c:/gone/removed.lnk".to_string()];
-    let state = build_dock_state(&[], &pinned, &[], &[], &config());
+    let state = build_dock_state(&[], &pinned, &[], &[], &appearance());
     assert_eq!(state.items.len(), 1);
     assert_eq!(state.items[0].name, "removed");
     assert!(state.items[0].disabled_reason.is_some());
@@ -198,4 +193,13 @@ fn catalog_returns_every_app_without_the_dock_cap() {
     ];
     let catalog = build_catalog(&apps, &running, &[]);
     assert_eq!(catalog.len(), 12);
+}
+
+#[test]
+fn derived_appearance_reaches_the_view() {
+    let state = build_dock_state(&[], &[], &[], &[], &appearance());
+    assert_eq!(state.edge, "bottom");
+    assert_eq!(state.appearance.icon_size, 48.0);
+    assert_eq!(state.appearance.leading_tiles, 4);
+    assert!(state.appearance.magnify);
 }

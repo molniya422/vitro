@@ -16,6 +16,9 @@ pub enum Event {
     Tick,
     SetEnabled(bool),
     SetLocked(bool),
+    /// A fullscreen foreground app owns the screen. Suppression hides the dock
+    /// regardless of auto-hide settings and ignores pointer events until lifted.
+    SetSuppressed(bool),
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -29,7 +32,10 @@ pub enum Action {
 pub struct AutoHide {
     enabled: bool,
     locked: bool,
+    suppressed: bool,
     visibility: Visibility,
+    show_delay_ms: u64,
+    hide_delay_ms: u64,
     /// Deadline after which the pending transition should fire.
     deadline: Option<u64>,
     /// Which transition the deadline refers to.
@@ -38,9 +44,14 @@ pub struct AutoHide {
 
 impl AutoHide {
     pub fn new(enabled: bool) -> Self {
+        Self::new_with_delays(enabled, SHOW_DELAY_MS, HIDE_DELAY_MS)
+    }
+
+    pub fn new_with_delays(enabled: bool, show_delay_ms: u64, hide_delay_ms: u64) -> Self {
         Self {
             enabled,
             locked: false,
+            suppressed: false,
             // With auto-hide on, the dock starts collapsed until the pointer
             // approaches; with it off, `visibility()` reports Visible anyway.
             visibility: if enabled {
@@ -48,13 +59,24 @@ impl AutoHide {
             } else {
                 Visibility::Visible
             },
+            show_delay_ms,
+            hide_delay_ms,
             deadline: None,
             pending: None,
         }
     }
 
+    /// Change the delays for future transitions. An already-armed deadline
+    /// keeps its original timing so a running transition is never stuck.
+    pub fn set_delays(&mut self, show_delay_ms: u64, hide_delay_ms: u64) {
+        self.show_delay_ms = show_delay_ms;
+        self.hide_delay_ms = hide_delay_ms;
+    }
+
     pub fn visibility(&self) -> Visibility {
-        if !self.enabled || self.locked {
+        if self.suppressed {
+            Visibility::Hidden
+        } else if !self.enabled || self.locked {
             Visibility::Visible
         } else {
             self.visibility
@@ -64,6 +86,10 @@ impl AutoHide {
     /// Whether auto-hide is currently active (enabled and not locked).
     pub fn enabled(&self) -> bool {
         self.enabled && !self.locked
+    }
+
+    pub fn suppressed(&self) -> bool {
+        self.suppressed
     }
 
     /// True while a delayed transition is armed and a tick is still needed.
@@ -94,11 +120,32 @@ impl AutoHide {
                 self.set_locked(locked);
                 Action::None
             }
+            Event::SetSuppressed(suppressed) => {
+                self.suppressed = suppressed;
+                self.deadline = None;
+                self.pending = None;
+                if !suppressed {
+                    // Restore the resting state: auto-hide starts hidden, a
+                    // permanently visible dock stays visible.
+                    self.visibility = if self.enabled {
+                        Visibility::Hidden
+                    } else {
+                        Visibility::Visible
+                    };
+                }
+                Action::None
+            }
             Event::PointerEntered => {
                 self.deadline = None;
                 self.pending = None;
-                if self.enabled && !self.locked && self.visibility == Visibility::Hidden {
-                    self.deadline = Some(now_ms.saturating_add(SHOW_DELAY_MS));
+                if self.suppressed {
+                    return Action::None;
+                }
+                if self.enabled
+                    && !self.locked
+                    && self.visibility == Visibility::Hidden
+                {
+                    self.deadline = Some(now_ms.saturating_add(self.show_delay_ms));
                     self.pending = Some(Action::Reveal);
                 }
                 Action::None
@@ -106,14 +153,20 @@ impl AutoHide {
             Event::PointerLeft => {
                 self.deadline = None;
                 self.pending = None;
-                if self.enabled && !self.locked && self.visibility == Visibility::Visible {
-                    self.deadline = Some(now_ms.saturating_add(HIDE_DELAY_MS));
+                if self.suppressed {
+                    return Action::None;
+                }
+                if self.enabled
+                    && !self.locked
+                    && self.visibility == Visibility::Visible
+                {
+                    self.deadline = Some(now_ms.saturating_add(self.hide_delay_ms));
                     self.pending = Some(Action::Collapse);
                 }
                 Action::None
             }
             Event::Tick => {
-                if !self.enabled || self.locked {
+                if !self.enabled || self.locked || self.suppressed {
                     return Action::None;
                 }
                 let (Some(deadline), Some(pending)) = (self.deadline, self.pending) else {
