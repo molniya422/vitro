@@ -1,12 +1,12 @@
-// tray.rs — 托盘(Glassboard tray.rs 借鉴):显隐 Dock / 自动隐藏开关 / 启动器 / 主题 / 退出
+// tray.rs — tray integration. Popup selection is applied after the nested
+// TrackPopupMenu loop has returned, without holding a runtime borrow.
 use windows::core::*;
 use windows::Win32::Foundation::*;
 use windows::Win32::UI::Shell::*;
 use windows::Win32::UI::WindowsAndMessaging::*;
 
-use crate::input;
-use crate::lpad;
-use crate::state::*;
+use crate::runtime::AppRuntime;
+use crate::state::WM_APP_TRAY;
 
 unsafe fn nid(hwnd: HWND) -> NOTIFYICONDATAW {
     let mut tip = [0u16; 128];
@@ -31,41 +31,35 @@ pub(crate) unsafe fn remove(hwnd: HWND) {
     let _ = Shell_NotifyIconW(NIM_DELETE, &nid(hwnd));
 }
 
-pub(crate) unsafe fn on_tray_menu() -> Result<()> {
-    let st = s();
+pub(crate) unsafe fn on_tray_menu(runtime: *mut AppRuntime) -> Result<()> {
+    // Copy everything needed to construct and display the menu. TrackPopupMenu
+    // runs a nested message loop, so no runtime/state reference may span it.
+    let (hwnd, autohide) = {
+        let state = &(*runtime).state;
+        (state.hwnd, (*runtime).behavior.autohide)
+    };
     let menu = CreatePopupMenu()?;
     let _ = AppendMenuW(menu, MF_STRING, 10, w!("显示 Dock(自动隐藏时移到屏幕底边)"));
-    let chk = if st.autohide { MF_STRING | MF_CHECKED } else { MF_STRING };
+    let chk = if autohide { MF_STRING | MF_CHECKED } else { MF_STRING };
     let _ = AppendMenuW(menu, chk, 11, w!("自动隐藏(底边召唤)"));
     let _ = AppendMenuW(menu, MF_SEPARATOR, 0, None);
     let _ = AppendMenuW(menu, MF_STRING, 12, w!("启动器…  Ctrl+Alt+D"));
     let _ = AppendMenuW(menu, MF_STRING, 13, w!("重载主题  Ctrl+Alt+R"));
     let _ = AppendMenuW(menu, MF_SEPARATOR, 0, None);
     let _ = AppendMenuW(menu, MF_STRING, 14, w!("退出 Vitro"));
-    let _ = SetForegroundWindow(st.hwnd);
+    let _ = SetForegroundWindow(hwnd);
     let mut pt = POINT::default();
     let _ = GetCursorPos(&mut pt);
-    let cmd = TrackPopupMenu(menu, TPM_RIGHTBUTTON | TPM_RETURNCMD, pt.x, pt.y, 0, st.hwnd, None);
+    let cmd = TrackPopupMenu(menu, TPM_RIGHTBUTTON | TPM_RETURNCMD, pt.x, pt.y, 0, hwnd, None);
     let _ = DestroyMenu(menu);
+    if (*runtime).is_shutting_down() { return Ok(()); }
+
     match cmd.0 {
-        10 => {
-            let st = s();
-            st.slide_target = 0.0;
-            SetTimer(st.hwnd, TIMER_ANIM as usize, 33, None);
-            crate::dockwin::render_frame();
-        }
-        11 => {
-            let st = s();
-            let target = !st.autohide;
-            if !target && st.slide_target != 0.0 {
-                st.slide_target = 0.0;
-                SetTimer(st.hwnd, TIMER_ANIM as usize, 33, None);
-            }
-            input::persist_autohide(target);
-        }
-        12 => lpad::toggle(),
-        13 => crate::dockwin::reload_theme()?,
-        14 => crate::dockwin::shutdown(s().hwnd),
+        10 => crate::dockwin::show_dock(runtime),
+        11 => crate::dockwin::toggle_autohide(runtime),
+        12 => crate::lpad::toggle(runtime),
+        13 => crate::dockwin::reload_theme(runtime)?,
+        14 => crate::dockwin::shutdown(runtime, hwnd),
         _ => {}
     }
     Ok(())

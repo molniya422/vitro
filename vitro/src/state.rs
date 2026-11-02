@@ -3,19 +3,23 @@
 // 几何以药丸为原点;钩子/命中测试用屏幕坐标(窗口原点平移一次)。
 use windows::Win32::Foundation::*;
 use windows::Win32::Graphics::Direct2D::*;
+use windows::Win32::Graphics::DirectWrite::IDWriteTextFormat;
 use windows::Win32::UI::WindowsAndMessaging::HHOOK;
 
 use crate::config::{PluginSpec, Theme};
+use crate::core::geometry;
+use crate::core::model::TileId;
 use crate::gpu::Gpu;
 use std::collections::HashMap;
 
 pub(crate) const WIN_W: i32 = 1024;   // 画布固定宽(≤屏宽-160 时自动缩小,启动时定死)
-pub(crate) const WIN_H: i32 = 124;    // 92 面板 + 32 倒影
-pub(crate) const PANEL_H: f32 = 92.0;
-pub(crate) const ICON: f32 = 56.0;
-pub(crate) const GAP: f32 = 13.0;
-pub(crate) const PAD: f32 = 24.0;     // 药丸左右内边距
-pub(crate) const BASE_UP: f32 = 12.0; // 图标底距面板底
+pub(crate) const WIN_H: i32 = 320;    // 220 子码头缓冲 + 68 面板 + 32 倒影
+pub(crate) const PANEL_TOP: f32 = 220.0;
+pub(crate) const PANEL_H: f32 = 68.0;
+pub(crate) const ICON: f32 = 48.0;
+pub(crate) const GAP: f32 = 8.0;
+pub(crate) const PAD: f32 = 16.0;     // 药丸左右内边距
+pub(crate) const BASE_UP: f32 = 10.0; // 图标底距面板底
 pub(crate) const WM_APP_MOUSE: u32 = 0x8000;
 pub(crate) const WM_APP_TRAY: u32 = 0x8010;
 pub(crate) const TIMER_DWELL: u32 = 2;
@@ -23,14 +27,36 @@ pub(crate) const TIMER_ANIM: u32 = 3;
 pub(crate) const TIMER_HIDE: u32 = 4;
 
 pub(crate) struct Tile {
+    pub id: TileId,
     pub name: String,
     pub path: String,
     pub bitmap: Option<ID2D1Bitmap1>,   // Shell 提取的真实图标
     pub fallback: Option<ID2D1Bitmap1>, // 无图标时的字符位图
     pub is_plugin: bool,
+    pub is_folder: bool,
     pub color_idx: usize,
     pub sq: Option<&'static str>,       // SQ 图标键(插件/兜底)
     pub label: Option<String>,          // 插件徽章文本(api.set 值)
+}
+
+pub(crate) struct SubdockItem {
+    pub name: String,
+    pub path: String,
+    pub bitmap: Option<ID2D1Bitmap1>,
+    pub fallback: Option<ID2D1Bitmap1>,
+    pub sq: Option<&'static str>,
+    pub color_idx: usize,
+}
+
+pub(crate) struct Subdock {
+    pub parent: TileId,
+    pub items: Vec<SubdockItem>,
+    pub width: i32,
+    pub left: f32,
+    pub top: f32,
+    pub progress: f32,
+    pub hovered: Option<usize>,
+    pub closing: bool,
 }
 
 pub(crate) struct State {
@@ -38,6 +64,7 @@ pub(crate) struct State {
     pub tip_hwnd: HWND,
     pub gpu: Gpu,
     pub tiles: Vec<Tile>,
+    pub subdock: Option<Subdock>,
     // 画笔(主题相关,Ctrl+Alt+R 重建)
     pub glass: ID2D1SolidColorBrush,
     pub white: ID2D1SolidColorBrush,
@@ -48,6 +75,8 @@ pub(crate) struct State {
     pub border: ID2D1SolidColorBrush,
     pub soft: ID2D1SolidColorBrush,
     pub pill: ID2D1SolidColorBrush,
+    pub plugin_fmt: IDWriteTextFormat,
+    pub plugin_fmt_sm: IDWriteTextFormat,
     pub palette: Vec<ID2D1SolidColorBrush>,
     pub sq: HashMap<&'static str, ID2D1Bitmap1>,
     pub grad_refl: ID2D1Brush,
@@ -55,13 +84,7 @@ pub(crate) struct State {
     pub layer: ID2D1Layer,
     pub noise: Option<ID2D1Brush>, // Sonoma 四层材质·颗粒纹理层(0.3% 均匀噪点,消塑料感/抗色带)
     // 输入
-    pub cursor: (f32, f32), // 屏幕坐标
-    pub hover_idx: Option<usize>,
-    pub hover_since: u32,
-    pub tip_shown_for: Option<usize>,
     pub hook: HHOOK,
-    pub was_near_flag: bool,
-    pub last_post_tick: u32,
     // 几何
     pub win_w: i32,
     pub win_x: i32,
@@ -71,9 +94,6 @@ pub(crate) struct State {
     pub pill_w: i32,
     // 召唤/隐藏(NeXuS R9)
     pub slide: f32,
-    pub slide_target: f32,
-    pub hide_armed: bool,
-    pub autohide: bool,
     // 动效/呼吸
     pub low_power: bool,
     pub anim_on: bool,
@@ -88,9 +108,6 @@ pub(crate) struct State {
     pub theme: Theme,
 }
 
-pub(crate) static mut STATE: Option<State> = None;
-pub(crate) unsafe fn s() -> &'static mut State { STATE.as_mut().unwrap() }
-
 impl State {
     // 磁贴数变化后调用:重算药丸宽 + 对齐各动态数组
     pub(crate) fn relayout(&mut self) {
@@ -102,14 +119,49 @@ impl State {
         if self.cpu_prev.len() != cap { self.cpu_prev = vec![(0, 0); cap]; self.cpu_pct = vec![0.0; cap]; }
     }
 
+    pub(crate) fn subdock_hit_test(&self, sx: i32, sy: i32) -> Option<usize> {
+        let sub = self.subdock.as_ref()?;
+        if sub.closing || sub.progress < 0.999 {
+            return None;
+        }
+        let x = sx as f32 - self.win_x as f32;
+        let y = sy as f32 - self.win_y as f32;
+        if x < sub.left || x > sub.left + sub.width as f32 || y < sub.top || y > sub.top + PANEL_H { return None; }
+        let size = tile_size(sub.width, sub.items.len());
+        for i in 0..sub.items.len() {
+            let cx = sub.left + PAD + size / 2.0 + i as f32 * (size + GAP);
+            let cy = sub.top + PANEL_H - BASE_UP - size / 2.0;
+            if (x - cx).abs() <= size * 0.55 && (y - cy).abs() <= size * 0.55 { return Some(i); }
+        }
+        None
+    }
+
+    pub(crate) fn subdock_contains(&self, sx: i32, sy: i32) -> bool {
+        let Some(sub) = self.subdock.as_ref() else { return false; };
+        let x = sx as f32 - self.win_x as f32;
+        let y = sy as f32 - self.win_y as f32;
+        x >= sub.left && x <= sub.left + sub.width as f32 && y >= sub.top - 16.0 && y <= sub.top + PANEL_H
+    }
+
+    pub(crate) fn move_tile(&mut self, from: usize, to: usize) -> bool {
+        let n = self.tiles.len();
+        if !crate::core::model::move_item(&mut self.tiles, from, to) { return false; }
+        if self.scale_anim.len() >= n { crate::core::model::move_item(&mut self.scale_anim, from, to); }
+        if self.running.len() >= n { crate::core::model::move_item(&mut self.running, from, to); }
+        crate::core::model::move_item(&mut self.cpu_prev, from, to);
+        crate::core::model::move_item(&mut self.cpu_pct, from, to);
+        self.relayout();
+        true
+    }
+
     pub(crate) fn pill_x(&self) -> f32 { (self.win_w as f32 - self.pill_w as f32) / 2.0 }
 
     // 磁贴中心(窗口局部):x 沿药丸,y 底对齐
     pub(crate) fn tile_center_local(&self, i: usize) -> (f32, f32, f32) {
-        let sz = tile_size(self.pill_w, self.tiles.len());
-        let x = self.pill_x() + PAD + sz / 2.0 + i as f32 * (sz + GAP);
-        let y = PANEL_H - BASE_UP - sz / 2.0;
-        (x, y, sz)
+        let (x, y, sz) = geometry::tile_center_local(
+            self.pill_w, self.tiles.len(), i, ICON, GAP, PAD, PANEL_H, BASE_UP,
+        );
+        (x + self.pill_x(), PANEL_TOP + y, sz)
     }
 
     // 磁贴中心(屏幕坐标,钩子/命中用)
@@ -120,32 +172,32 @@ impl State {
 
     pub(crate) fn pill_rect_screen(&self) -> RECT {
         let l = self.win_x + self.pill_x() as i32;
-        RECT { left: l, top: self.win_y, right: l + self.pill_w, bottom: self.win_y + PANEL_H as i32 }
+        let top = self.win_y + PANEL_TOP as i32;
+        RECT { left: l, top, right: l + self.pill_w, bottom: top + PANEL_H as i32 }
     }
 
     pub(crate) fn hit_test(&self, sx: i32, sy: i32) -> Option<usize> {
         for i in 0..self.tiles.len() {
-            let (cx, cy, sz) = self.tile_center_screen(i);
-            if (sx as f32 - cx).abs() <= sz * 0.75 && (sy as f32 - cy).abs() <= sz * 0.75 { return Some(i); }
+            let (cx, _, base_size) = self.tile_center_screen(i);
+            let scale = self.scale_anim.get(i).copied().unwrap_or(1.0);
+            let size = base_size * scale;
+            let cy = self.win_y as f32 + PANEL_TOP + PANEL_H - BASE_UP - size / 2.0;
+            if (sx as f32 - cx).abs() <= size * 0.55 && (sy as f32 - cy).abs() <= size * 0.55 { return Some(i); }
         }
         None
     }
 
-    pub(crate) fn cursor_inside_pill(&self) -> bool {
+    pub(crate) fn cursor_inside_pill(&self, cursor: (f32, f32)) -> bool {
         let r = self.pill_rect_screen();
-        self.cursor.0 >= r.left as f32 && self.cursor.0 <= r.right as f32
-            && self.cursor.1 >= r.top as f32 && self.cursor.1 <= r.bottom as f32
+        cursor.0 >= r.left as f32 && cursor.0 <= r.right as f32
+            && cursor.1 >= r.top as f32 && cursor.1 <= r.bottom as f32
     }
 }
 
 pub(crate) fn pill_w_for(n: usize, win_w: i32) -> i32 {
-    if n == 0 { return (2.0 * PAD) as i32; }
-    let w = n as f32 * ICON + (n - 1) as f32 * GAP + 2.0 * PAD;
-    (w as i32).min(win_w - 40).max(2 * PAD as i32)
+    geometry::pill_width(n, win_w, ICON, GAP, PAD)
 }
 
 pub(crate) fn tile_size(pill_w: i32, n: usize) -> f32 {
-    if n == 0 { return ICON; }
-    let avail = (pill_w as f32 - 2.0 * PAD).max(60.0);
-    ((avail / n as f32) - GAP).clamp(34.0, ICON)
+    geometry::tile_size(pill_w, n, ICON, GAP, PAD)
 }

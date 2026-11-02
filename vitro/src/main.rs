@@ -27,16 +27,21 @@ use windows::Win32::Graphics::Dwm::{DwmSetWindowAttribute, DWMWINDOWATTRIBUTE};
 use windows::Win32::System::Threading::{GetCurrentProcess, SetProcessWorkingSetSize};
 
 mod config;
+mod core;
 mod icons;
 mod gpu;
 mod state;
+mod runtime;
 mod input;
 mod tray;
 mod dockwin;
+mod launcher_model;
 mod lpad { include!("lpad.rs"); }
 mod plugin { include!("plugin.rs"); }
 
 use config::DockConfig;
+use core::model::{BehaviorState, TileId};
+use runtime::AppRuntime;
 use state::*;
 
 fn main() -> Result<()> {
@@ -86,7 +91,7 @@ fn main() -> Result<()> {
         let backdrop_ok = {
             let v: i32 = 3; // DWMSBT_TRANSIENTWINDOW
             DwmSetWindowAttribute(hwnd, DWMWINDOWATTRIBUTE(38),
-                &v as *const i32 as *const core::ffi::c_void, 4).is_ok()
+                &v as *const i32 as *const std::ffi::c_void, 4).is_ok()
         };
 
         // GPU 管线一次成型
@@ -94,6 +99,7 @@ fn main() -> Result<()> {
 
         // 画笔(主题色;Ctrl+Alt+R 热重建)
         let rt = &gpu.rt;
+        let text_formats = plugin::create_text_formats()?;
         let cptr = |c: &D2D1_COLOR_F| std::ptr::from_ref(c);
         let glass = rt.CreateSolidColorBrush(cptr(&D2D1_COLOR_F { r: theme.tint[0], g: theme.tint[1], b: theme.tint[2], a: theme.alpha }), None)?;
         let white = rt.CreateSolidColorBrush(cptr(&D2D1_COLOR_F { r: 1.0, g: 1.0, b: 1.0, a: 0.72 }), None)?;
@@ -130,12 +136,13 @@ fn main() -> Result<()> {
             let bitmap = icons::extract_icon_96(&gpu.dc, &item.path);
             let sqk = if bitmap.is_none() { icons::sq_guess(&item.name) } else { None };
             let fallback = if bitmap.is_none() && sqk.is_none() {
-                dockwin::make_text_bitmap(&gpu.dc, &white,
+                dockwin::make_text_bitmap(&gpu.dc, &white, &text_formats.plugin,
                     item.name.chars().next().map(|c| c.to_string()).unwrap_or_default().as_str(), 24.0)
             } else { None };
             let color_idx = item.name.bytes().map(|b| b as usize).sum::<usize>() % 8;
-            tiles.push(Tile { name: item.name.clone(), path: item.path.clone(),
-                bitmap, fallback, is_plugin: false, color_idx, sq: sqk, label: None });
+            let id = TileId(tiles.len() as u64);
+            tiles.push(Tile { id, name: item.name.clone(), path: item.path.clone(),
+                bitmap, fallback, is_plugin: false, is_folder: std::path::Path::new(&item.path).is_dir(), color_idx, sq: sqk, label: None });
         }
         // 插件磁贴(boa 沙箱 → SQ 图标 + 数值徽章)
         for ps in &cfg.plugins {
@@ -145,12 +152,13 @@ fn main() -> Result<()> {
                         else { Some(Box::leak(ps.icon.clone().into_boxed_str())) };
                     let fallback = match key {
                         Some(k) if sq.contains_key(k) => None,
-                        _ => dockwin::make_text_bitmap(&gpu.dc, &white,
+                        _ => dockwin::make_text_bitmap(&gpu.dc, &white, &text_formats.plugin,
                             ps.name.chars().next().map(|c| c.to_string()).unwrap_or_default().as_str(), 24.0),
                     };
                     let color_idx = ps.name.bytes().map(|b| b as usize).sum::<usize>() % 8;
-                    tiles.push(Tile { name: ps.name.clone(), path: String::new(),
-                        bitmap: None, fallback, is_plugin: true, color_idx, sq: key, label: Some(text) });
+                    let id = TileId(tiles.len() as u64);
+                    tiles.push(Tile { id, name: ps.name.clone(), path: String::new(),
+                        bitmap: None, fallback, is_plugin: true, is_folder: false, color_idx, sq: key, label: Some(text) });
                     println!("[vitro] plugin loaded: {}", ps.name);
                 }
                 Err(e) => println!("[vitro] plugin error: {} — {}", ps.name, e),
@@ -158,40 +166,55 @@ fn main() -> Result<()> {
         }
 
         let n0 = tiles.len();
-        STATE = Some(State {
+        let mut runtime = Box::new(AppRuntime::new(State {
             hwnd, tip_hwnd, gpu,
             tiles,
+            subdock: None,
             glass, white, accent, halo, hi, lo, border, soft, pill, palette,
+            plugin_fmt: text_formats.plugin,
+            plugin_fmt_sm: text_formats.plugin_small,
             sq, grad_refl, grad_lin, layer, noise: Some(noise),
-            cursor: (-9999.0, -9999.0),
-            hover_idx: None, hover_since: 0, tip_shown_for: None,
-            hook: HHOOK::default(), was_near_flag: false, last_post_tick: 0,
+            hook: HHOOK::default(),
             win_w, win_x, win_y: base_y, base_y, screen_h: sh,
             pill_w: 0,
-            slide: 0.0, slide_target: 0.0, hide_armed: false, autohide: cfg.autohide,
+            slide: 0.0,
             low_power: false, anim_on: false,
             cpu_prev: vec![(0, 0); n0], cpu_pct: vec![0.0; n0], last_anim_tick: 0,
             backdrop_ok, scale_anim: vec![1.0; n0], running: vec![None; n0],
             plugins: cfg.plugins.clone(),
             theme: theme.clone(),
-        });
-        s().relayout();
+        }, BehaviorState::new(cfg.autohide)));
+        let runtime_ptr = std::ptr::NonNull::from(runtime.as_mut());
+        runtime::bind_window(hwnd, runtime_ptr);
+        runtime::bind_window(tip_hwnd, runtime_ptr);
+        runtime.state.relayout();
 
         // 输入与系统集成(全部事件驱动)
         let _ = DragAcceptFiles(hwnd, TRUE);
         tray::init(hwnd);
-        s().hook = SetWindowsHookExW(WH_MOUSE_LL, Some(input::ll_hook), hinstance, 0)?;
+        input::publish_hook_snapshot(&runtime.state, runtime.behavior.autohide);
+        input::reset_pointer_route();
+        runtime.state.hook = runtime::cleanup_after_startup_error(
+            SetWindowsHookExW(WH_MOUSE_LL, Some(input::ll_hook), hinstance, 0),
+            || dockwin::shutdown(runtime_ptr.as_ptr(), hwnd),
+        )?;
         let _ = RegisterHotKey(hwnd, 1, MOD_CONTROL | MOD_ALT, 0x44); // Ctrl+Alt+D 抽屉
         let _ = RegisterHotKey(hwnd, 2, MOD_CONTROL | MOD_ALT, 0x52); // Ctrl+Alt+R 主题
-        lpad::init(HINSTANCE::from(hinstance))?;
-        input::update_power();
+        runtime.launcher = Some(runtime::cleanup_after_startup_error(
+            lpad::init(HINSTANCE::from(hinstance)),
+            || dockwin::shutdown(runtime_ptr.as_ptr(), hwnd),
+        )?);
+        if let Some(launcher) = runtime.launcher.as_ref() {
+            runtime::bind_window(launcher.hwnd, runtime_ptr);
+        }
+        input::update_power(runtime_ptr.as_ptr());
 
         let _ = ShowWindow(hwnd, SW_SHOW);
-        dockwin::render_frame();
+        dockwin::render_frame(runtime_ptr.as_ptr());
 
         // 首帧后软回收(DWrite 初始化页进 standby,回 fault 近零)
         let _ = SetProcessWorkingSetSize(GetCurrentProcess(), usize::MAX, usize::MAX);
-        println!("[vitro] v3 ready: tiles={} pill_w={} backdrop_ok={}", s().tiles.len(), s().pill_w, backdrop_ok);
+        println!("[vitro] v3 ready: tiles={} pill_w={} backdrop_ok={}", runtime.state.tiles.len(), runtime.state.pill_w, backdrop_ok);
 
         let mut msg = MSG::default();
         while GetMessageW(&mut msg, None, 0, 0).as_bool() {

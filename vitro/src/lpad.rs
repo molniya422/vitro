@@ -15,10 +15,13 @@ use windows::Win32::System::LibraryLoader::GetModuleHandleW;
 use windows::Win32::UI::Shell::*;
 use windows::Win32::UI::WindowsAndMessaging::*;
 
+use crate::launcher_model::{append_utf16_unit, parse_query_mode, QueryMode};
+use crate::runtime::{self, AppRuntime};
+
 const WM_APP_LPAD: u32 = 0x8001;
 
-struct LpadState {
-    hwnd: HWND,
+pub(crate) struct LpadState {
+    pub(crate) hwnd: HWND,
     sc: IDXGISwapChain1,
     rt: ID2D1RenderTarget,
     fmt: Option<IDWriteTextFormat>,
@@ -33,13 +36,10 @@ struct LpadState {
     sel: usize,
     open: bool,
     calc_result: Option<String>,
+    pending_high_surrogate: Option<u16>,
     sw: i32,
     sh: i32,
 }
-
-static mut LP: Option<LpadState> = None;
-
-unsafe fn lp() -> &'static mut LpadState { LP.as_mut().unwrap() }
 
 // ── 应用枚举:开始菜单 .lnk 递归 ──
 fn collect_apps() -> Vec<(String, String)> {
@@ -89,9 +89,8 @@ fn calc_eval(expr: &str) -> Option<String> {
 }
 
 // ── 懒创建 DWrite(与 plugin.rs 同模式)──
-static mut LP_FMT: Option<IDWriteTextFormat> = None;
-unsafe fn lpad_fmt() -> &'static IDWriteTextFormat {
-    if LP_FMT.is_none() {
+unsafe fn lpad_fmt(lp: &mut LpadState) -> &IDWriteTextFormat {
+    if lp.fmt.is_none() {
         let dw: IDWriteFactory = DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED).unwrap();
         let fmt = dw.CreateTextFormat(
             w!("Microsoft YaHei UI"), None, DWRITE_FONT_WEIGHT_SEMI_BOLD, DWRITE_FONT_STYLE_NORMAL,
@@ -99,12 +98,12 @@ unsafe fn lpad_fmt() -> &'static IDWriteTextFormat {
         ).unwrap();
         let _ = fmt.SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
         let _ = fmt.SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
-        LP_FMT = Some(fmt);
+        lp.fmt = Some(fmt);
     }
-    LP_FMT.as_ref().unwrap()
+    lp.fmt.as_ref().unwrap()
 }
 
-pub(crate) unsafe fn init(hinstance: HINSTANCE) -> Result<()> {
+pub(crate) unsafe fn init(hinstance: HINSTANCE) -> Result<LpadState> {
     let (sw, sh) = (GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN));
     let wc = WNDCLASSW {
         lpfnWndProc: Some(lpad_wndproc),
@@ -120,69 +119,72 @@ pub(crate) unsafe fn init(hinstance: HINSTANCE) -> Result<()> {
         0, 0, sw, sh, None, None, HINSTANCE::from(hinstance), None,
     )?;
 
-    let mut d3d = None; let mut ctx3 = None;
-    D3D11CreateDevice(None, D3D_DRIVER_TYPE_HARDWARE, HMODULE::default(),
-        D3D11_CREATE_DEVICE_BGRA_SUPPORT, None, D3D11_SDK_VERSION,
-        Some(&mut d3d), None, Some(&mut ctx3))?;
-    let d3d = d3d.unwrap();
-    let dxgi_dev: IDXGIDevice = d3d.cast()?;
-    let factory: IDXGIFactory2 = CreateDXGIFactory1::<IDXGIFactory1>()?.cast()?;
-    let d2d_factory: ID2D1Factory1 = D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, None)?;
-    let d2d_device = d2d_factory.CreateDevice(&dxgi_dev)?;
-    let dc: ID2D1DeviceContext = d2d_device.CreateDeviceContext(D2D1_DEVICE_CONTEXT_OPTIONS_NONE)?;
-    let sc = factory.CreateSwapChainForComposition(&d3d, &DXGI_SWAP_CHAIN_DESC1 {
-        Width: sw as u32, Height: sh as u32,
-        Format: DXGI_FORMAT_B8G8R8A8_UNORM, Stereo: false.into(),
-        SampleDesc: DXGI_SAMPLE_DESC { Count: 1, Quality: 0 },
-        BufferUsage: DXGI_USAGE_RENDER_TARGET_OUTPUT, BufferCount: 2,
-        Scaling: DXGI_SCALING_STRETCH, SwapEffect: DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL,
-        AlphaMode: DXGI_ALPHA_MODE_PREMULTIPLIED, Flags: 0,
-    }, None)?;
-    let buffer: IDXGISurface = sc.GetBuffer(0)?;
-    let props = D2D1_BITMAP_PROPERTIES1 {
-        pixelFormat: D2D1_PIXEL_FORMAT { format: DXGI_FORMAT_B8G8R8A8_UNORM, alphaMode: D2D1_ALPHA_MODE_PREMULTIPLIED },
-        dpiX: 96.0, dpiY: 96.0,
-        bitmapOptions: D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW,
-        colorContext: std::mem::ManuallyDrop::new(None),
-    };
-    let bmp = dc.CreateBitmapFromDxgiSurface(&buffer, Some(std::ptr::from_ref(&props)))?;
-    dc.SetTarget(&bmp.cast::<ID2D1Image>()?);
+    let lp = crate::runtime::cleanup_after_startup_error(
+        (|| -> Result<LpadState> {
+            let mut d3d = None; let mut ctx3 = None;
+            D3D11CreateDevice(None, D3D_DRIVER_TYPE_HARDWARE, HMODULE::default(),
+                D3D11_CREATE_DEVICE_BGRA_SUPPORT, None, D3D11_SDK_VERSION,
+                Some(&mut d3d), None, Some(&mut ctx3))?;
+            let d3d = d3d.unwrap();
+            let dxgi_dev: IDXGIDevice = d3d.cast()?;
+            let factory: IDXGIFactory2 = CreateDXGIFactory1::<IDXGIFactory1>()?.cast()?;
+            let d2d_factory: ID2D1Factory1 = D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, None)?;
+            let d2d_device = d2d_factory.CreateDevice(&dxgi_dev)?;
+            let dc: ID2D1DeviceContext = d2d_device.CreateDeviceContext(D2D1_DEVICE_CONTEXT_OPTIONS_NONE)?;
+            let sc = factory.CreateSwapChainForComposition(&d3d, &DXGI_SWAP_CHAIN_DESC1 {
+                Width: sw as u32, Height: sh as u32,
+                Format: DXGI_FORMAT_B8G8R8A8_UNORM, Stereo: false.into(),
+                SampleDesc: DXGI_SAMPLE_DESC { Count: 1, Quality: 0 },
+                BufferUsage: DXGI_USAGE_RENDER_TARGET_OUTPUT, BufferCount: 2,
+                Scaling: DXGI_SCALING_STRETCH, SwapEffect: DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL,
+                AlphaMode: DXGI_ALPHA_MODE_PREMULTIPLIED, Flags: 0,
+            }, None)?;
+            let buffer: IDXGISurface = sc.GetBuffer(0)?;
+            let props = D2D1_BITMAP_PROPERTIES1 {
+                pixelFormat: D2D1_PIXEL_FORMAT { format: DXGI_FORMAT_B8G8R8A8_UNORM, alphaMode: D2D1_ALPHA_MODE_PREMULTIPLIED },
+                dpiX: 96.0, dpiY: 96.0,
+                bitmapOptions: D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW,
+                colorContext: std::mem::ManuallyDrop::new(None),
+            };
+            let bmp = dc.CreateBitmapFromDxgiSurface(&buffer, Some(std::ptr::from_ref(&props)))?;
+            dc.SetTarget(&bmp.cast::<ID2D1Image>()?);
 
-    let comp: IDCompositionDevice = DCompositionCreateDevice(&dxgi_dev)?;
-    let target = comp.CreateTargetForHwnd(hwnd, true)?;
-    let visual = comp.CreateVisual()?;
-    visual.SetContent(&sc)?;
-    target.SetRoot(&visual)?;
-    comp.Commit()?;
+            let comp: IDCompositionDevice = DCompositionCreateDevice(&dxgi_dev)?;
+            let target = comp.CreateTargetForHwnd(hwnd, true)?;
+            let visual = comp.CreateVisual()?;
+            visual.SetContent(&sc)?;
+            target.SetRoot(&visual)?;
+            comp.Commit()?;
 
-    let rt: ID2D1RenderTarget = dc.cast()?;
-    let cptr = |c: &D2D1_COLOR_F| Some(std::ptr::from_ref(c));
-    let bg = rt.CreateSolidColorBrush(std::ptr::from_ref(&D2D1_COLOR_F { r: 0.02, g: 0.03, b: 0.05, a: 0.86 }), None)?;
-    let tile = rt.CreateSolidColorBrush(std::ptr::from_ref(&D2D1_COLOR_F { r: 1.0, g: 1.0, b: 1.0, a: 0.06 }), None)?;
-    let tile_sel = rt.CreateSolidColorBrush(std::ptr::from_ref(&D2D1_COLOR_F { r: 1.0, g: 1.0, b: 1.0, a: 0.17 }), None)?;
-    let txt = rt.CreateSolidColorBrush(std::ptr::from_ref(&D2D1_COLOR_F { r: 0.94, g: 0.96, b: 1.0, a: 1.0 }), None)?;
-    let muted = rt.CreateSolidColorBrush(std::ptr::from_ref(&D2D1_COLOR_F { r: 1.0, g: 1.0, b: 1.0, a: 0.55 }), None)?;
+            let rt: ID2D1RenderTarget = dc.cast()?;
+            let bg = rt.CreateSolidColorBrush(std::ptr::from_ref(&D2D1_COLOR_F { r: 0.02, g: 0.03, b: 0.05, a: 0.86 }), None)?;
+            let tile = rt.CreateSolidColorBrush(std::ptr::from_ref(&D2D1_COLOR_F { r: 1.0, g: 1.0, b: 1.0, a: 0.06 }), None)?;
+            let tile_sel = rt.CreateSolidColorBrush(std::ptr::from_ref(&D2D1_COLOR_F { r: 1.0, g: 1.0, b: 1.0, a: 0.17 }), None)?;
+            let txt = rt.CreateSolidColorBrush(std::ptr::from_ref(&D2D1_COLOR_F { r: 0.94, g: 0.96, b: 1.0, a: 1.0 }), None)?;
+            let muted = rt.CreateSolidColorBrush(std::ptr::from_ref(&D2D1_COLOR_F { r: 1.0, g: 1.0, b: 1.0, a: 0.55 }), None)?;
 
-    let apps = collect_apps();
-    let mut lp = LpadState {
-        hwnd, sc, rt,
-        fmt: None,
-        brush_bg: bg, brush_tile: tile, brush_tile_sel: tile_sel, brush_txt: txt, brush_muted: muted,
-        apps, query: String::new(), visible: Vec::new(), sel: 0,
-        open: false, calc_result: None, sw, sh,
-    };
-    refilter(&mut lp);
-    LP = Some(lp);
-    Ok(())
+            let apps = collect_apps();
+            let mut lp = LpadState {
+                hwnd, sc, rt,
+                fmt: None,
+                brush_bg: bg, brush_tile: tile, brush_tile_sel: tile_sel, brush_txt: txt, brush_muted: muted,
+                apps, query: String::new(), visible: Vec::new(), sel: 0,
+                open: false, calc_result: None, pending_high_surrogate: None, sw, sh,
+            };
+            refilter(&mut lp);
+            Ok(lp)
+        })(),
+        || { let _ = DestroyWindow(hwnd); },
+    )?;
+    Ok(lp)
 }
 
 fn refilter(lp: &mut LpadState) {
-    let q = lp.query.to_lowercase();
-    let (mode_cmd, mode_calc, q0) = if let Some(r) = lp.query.strip_prefix('>') {
-        (true, false, r.trim().to_string())
-    } else if let Some(r) = lp.query.strip_prefix('=') {
-        (false, true, r.trim().to_string())
-    } else { (false, false, q.clone()) };
+    let (mode_cmd, mode_calc, q0) = match parse_query_mode(&lp.query) {
+        QueryMode::Command(q) => (true, false, q),
+        QueryMode::Calculation(q) => (false, true, q),
+        QueryMode::Apps(q) => (false, false, q),
+    };
     lp.visible.clear();
     if !mode_cmd && !mode_calc {
         for (i, (name, _)) in lp.apps.iter().enumerate() {
@@ -193,53 +195,77 @@ fn refilter(lp: &mut LpadState) {
     lp.sel = 0;
 }
 
-pub(crate) unsafe fn toggle() {
-    let lp = lp();
+pub(crate) unsafe fn toggle(runtime: *mut AppRuntime) {
+    let Some(lp) = (*runtime).launcher.as_mut() else { return; };
     if lp.open {
         lp.open = false;
         let _ = ShowWindow(lp.hwnd, SW_HIDE);
     } else {
         if lp.apps.is_empty() { lp.apps = collect_apps(); refilter(lp); }
         lp.open = true;
-        lp.query.clear(); lp.calc_result = None; refilter(lp);
+        lp.query.clear(); lp.calc_result = None; lp.pending_high_surrogate = None; refilter(lp);
         let _ = ShowWindow(lp.hwnd, SW_SHOW);
         let _ = SetForegroundWindow(lp.hwnd);
-        render_lpad();
+        render_lpad(runtime);
     }
 }
 
-unsafe fn lpad_shutdown(hwnd: HWND) {
-    let lp = lp();
+unsafe fn lpad_shutdown(runtime: *mut AppRuntime) {
+    let Some(lp) = (*runtime).launcher.as_mut() else { return; };
     lp.open = false;
     let _ = ShowWindow(lp.hwnd, SW_HIDE);
 }
 
+pub(crate) unsafe fn shutdown(runtime: *mut AppRuntime) {
+    let Some(lp) = (*runtime).launcher.take() else { return; };
+    let _ = ShowWindow(lp.hwnd, SW_HIDE);
+    let _ = DestroyWindow(lp.hwnd);
+}
+
 unsafe extern "system" fn lpad_wndproc(hwnd: HWND, msg: u32, wp: WPARAM, lpm: LPARAM) -> LRESULT {
+    let Some(runtime) = runtime::from_window(hwnd) else {
+        return DefWindowProcW(hwnd, msg, wp, lpm);
+    };
+    let runtime = runtime.as_ptr();
     match msg {
         WM_CHAR => {
-            let ch = wp.0 as u16 as u8 as char;
-            let lpv = lp();
-            if ch == '\u{8}' { lpv.query.pop(); }
-            else if ch >= ' ' { lpv.query.push(ch); }
+            let unit = wp.0 as u16;
+            let Some(lpv) = (*runtime).launcher.as_mut() else { return LRESULT(0); };
+            if unit == 8 {
+                lpv.pending_high_surrogate = None;
+                lpv.query.pop();
+            } else if unit >= 0x20 {
+                append_utf16_unit(&mut lpv.query, &mut lpv.pending_high_surrogate, unit);
+            }
             lpv.calc_result = None;
             refilter(lpv);
-            render_lpad();
+            render_lpad(runtime);
             LRESULT(0)
         }
         WM_KEYDOWN => {
             let vk = wp.0 as u32;
-            let lpv = lp();
+            let Some(lpv) = (*runtime).launcher.as_mut() else { return LRESULT(0); };
             match vk {
-                0x1B => { lpad_shutdown(hwnd); LRESULT(0) }          // Esc
-                0x0D => { on_enter(); LRESULT(0) }                    // Enter
-                0x26 => { if lpv.sel > 0 { lpv.sel -= 1; render_lpad(); } LRESULT(0) }  // Up
-                0x28 => { if lpv.sel + 1 < lpv.visible.len() { lpv.sel += 1; render_lpad(); } LRESULT(0) }  // Down
+                0x1B => { lpad_shutdown(runtime); LRESULT(0) }          // Esc
+                0x0D => { on_enter(runtime); LRESULT(0) }                    // Enter
+                0x26 => {
+                    let changed = lpv.sel > 0;
+                    if changed { lpv.sel -= 1; }
+                    if changed { render_lpad(runtime); }
+                    LRESULT(0)
+                }  // Up
+                0x28 => {
+                    let changed = lpv.sel + 1 < lpv.visible.len();
+                    if changed { lpv.sel += 1; }
+                    if changed { render_lpad(runtime); }
+                    LRESULT(0)
+                }  // Down
                 _ => LRESULT(0)
             }
         }
         WM_LBUTTONDOWN => {
             let (x, y) = (lpm.0 as i32 & 0xFFFF, (lpm.0 as i32 >> 16) & 0xFFFF);
-            on_lpad_click(x, y);
+            on_lpad_click(runtime, x, y);
             LRESULT(0)
         }
         WM_DESTROY => LRESULT(0),
@@ -247,8 +273,8 @@ unsafe extern "system" fn lpad_wndproc(hwnd: HWND, msg: u32, wp: WPARAM, lpm: LP
     }
 }
 
-unsafe fn on_enter() {
-    let lp = lp();
+unsafe fn on_enter(runtime: *mut AppRuntime) {
+    let Some(lp) = (*runtime).launcher.as_mut() else { return; };
     let q = lp.query.clone();
     if let Some(cmd) = q.strip_prefix('>') {
         let c = cmd.trim();
@@ -256,33 +282,38 @@ unsafe fn on_enter() {
             let cmd_w: Vec<u16> = format!("/c {}\0", c).encode_utf16().collect();
             let _ = ShellExecuteW(None, w!("open"), w!("cmd.exe"), PCWSTR(cmd_w.as_ptr()), None, SW_HIDE);
         }
-        lpad_shutdown(lp.hwnd);
+        lpad_shutdown(runtime);
         return;
     }
     if q.starts_with('=') { return; } // 计算结果已实时显示
-    if lp.sel < lp.visible.len() {
-        let (_, path) = lp.apps[lp.visible[lp.sel]].clone();
+    let path = if lp.sel < lp.visible.len() {
+        Some(lp.apps[lp.visible[lp.sel]].1.clone())
+    } else {
+        None
+    };
+    if let Some(path) = path {
         let wpath: Vec<u16> = path.encode_utf16().chain(std::iter::once(0)).collect();
         let _ = ShellExecuteW(None, w!("open"), PCWSTR(wpath.as_ptr()), None, None, SW_SHOWNORMAL);
-        lpad_shutdown(lp.hwnd);
+        lpad_shutdown(runtime);
     }
 }
 
-unsafe fn on_lpad_click(x: i32, y: i32) {
-    let lp = lp();
-    if let Some(idx) = grid_hit(x, y) {
-        if idx < lp.visible.len() {
-            let (_, path) = lp.apps[lp.visible[idx]].clone();
+unsafe fn on_lpad_click(runtime: *mut AppRuntime, x: i32, y: i32) {
+    if let Some(idx) = grid_hit(runtime, x, y) {
+        let path = (*runtime).launcher.as_ref().and_then(|lp| {
+            lp.visible.get(idx).and_then(|visible_idx| lp.apps.get(*visible_idx)).map(|app| app.1.clone())
+        });
+        if let Some(path) = path {
             let wpath: Vec<u16> = path.encode_utf16().chain(std::iter::once(0)).collect();
             let _ = ShellExecuteW(None, w!("open"), PCWSTR(wpath.as_ptr()), None, None, SW_SHOWNORMAL);
-            lpad_shutdown(lp.hwnd);
+            lpad_shutdown(runtime);
         }
     }
 }
 
 // 网格几何:5 列,瓦片 170x110,起点 y=250
-unsafe fn grid_cell(i: usize) -> (f32, f32, f32, f32) {
-    let lp = lp();
+unsafe fn grid_cell(runtime: *mut AppRuntime, i: usize) -> (f32, f32, f32, f32) {
+    let Some(lp) = (*runtime).launcher.as_ref() else { return (0.0, 0.0, 0.0, 0.0); };
     let cols = 5usize;
     let tw = 170.0f32; let th = 110.0f32; let gx = 18.0f32; let gy = 14.0f32;
     let row = (i / cols) as f32; let col = (i % cols) as f32;
@@ -292,21 +323,23 @@ unsafe fn grid_cell(i: usize) -> (f32, f32, f32, f32) {
     (x0 + col * (tw + gx), y0 + row * (th + gy), tw, th)
 }
 
-unsafe fn grid_hit(x: i32, y: i32) -> Option<usize> {
-    let lp = lp();
+unsafe fn grid_hit(runtime: *mut AppRuntime, x: i32, y: i32) -> Option<usize> {
+    let Some(lp) = (*runtime).launcher.as_ref() else { return None; };
     for i in 0..lp.visible.len().min(15) {
-        let (l, t, w, h) = grid_cell(i);
+        let (l, t, w, h) = grid_cell(runtime, i);
         if x as f32 >= l && x as f32 <= l + w && y as f32 >= t && y as f32 <= t + h { return Some(i); }
     }
     None
 }
 
-unsafe fn render_lpad() {
-    let lp = lp();
+unsafe fn render_lpad(runtime: *mut AppRuntime) {
+    let Some(lp) = (*runtime).launcher.as_mut() else { return; };
+    let _ = lpad_fmt(lp);
+    let Some(lp) = (*runtime).launcher.as_ref() else { return; };
+    let f = lp.fmt.as_ref().unwrap();
     let (rt, bg, tile, tile_sel, txt, muted) =
         (&lp.rt, &lp.brush_bg, &lp.brush_tile, &lp.brush_tile_sel, &lp.brush_txt, &lp.brush_muted);
     let cptr = |c: &D2D1_COLOR_F| Some(std::ptr::from_ref(c));
-    let f = lpad_fmt();
 
     rt.BeginDraw();
     rt.Clear(cptr(&D2D1_COLOR_F { r: 0.0, g: 0.0, b: 0.0, a: 0.0 }));
@@ -359,7 +392,13 @@ unsafe fn render_lpad() {
         // 应用网格(≤15)
         let max = lp.visible.len().min(15);
         for i in 0..max {
-            let (l, t, w, h) = grid_cell(i);
+            let cols = 5usize;
+            let tw = 170.0f32; let th = 110.0f32; let gx = 18.0f32; let gy = 14.0f32;
+            let total_w = cols as f32 * tw + (cols - 1) as f32 * gx;
+            let x0 = (lp.sw as f32 - total_w) / 2.0;
+            let l = x0 + (i % cols) as f32 * (tw + gx);
+            let t = 250.0 + (i / cols) as f32 * (th + gy);
+            let (w, h) = (tw, th);
             let brush = if i == lp.sel { tile_sel } else { tile };
             let _ = rt.FillRoundedRectangle(
                 std::ptr::from_ref(&D2D1_ROUNDED_RECT {

@@ -23,7 +23,7 @@ unsafe fn hbitmap_to_bgra(hb: HBITMAP, w: i32, h: i32) -> Option<Vec<u8>> {
     bmi.bmiHeader.biCompression = BI_RGB.0;
     let mut pixels = vec![0u8; (w * h * 4) as usize];
     let got = GetDIBits(hdc, hb, 0, h as u32,
-        Some(pixels.as_mut_ptr() as *mut core::ffi::c_void), &mut bmi, DIB_RGB_COLORS);
+        Some(pixels.as_mut_ptr() as *mut std::ffi::c_void), &mut bmi, DIB_RGB_COLORS);
     let _ = ReleaseDC(None, hdc);
     if got == 0 { None } else { Some(pixels) }
 }
@@ -36,7 +36,7 @@ unsafe fn bgra_to_bitmap(dc: &ID2D1DeviceContext, pixels: &[u8], w: u32, h: u32)
         colorContext: std::mem::ManuallyDrop::new(None),
     };
     dc.CreateBitmap(D2D_SIZE_U { width: w, height: h },
-        Some(pixels.as_ptr() as *const core::ffi::c_void),
+        Some(pixels.as_ptr() as *const std::ffi::c_void),
         w * 4, std::ptr::from_ref(&props)).ok()
 }
 

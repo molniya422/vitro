@@ -94,7 +94,7 @@ pub(crate) struct Theme {
 
 impl Default for Theme {
     fn default() -> Self {
-        Theme { alpha: 0.56, tint: [0.075, 0.085, 0.130], accent: [0.478, 0.510, 0.804], peak: 1.60, radius: 120.0 }
+        Theme { alpha: 0.56, tint: [0.075, 0.085, 0.130], accent: [0.478, 0.510, 0.804], peak: 1.20, radius: 120.0 }
     }
 }
 
