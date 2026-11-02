@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-24 -24 468 116" width="560" height="139" role="img" aria-label="Glow rim (optional)">
+  <title>Glow rim (optional)</title>
+  <desc>Optional outer glow, default OFF. 24 unit spread, capped at 8 percent accent, accent colour only. 预览底仅用于单独打开时观察，接入时删除 id=preview-stage 的整组即可得到透明资产。</desc>
+  <!-- 预览底：单独打开时的观察背景，接入时删除本组 -->
+  <g id="preview-stage">
+    <defs>
+      <linearGradient id="preview-bg" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stop-color="#1b2434"/>
+        <stop offset="1" stop-color="#0d1119"/>
+      </linearGradient>
+    </defs>
+    <rect x="-24" y="-24" width="468" height="116" fill="url(#preview-bg)"/>
+  </g>
+  <g id="asset">
+
+  <defs>
+    <filter id="soft" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="10"/>
+    </filter>
+  </defs>
+  <g opacity=".08" filter="url(#soft)">
+    <rect x="0" y="0" width="420" height="68" rx="34" fill="none" stroke="#7c9be0" stroke-width="6"/>
+  </g>
+  </g>
+</svg>

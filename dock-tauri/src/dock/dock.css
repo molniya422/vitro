@@ -1,0 +1,351 @@
+:root {
+  --glass-fill: rgba(22, 26, 38, 0.62);
+  --glass-top-highlight: rgba(255, 255, 255, 0.15);
+  --glass-bottom-shadow: rgba(0, 0, 0, 0.15);
+  --pill-radius: 34px;
+  --icon-size: 48px;
+  --icon-gap: 8px;
+  --pad-h: 16px;
+  --pad-v: 10px;
+  --icon-radius: 20%;
+  --reflection-space: 40px;
+  --reflection-opacity: 0.25;
+  --text: #e9edf7;
+  --muted: #98a1b6;
+  --accent: #7fa4ff;
+  --spring: cubic-bezier(0.34, 1.36, 0.64, 1);
+  --signature: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  overflow: hidden;
+  font-family: "Segoe UI Variable", "Segoe UI", system-ui, sans-serif;
+  color: var(--text);
+  user-select: none;
+}
+
+.dock-stage {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  /* 100vh keeps the pill anchored to the window bottom even though #root has
+     no height; border-box keeps the reflection margin inside the viewport. */
+  height: 100vh;
+  box-sizing: border-box;
+  padding-bottom: var(--reflection-space, 40px);
+}
+
+.dock-pill {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  gap: var(--icon-gap, 8px);
+  height: calc(var(--icon-size, 48px) + var(--pad-v, 10px) * 2);
+  padding: 0 var(--pad-h, 16px);
+  border-radius: var(--pill-radius, 34px);
+  /* Tint/opacity come from settings; the gradient adds a little depth without
+     adding an outer stroke the transparent window would clip. */
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.045), transparent 46%),
+    var(--glass-fill);
+  box-shadow:
+    inset 0 1px 0 var(--glass-top-highlight),
+    inset 0 -1px 0 var(--glass-bottom-shadow),
+    inset 0 -10px 18px rgba(0, 0, 0, 0.08);
+}
+
+/* Collapsed: only the control tile stays, so the pill shrinks to a handle. */
+.dock-pill.is-collapsed .dock-item:not(.control-tile) {
+  display: none;
+}
+
+/* Tiled monochrome grain, pre-rendered as a repeating layer. */
+.dock-pill::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0.0025;
+  background-image: radial-gradient(#fff 0.5px, transparent 0.5px);
+  background-size: 3px 3px;
+}
+
+.dock-item {
+  position: relative;
+  /* border-box + zero chrome keeps the rendered tile exactly --icon-size wide,
+     so the pill matches the geometry Rust computed for the window. */
+  box-sizing: border-box;
+  flex: 0 0 auto;
+  width: var(--icon-size, 48px);
+  height: var(--icon-size, 48px);
+  margin-bottom: var(--pad-v, 10px);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  -webkit-appearance: none;
+  appearance: none;
+  cursor: pointer;
+  transform-origin: bottom center;
+  transition: transform 160ms var(--signature);
+  will-change: auto;
+}
+
+.dock-item.is-magnifying {
+  /* Only icons inside the magnify radius hold a compositor layer. */
+  will-change: transform;
+}
+
+.dock-item.is-reduced {
+  transition: opacity 200ms linear;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dock-item > img:not(.reflection),
+  .dock-item .system-icon,
+  .dock-item .fallback-icon {
+    transition: none;
+  }
+}
+
+.dock-item img,
+.dock-item .fallback-icon {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: contain;
+  border-radius: var(--icon-radius, 20%);
+}
+
+/* A soft shadow makes the icon sit above the glass instead of being pasted on
+   it. The reflection is excluded so it does not double the shadow. */
+.dock-item > img:not(.reflection),
+.dock-item .system-icon,
+.dock-item .fallback-icon {
+  filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.35));
+  transition:
+    transform 90ms var(--signature),
+    filter 120ms ease;
+}
+
+.dock-item:active > img:not(.reflection),
+.dock-item:active .system-icon,
+.dock-item:active .fallback-icon {
+  transform: scale(0.9);
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.28)) brightness(0.92);
+}
+
+/* Drag reorder: the lifted tile follows the pointer with no transition (a
+   trailing transform would lag the cursor); its neighbours keep the base
+   transition so the gap opens smoothly. */
+.dock-item.is-dragging {
+  z-index: 5;
+  cursor: grabbing;
+  transition: none;
+}
+
+.dock-item.is-dragging > img:not(.reflection),
+.dock-item.is-dragging .system-icon,
+.dock-item.is-dragging .fallback-icon {
+  transform: none;
+  filter: drop-shadow(0 10px 16px rgba(0, 0, 0, 0.45)) brightness(1.04);
+}
+
+/* Launch feedback: one short hop on the icon itself, so the tile's layout
+   transform (drag offset) is untouched. */
+@keyframes dock-launch-bounce {
+  0% { transform: translateY(0); }
+  18% { transform: translateY(-14px); }
+  36% { transform: translateY(0); }
+  52% { transform: translateY(-6px); }
+  68% { transform: translateY(0); }
+  82% { transform: translateY(-2px); }
+  100% { transform: translateY(0); }
+}
+
+.dock-item.is-launching > img:not(.reflection),
+.dock-item.is-launching .system-icon,
+.dock-item.is-launching .fallback-icon {
+  animation: dock-launch-bounce 700ms var(--signature);
+}
+
+/* The in-app reduced-motion setting, not only the OS preference. */
+.dock-item.is-reduced.is-launching > img:not(.reflection),
+.dock-item.is-reduced.is-launching .system-icon,
+.dock-item.is-reduced.is-launching .fallback-icon {
+  animation: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dock-item.is-launching > img:not(.reflection),
+  .dock-item.is-launching .system-icon,
+  .dock-item.is-launching .fallback-icon {
+    animation: none;
+  }
+}
+
+.dock-item .fallback-icon {
+  display: grid;
+  place-items: center;
+  background: rgba(255, 255, 255, 0.08);
+  font-size: calc(var(--icon-size, 48px) * 0.4);
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.dock-item .reflection {
+  position: absolute;
+  left: 0;
+  top: 100%;
+  width: 100%;
+  height: 32px;
+  transform: scaleY(-0.45);
+  transform-origin: top center;
+  opacity: var(--reflection-opacity, 0.25);
+  -webkit-mask-image: linear-gradient(to bottom, #000, transparent);
+  mask-image: linear-gradient(to bottom, #000, transparent);
+  pointer-events: none;
+}
+
+.dock-item .running-dot {
+  position: absolute;
+  left: 50%;
+  bottom: -10px; /* 4px dot, 6px gap below the icon */
+  width: 4px;
+  height: 4px;
+  margin-left: -2px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.6);
+  /* 1 px dark ring keeps the 4 px dot readable on a light wallpaper. */
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35);
+}
+
+.dock-item .badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 8px;
+  background: #e8342e;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 16px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.dock-item.is-disabled {
+  filter: saturate(0);
+  opacity: 0.7;
+}
+
+.dock-tooltip {
+  position: absolute;
+  bottom: calc(100% + 10px);
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 4px 8px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  background: rgba(24, 28, 40, 0.95);
+  box-shadow:
+    0 6px 18px rgba(0, 0, 0, 0.32),
+    inset 0 1px 0 var(--glass-top-highlight);
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  pointer-events: none;
+  animation: tooltip-in 150ms var(--signature);
+}
+
+@keyframes tooltip-in {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dock-item,
+  .dock-tooltip {
+    transition: none;
+    animation: none;
+  }
+}
+
+/* Vector glyphs for system tiles and the three control buttons. */
+.dock-glyph {
+  display: grid;
+  place-items: center;
+  width: 58%;
+  height: 58%;
+  color: var(--text);
+}
+
+.system-icon {
+  display: grid;
+  place-items: center;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.07));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22);
+}
+
+.dock-item .fallback-icon {
+  background: rgba(255, 255, 255, 0.14);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18);
+  color: var(--text);
+}
+
+/* Right-click menu. Opens above the pointer and is included in the hit rects
+   while visible so its clicks never pass through to the app below. */
+.dock-menu {
+  position: fixed;
+  z-index: 30;
+  min-width: 172px;
+  padding: 4px;
+  transform: translate(-50%, calc(-100% - 10px));
+  border-radius: 10px;
+  background: rgba(28, 32, 44, 0.97);
+  box-shadow:
+    0 10px 26px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  user-select: none;
+}
+
+.dock-menu button {
+  display: block;
+  width: 100%;
+  padding: 7px 10px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.dock-menu button:hover:not(:disabled),
+.dock-menu button:focus-visible {
+  outline: none;
+  background: rgba(127, 164, 255, 0.24);
+}
+
+.dock-menu button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}

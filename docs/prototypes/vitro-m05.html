@@ -1,0 +1,372 @@
+<div id="vitro-m05" data-refl="on">
+<style>
+#vitro-m05{
+  --sig:cubic-bezier(0.22,1,0.36,1); --spring:cubic-bezier(0.34,3.85,0.64,1);
+  --txt:#e9edf7; --mut:#98a1b6; --acc:#7fa4ff; --line:rgba(255,255,255,.09);
+  --glass:rgba(22,26,38,.62);
+  font-family:system-ui,"Segoe UI","Microsoft YaHei",sans-serif; color:var(--txt); font-size:14px; line-height:1.45;
+}
+#vitro-m05 *{box-sizing:border-box; margin:0}
+#vitro-m05 button{font:inherit; color:inherit}
+#vitro-m05 .app{border:1px solid var(--line); border-radius:18px; overflow:hidden; background:#0b0e17; box-shadow:0 24px 70px rgba(0,0,0,.5)}
+#vitro-m05 .head{display:flex; align-items:center; gap:10px; padding:11px 16px; border-bottom:1px solid var(--line); background:linear-gradient(rgba(255,255,255,.03),transparent)}
+#vitro-m05 .dots{display:flex; gap:6px} #vitro-m05 .dots i{width:11px;height:11px;border-radius:50%}
+#vitro-m05 .dots i:first-child{background:#ff5f57}#vitro-m05 .dots i:nth-child(2){background:#febc2e}#vitro-m05 .dots i:nth-child(3){background:#28c840}
+#vitro-m05 .ttl{font-weight:500} #vitro-m05 .ttl small{color:var(--mut); font-weight:400; margin-left:8px}
+#vitro-m05 .head .sp{flex:1}
+#vitro-m05 .sw{display:flex; align-items:center; gap:7px; font-size:12px; color:var(--mut); cursor:pointer; user-select:none}
+#vitro-m05 .sw input{appearance:none; width:34px; height:19px; border-radius:10px; background:rgba(255,255,255,.14); position:relative; cursor:pointer; transition:background .2s var(--sig); margin:0}
+#vitro-m05 .sw input::after{content:""; position:absolute; top:2.5px; left:3px; width:14px; height:14px; border-radius:50%; background:#fff; transition:transform .2s var(--sig)}
+#vitro-m05 .sw input:checked{background:#e8b84b} #vitro-m05 .sw input:checked::after{transform:translateX(14px)}
+/* ── 舞台 ── */
+#vitro-m05 .stage{position:relative; min-height:560px; overflow:hidden;
+  background:radial-gradient(60% 45% at 18% 8%, rgba(63,81,180,.4), transparent 70%),
+    radial-gradient(55% 50% at 85% 90%, rgba(122,59,143,.32), transparent 70%),
+    radial-gradient(40% 35% at 70% 15%, rgba(34,120,160,.18), transparent 70%), linear-gradient(#0d1322,#080a12)}
+#vitro-m05 .win{position:absolute; left:50%; top:36px; transform:translateX(-50%); width:min(62%,430px); height:44%;
+  border:1px solid var(--line); border-radius:12px; background:rgba(16,20,31,.55); backdrop-filter:blur(4px);
+  box-shadow:0 16px 44px rgba(0,0,0,.36)}
+#vitro-m05 .win::before{content:""; position:absolute; inset:0 0 auto 0; height:30px; border-bottom:1px solid var(--line); background:linear-gradient(rgba(255,255,255,.045),transparent)}
+#vitro-m05 .wbtns{position:absolute; top:8px; left:12px; display:flex; gap:7px; z-index:2}
+#vitro-m05 .wbtns i{width:12px; height:12px; border-radius:50%; display:block}
+#vitro-m05 .wbtns .c{background:#ff5f57} #vitro-m05 .wbtns .m{background:#febc2e} #vitro-m05 .wbtns .x{background:#28c840}
+#vitro-m05 .wbtns button{border:0; background:none; padding:0; cursor:pointer}
+#vitro-m05 .wcap{position:absolute; top:8px; left:50px; font-size:11px; color:var(--mut)}
+#vitro-m05 .win.minning{transition:transform .5s var(--sig), opacity .5s var(--sig); transform:translate(calc(-50% + var(--dx)),calc(0px + var(--dy))) scale(.05)!important; opacity:.1}
+#vitro-m05 .win.minned{display:none}
+/* ── 应用库 ── */
+#vitro-m05 .tray{position:absolute; left:14px; top:14px; z-index:15; display:flex; flex-direction:column; gap:6px; padding:10px; border-radius:14px;
+  background:var(--glass); backdrop-filter:blur(14px); border:1px solid var(--line); box-shadow:0 12px 34px rgba(0,0,0,.4)}
+#vitro-m05 .tray b{font-size:11px; color:var(--mut); font-weight:500}
+#vitro-m05 .t-chip{display:flex; align-items:center; gap:8px; padding:4px 8px 4px 4px; border:0; border-radius:10px; background:rgba(255,255,255,.05);
+  cursor:grab; transition:background .15s var(--sig), transform .15s var(--sig)}
+#vitro-m05 .t-chip:hover{background:rgba(255,255,255,.12); transform:translateX(2px)}
+#vitro-m05 .t-chip svg{width:26px; height:26px; display:block; filter:drop-shadow(0 2px 4px rgba(0,0,0,.4))}
+#vitro-m05 .t-chip span{font-size:12px}
+#vitro-m05 .tray em{font-size:10.5px; color:var(--mut); font-style:normal; max-width:118px}
+/* ── Dock ── */
+#vitro-m05 .edgezone{position:absolute; left:0; right:0; bottom:0; height:16px; z-index:25}
+#vitro-m05 .dockwrap{position:absolute; left:0; right:0; bottom:30px; display:flex; justify-content:center; z-index:20; transition:transform .38s var(--sig)}
+#vitro-m05 .ah .dockwrap{transform:translateY(130%)}
+#vitro-m05 .ah .edgezone:hover ~ .dockwrap, #vitro-m05 .ah .dockwrap:hover{transform:none}
+#vitro-m05 .dock{display:flex; align-items:flex-end; gap:10px; padding:10px 13px; border-radius:24px; position:relative;
+  background:var(--glass); backdrop-filter:blur(20px) saturate(1.5); border:1px solid var(--line);
+  box-shadow:0 18px 46px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.14)}
+#vitro-m05 .v-ic{appearance:none; border:0; background:none; padding:0; position:relative; width:56px; height:56px; cursor:pointer;
+  transition:transform .16s var(--sig)}
+#vitro-m05 .dock.settle .v-ic{transition:transform .5s var(--spring)}
+#vitro-m05 .v-ico{display:block; width:56px; height:56px; will-change:transform}
+#vitro-m05 .v-ico svg{width:100%; height:100%; display:block; filter:drop-shadow(0 7px 12px rgba(0,0,0,.5))}
+#vitro-m05 .v-ico.fx-boing{animation:vmBoing .6s var(--spring)}
+#vitro-m05 .v-dot{position:absolute; left:50%; bottom:-9px; transform:translateX(-50%); width:4.5px; height:4.5px; border-radius:50%; background:#fff; opacity:0; box-shadow:0 0 5px rgba(255,255,255,.85); transition:opacity .3s}
+#vitro-m05 .v-ic.has-run .v-dot{opacity:.95}
+#vitro-m05 .v-refl{position:absolute; top:calc(100% + 14px); left:0; width:56px; height:56px; opacity:.2; pointer-events:none;
+  -webkit-mask-image:linear-gradient(to bottom, rgba(0,0,0,.65), transparent 58%); mask-image:linear-gradient(to bottom, rgba(0,0,0,.65), transparent 58%)}
+#vitro-m05 .v-refl svg{width:100%; height:100%; transform:scaleY(-1); display:block}
+#vitro-m05[data-refl="off"] .v-refl, #vitro-m05.lp .v-refl{display:none}
+#vitro-m05 .v-sep{width:2px; height:48px; align-self:center; background:rgba(255,255,255,.22); border-radius:1px; margin:0 3px}
+#vitro-m05 .v-ic.ins::before{content:""; position:absolute; left:-8px; top:4px; bottom:4px; width:3px; border-radius:2px; background:var(--acc)}
+#vitro-m05 .trash-hot svg{filter:drop-shadow(0 0 10px rgba(255,120,110,.9))}
+#vitro-m05 .cl .dock>:not(.ctl){display:none}
+#vitro-m05 .cl .dock{padding:8px; border-radius:18px}
+#vitro-m05 .v-ic.e-in{animation:vmRise .45s var(--sig) both}
+@keyframes vmRise{from{opacity:0; transform:translateY(16px) scale(.7)}}
+@keyframes vmBoing{0%{transform:none}28%{transform:translateY(-32px) scale(1.08)}52%{transform:translateY(1px) scale(.94)}74%{transform:translateY(-10px)}100%{transform:none}}
+/* ── 弹出层 ── */
+#vitro-m05 .pop{position:absolute; z-index:60; padding:6px; border-radius:14px; background:var(--glass); backdrop-filter:blur(20px) saturate(1.5);
+  border:1px solid var(--line); box-shadow:0 18px 48px rgba(0,0,0,.5); opacity:0; visibility:hidden; pointer-events:none; transform-origin:bottom left;
+  transform:scale(.94) translateY(6px); transition:opacity .25s var(--sig), transform .25s var(--sig), visibility 0s .25s}
+#vitro-m05 .pop.open{opacity:1; visibility:visible; pointer-events:auto; transform:none; transition:opacity .25s var(--sig), transform .25s var(--sig), visibility 0s 0s}
+#vitro-m05 .p-item{display:block; width:100%; text-align:left; border:0; background:none; border-radius:9px; padding:7px 11px; cursor:pointer; font-size:13px; transition:background .15s}
+#vitro-m05 .p-item:hover{background:rgba(255,255,255,.09)}
+#vitro-m05 .p-item[aria-disabled="true"]{opacity:.45; cursor:default}
+#vitro-m05 #subdock{display:grid; grid-template-columns:repeat(2,1fr); gap:4px; padding:10px}
+#vitro-m05 #subdock .s-app{border:0; background:none; padding:6px; border-radius:12px; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:4px; transition:background .15s, transform .15s var(--sig)}
+#vitro-m05 #subdock .s-app:hover{background:rgba(255,255,255,.09); transform:translateY(-2px)}
+#vitro-m05 #subdock svg{width:40px; height:40px; filter:drop-shadow(0 4px 8px rgba(0,0,0,.45))}
+#vitro-m05 #subdock span{font-size:11px; color:var(--mut)}
+#vitro-m05 .puff{position:absolute; z-index:65; width:26px; height:26px; border-radius:50%; pointer-events:none;
+  background:radial-gradient(circle, rgba(230,236,246,.85), rgba(230,236,246,0) 70%); animation:vmPuff .55s var(--sig) forwards}
+@keyframes vmPuff{to{transform:translate(var(--px),var(--py)) scale(1.9); opacity:0}}
+#vitro-m05 .hint{position:absolute; right:14px; top:14px; z-index:15; max-width:290px; padding:8px 12px; border-radius:12px; font-size:12px; color:#cfe0ff;
+  background:var(--glass); backdrop-filter:blur(14px); border:1px solid var(--line); box-shadow:0 12px 34px rgba(0,0,0,.4)}
+#vitro-m05 .hint b{display:block; font-size:11px; color:var(--mut); font-weight:500; margin-bottom:2px}
+/* ── 对标脚注 ── */
+#vitro-m05 .srcs{display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:10px; padding:12px 16px 14px; border-top:1px solid var(--line); background:#0a0d15}
+#vitro-m05 .src h4{font-size:11.5px; color:var(--mut); font-weight:500; margin-bottom:6px}
+#vitro-m05 .chips{display:flex; flex-wrap:wrap; gap:4px}
+#vitro-m05 .chips i{font-style:normal; font-size:11px; color:#a8b6d8; background:rgba(255,255,255,.05); border:1px solid var(--line); border-radius:7px; padding:2px 7px}
+#vitro-m05 .chips i.on{color:#0d1220; background:var(--acc); border-color:var(--acc)}
+#vitro-m05.lp .stage *{transition-duration:0s!important; animation:none!important}
+@media (prefers-reduced-motion:reduce){#vitro-m05 *{animation:none!important; transition:none!important}}
+</style>
+<div class="app">
+  <div class="head">
+    <div class="dots" aria-hidden="true"><i></i><i></i><i></i></div>
+    <div class="ttl">Vitro M0.5<small>写实图标 · 自带图标插入 · 三源功能对标</small></div>
+    <div class="sp"></div>
+    <label class="sw"><input type="checkbox" id="swAh">自动隐藏</label>
+    <label class="sw"><input type="checkbox" id="swRefl" checked>反射</label>
+    <label class="sw"><input type="checkbox" id="swMag" checked>放大</label>
+    <label class="sw"><input type="checkbox" id="swLp">省电</label>
+  </div>
+  <div class="stage" id="stage">
+    <div class="win" id="win" role="img" aria-label="预览桌面窗口">
+      <div class="wbtns" aria-hidden="false"><button type="button" class="wmin" id="wmin" aria-label="最小化窗口"><i class="m"></i></button></div>
+      <div class="wcap">预览桌面窗口 — 黄点可最小化进 dock</div>
+    </div>
+    <div class="tray" aria-label="应用库(拖到 dock 插入)">
+      <b>应用库(开始菜单/桌面)</b>
+      <em>拖到 dock = 用它<b style="color:#cfe0ff">自己的图标</b>插入</em>
+    </div>
+    <div class="hint" id="hint"><b>最近动作</b>悬停 dock 查看放大与运行指示</div>
+    <div class="edgezone" aria-hidden="true"></div>
+    <div class="dockwrap"><div class="dock" id="dock"></div></div>
+    <div class="pop" id="prefs" role="menu" aria-label="偏好设置">
+      <button type="button" class="p-item" role="menuitem" data-p="Dock 属性">Dock 属性…</button>
+      <button type="button" class="p-item" role="menuitem" data-p="偏好设置">偏好设置…</button>
+    </div>
+    <div class="pop" id="subdock" role="menu" aria-label="子码头"></div>
+    <div class="pop" id="ctx" role="menu" aria-label="条目菜单">
+      <button type="button" class="p-item" role="menuitem" id="ctxLaunch">启动</button>
+      <button type="button" class="p-item" role="menuitem" id="ctxRemove">从 Dock 移除</button>
+      <button type="button" class="p-item" role="menuitem" aria-disabled="true">条目属性…</button>
+    </div>
+  </div>
+  <div class="srcs">
+    <div class="src"><h4>NeXuS 逆向规格(交互基线)</h4><div class="chips" id="srcNexus"></div></div>
+    <div class="src"><h4>macOS(质感与体验基准)</h4><div class="chips" id="srcMac"></div></div>
+    <div class="src"><h4>MyDockFinder(商业标杆参考)</h4><div class="chips" id="srcMd"></div></div>
+    <div class="src"><h4>Glassboard(桌面集成,M1 搬运)</h4><div class="chips" id="srcGb"></div></div>
+  </div>
+</div>
+<script>
+(function(){
+  var $=function(id){return document.getElementById(id)};
+  var root=$('vitro-m05'), stage=$('stage'), dock=$('dock'), hintEl=$('hint'), live=null;
+  var RM=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* ── 写实图标库(Big Sur 风:squircle + 渐变 + 顶部高光 + 内描边)── */
+  function sq(grad,body){return '<defs><linearGradient id="'+grad.id+'" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="'+grad.a+'"/><stop offset="1" stop-color="'+grad.b+'"/></linearGradient></defs>'
+    +'<rect x="2" y="2" width="60" height="60" rx="15" fill="url(#'+grad.id+')"/>'
+    +'<path d="M2 21 C2 9 9 2 21 2 H43 C55 2 62 9 62 21 V31 H2 Z" fill="#fff" opacity=".15"/>'
+    +'<rect x="2.5" y="2.5" width="59" height="59" rx="14.5" fill="none" stroke="rgba(255,255,255,.30)"/>'
+    +body}
+  var SQ={
+    browser:{g:{id:'gBr',a:'#41d0f5',b:'#1f6df2'},b:'<circle cx="32" cy="32" r="15" fill="#eef7ff"/><ellipse cx="32" cy="32" rx="6.5" ry="15" fill="none" stroke="#2a7de1" stroke-width="1.6"/><path d="M17.5 28 H46.5 M17.5 36 H46.5 M32 17 V47" stroke="#2a7de1" stroke-width="1.6" fill="none"/>'},
+    mail:{g:{id:'gMa',a:'#54b4ff',b:'#1e63ea'},b:'<rect x="15" y="21" width="34" height="23" rx="4" fill="#f4faff"/><path d="M16.5 24 L32 35.5 L47.5 24" fill="none" stroke="#1e63ea" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>'},
+    music:{g:{id:'gMu',a:'#ff6f9d',b:'#e02f68'},b:'<circle cx="23.5" cy="42" r="5.2" fill="#fff"/><circle cx="40.5" cy="38" r="5.2" fill="#fff"/><path d="M28.7 42 V21.5 L45.7 17.5 V38" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>'},
+    terminal:{g:{id:'gTe',a:'#454e63',b:'#141926'},b:'<path d="M17 24 L27 32 L17 40" fill="none" stroke="#7ef0b0" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/><rect x="31" y="38.4" width="15" height="3.6" rx="1.8" fill="#7ef0b0"/>'},
+    gamepad:{g:{id:'gGa',a:'#8f66ff',b:'#5628d8'},b:'<rect x="13" y="23" width="38" height="19" rx="9.5" fill="#fff"/><circle cx="23" cy="32.5" r="2.4" fill="#5628d8"/><circle cx="41" cy="33.5" r="2.4" fill="#5628d8"/><circle cx="45.5" cy="29" r="2" fill="#ff8a5c"/><circle cx="36.5" cy="36" r="2" fill="#38d17c"/>'},
+    settings:{g:{id:'gSe',a:'#a3aec2',b:'#5b6a82'},b:'<circle cx="32" cy="32" r="12.5" fill="none" stroke="#fff" stroke-width="6" stroke-dasharray="5.4 4.5"/><circle cx="32" cy="32" r="5.6" fill="#fff"/>'},
+    control:{g:{id:'gCo',a:'#b8c2d4',b:'#6d7c96'},b:'<circle cx="32" cy="32" r="12.5" fill="none" stroke="#fff" stroke-width="6" stroke-dasharray="5.4 4.5"/><circle cx="32" cy="32" r="5.6" fill="#fff"/>'},
+    drawer:{g:{id:'gDr',a:'#aab6c8',b:'#5f6d84'},b:'<g fill="#fff"><circle cx="22" cy="22" r="3.2"/><circle cx="32" cy="22" r="3.2"/><circle cx="42" cy="22" r="3.2"/><circle cx="22" cy="32" r="3.2"/><circle cx="32" cy="32" r="3.2"/><circle cx="42" cy="32" r="3.2"/><circle cx="22" cy="42" r="3.2"/><circle cx="32" cy="42" r="3.2"/><circle cx="42" cy="42" r="3.2"/></g>'},
+    folder:{g:{id:'gFo',a:'#7cc4ff',b:'#3d8bf5'},b:'<path d="M9 21 C9 18 11 16 14 16 H24 C26.5 16 27.5 17 29 19 L30.5 21 H50 C53 21 55 23 55 26 V44 C55 47 53 49 50 49 H14 C11 49 9 47 9 44 Z" fill="#eaf4ff"/><path d="M9 27 H55 V44 C55 47 53 49 50 49 H14 C11 49 9 47 9 44 Z" fill="url(#gFo)"/>'},
+    code:{g:{id:'gCd',a:'#3c4353',b:'#12151d'},b:'<path d="M20 22 L12 32 L20 42 M44 22 L52 32 L44 42" fill="none" stroke="#9fe8ff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M35 20 L29 44" stroke="#9fe8ff" stroke-width="3.2" stroke-linecap="round"/>'},
+    calendar:{g:{id:'gCa',a:'#fdfdff',b:'#e4e9f2'},b:'<path d="M2 17 C2 9 9 2 17 2 H47 C55 2 62 9 62 17 V20 H2 Z" fill="#ff5f6d"/><rect x="20" y="8" width="4" height="10" rx="2" fill="#c23b48"/><rect x="40" y="8" width="4" height="10" rx="2" fill="#c23b48"/><text x="32" y="48" text-anchor="middle" font-size="23" font-weight="500" fill="#3c4353" font-family="Segoe UI,sans-serif">24</text>'},
+    weather:{g:{id:'gWe',a:'#63bcff',b:'#2f7fe0'},b:'<circle cx="24" cy="24" r="8.5" fill="#ffd76e"/><g fill="#fff"><circle cx="29" cy="39" r="7"/><circle cx="38" cy="36" r="8.5"/><circle cx="46" cy="40" r="6"/><rect x="23" y="39" width="29" height="8" rx="4"/></g>'},
+    photos:{g:{id:'gPh',a:'#f7f9fc',b:'#e0e7f1'},b:'<g opacity=".92"><ellipse cx="32" cy="20" rx="4.6" ry="9" fill="#ff5f6d"/><ellipse cx="32" cy="20" rx="4.6" ry="9" fill="#ffb340" transform="rotate(45 32 32)"/><ellipse cx="32" cy="20" rx="4.6" ry="9" fill="#ffe23d" transform="rotate(90 32 32)"/><ellipse cx="32" cy="20" rx="4.6" ry="9" fill="#38d17c" transform="rotate(135 32 32)"/><ellipse cx="32" cy="20" rx="4.6" ry="9" fill="#3f9bf7" transform="rotate(180 32 32)"/><ellipse cx="32" cy="20" rx="4.6" ry="9" fill="#7a6cf7" transform="rotate(225 32 32)"/><ellipse cx="32" cy="20" rx="4.6" ry="9" fill="#c96cf7" transform="rotate(270 32 32)"/><ellipse cx="32" cy="20" rx="4.6" ry="9" fill="#f75c9d" transform="rotate(315 32 32)"/></g>'},
+    calc:{g:{id:'gCl',a:'#3a4152',b:'#181c26'},b:'<rect x="14" y="11" width="36" height="11" rx="3" fill="#bfead9"/><g fill="#fff" opacity=".92"><circle cx="20" cy="31" r="2.7"/><circle cx="32" cy="31" r="2.7"/><circle cx="44" cy="31" r="2.7"/><circle cx="20" cy="41" r="2.7"/><circle cx="32" cy="41" r="2.7"/><circle cx="20" cy="51" r="2.7"/><circle cx="32" cy="51" r="2.7"/></g><circle cx="44" cy="41" r="2.7" fill="#ffb340"/><circle cx="44" cy="51" r="2.7" fill="#ffb340"/>'},
+    notes:{g:{id:'gNo',a:'#fdd968',b:'#f0b73e'},b:'<rect x="12" y="12" width="40" height="40" rx="6" fill="#fffdf4"/><path d="M12 18 C12 14.5 14.5 12 18 12 H46 C49.5 12 52 14.5 52 18 V24 H12 Z" fill="#f7c948"/><rect x="18" y="31" width="28" height="3" rx="1.5" fill="#d8cfa8"/><rect x="18" y="38" width="28" height="3" rx="1.5" fill="#d8cfa8"/><rect x="18" y="45" width="19" height="3" rx="1.5" fill="#d8cfa8"/>'},
+    cpu:{g:{id:'gCp',a:'#2c3550',b:'#10141f'},b:'<polyline id="vSpark" points="14,38 20,32 26,36 32,26 38,31 44,22 50,28" fill="none" stroke="#5eead4" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><text id="vCpuT" x="32" y="52" text-anchor="middle" font-size="11" fill="#e8f6ff" font-family="ui-monospace,Consolas,monospace">12</text>'}
+  };
+  SQ.trash={raw:'<defs><linearGradient id="gTr" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#c4ccd9"/><stop offset=".5" stop-color="#eef2f8"/><stop offset="1" stop-color="#b4bfce"/></linearGradient></defs>'
+    +'<rect x="29" y="9" width="6" height="4" rx="2" fill="#aab4c4"/><rect x="19" y="12" width="26" height="5" rx="2.5" fill="url(#gTr)" stroke="#8b96a8"/>'
+    +'<path d="M21.5 19 H42.5 L40.6 54 C40.5 56 38.7 57.5 36.6 57.5 H27.4 C25.3 57.5 23.5 56 23.4 54 Z" fill="url(#gTr)" stroke="#8b96a8"/>'
+    +'<path d="M28 23 V52 M32 23 V52 M36 23 V52" stroke="#93a0b2" stroke-width="1.6" fill="none"/>'};
+  function icn(id){var s=SQ[id]; if(s.raw)return '<svg viewBox="0 0 64 64" aria-hidden="true">'+s.raw+'</svg>'; return '<svg viewBox="0 0 64 64" aria-hidden="true">'+sq(s.g,s.b)+'</svg>'}
+  var NAMES={control:'控制磁贴',drawer:'抽屉',browser:'浏览器',mail:'邮件',music:'音乐',terminal:'终端',gamepad:'游戏',settings:'设置',folder:'文件夹(子码头)',trash:'回收站',cpu:'CPU 插件',code:'代码',calendar:'日历',weather:'天气',photos:'相册',calc:'计算器',notes:'笔记'};
+
+  /* ── Dock 构建 ── */
+  var trashEl=null, ctlEl=null, drawerEl=null, folderEl=null;
+  function mk(id,opts){opts=opts||{};
+    var b=document.createElement('button'); b.type='button'; b.className='v-ic'+(opts.cls?' '+opts.cls:'');
+    b.dataset.app=id; b.draggable=opts.drag!==false;
+    b.setAttribute('data-tooltip',NAMES[id]||id);
+    b.setAttribute('aria-label',NAMES[id]||id);
+    b.innerHTML='<span class="v-ico">'+icn(id)+'</span><span class="v-dot" aria-hidden="true"></span>'+(opts.refl?'<span class="v-refl" aria-hidden="true">'+icn(id)+'</span>':'');
+    return b}
+  function addDock(id,opts){var b=mk(id,opts); dock.appendChild(b); wire(b); return b}
+  ctlEl=addDock('control',{cls:'ctl',drag:false});
+  drawerEl=addDock('drawer',{drag:false});
+  ['browser','mail','music','terminal','gamepad'].forEach(function(id){addDock(id,{refl:true})});
+  var sep=document.createElement('span'); sep.className='v-sep'; sep.setAttribute('aria-hidden','true'); dock.appendChild(sep);
+  folderEl=addDock('folder',{drag:false});
+  trashEl=addDock('trash',{drag:false,cls:'trash'});
+  var cpuB=addDock('cpu',{drag:false,refl:true});
+
+  /* ── 应用库(拖入=自身图标) ── */
+  var tray=$('vitro-m05').querySelector('.tray');
+  var TRAY=['code','calendar','weather','photos','calc','notes'];
+  var dragNew=null, dragEl=null;
+  TRAY.forEach(function(id){
+    var c=document.createElement('button'); c.type='button'; c.className='t-chip'; c.draggable=true;
+    c.innerHTML=icn(id)+'<span>'+NAMES[id]+'</span>'; c.setAttribute('aria-label','拖入 '+NAMES[id]);
+    c.addEventListener('dragstart',function(e){dragNew=id; dragEl=null; e.dataTransfer.setData('text/plain',id); e.dataTransfer.effectAllowed='copy';});
+    tray.appendChild(c);
+  });
+
+  /* ── Dock DnD:重排 / 插入 / 回收站删除 ── */
+  var insTarget=null;
+  dock.addEventListener('dragover',function(e){
+    if(!dragNew&&!dragEl)return; e.preventDefault(); e.dataTransfer.dropEffect=dragEl?'move':'copy';
+    clearIns();
+    var t=e.target.closest?e.target.closest('.v-ic'):null;
+    if(dragEl&&t===trashEl){trashEl.classList.add('trash-hot'); return;}
+    if(t&&t!==trashEl&&t!==insTarget){t.classList.add('ins'); insTarget=t;}
+  });
+  dock.addEventListener('dragleave',function(e){if(e.target===dock)clearIns();});
+  dock.addEventListener('drop',function(e){
+    e.preventDefault();
+    if(dragEl&&e.target.closest&&e.target.closest('.trash')){removePoof(dragEl); clearIns(); dragEl=null; return;}
+    if(dragEl){var t=e.target.closest?e.target.closest('.v-ic'):null;
+      if(t&&t!==dragEl&&t!==trashEl){dock.insertBefore(dragEl,t);} dragEl=null; clearIns(); hint('重排条目 — 拖拽排序(规格 R6)'); return;}
+    if(dragNew){insertApp(dragNew); dragNew=null; clearIns();}
+  });
+  function clearIns(){if(insTarget){insTarget.classList.remove('ins'); insTarget=null;} trashEl.classList.remove('trash-hot');}
+  function insertApp(id){
+    var b=mk(id,{refl:true}); dock.insertBefore(b,sep); wire(b);
+    b.style.setProperty('--i',dock.querySelectorAll('.v-ic').length);
+    b.classList.add('e-in'); hint('拖入「'+NAMES[id]+'」— 使用其自身图标插入(规格 R6 OLE 拖放)');
+    setTimeout(function(){b.classList.remove('e-in');},600);
+    return b}
+  function removePoof(el){
+    var r=el.getBoundingClientRect(), sr=stage.getBoundingClientRect();
+    var cx=r.left-sr.left+r.width/2, cy=r.top-sr.top+r.height/2;
+    for(var i=0;i<6;i++){var p=document.createElement('span'); p.className='puff';
+      p.style.left=(cx-13)+'px'; p.style.top=(cy-13)+'px';
+      p.style.setProperty('--px',(Math.random()*54-27)+'px'); p.style.setProperty('--py',(Math.random()*54-27)+'px');
+      stage.appendChild(p); (function(pp){setTimeout(function(){pp.remove();},620);})(p);}
+    var name=NAMES[el.dataset.app]||'条目';
+    el.style.transition='transform .28s var(--sig), opacity .28s var(--sig)'; el.style.transform='scale(.3)'; el.style.opacity='0';
+    setTimeout(function(){el.remove();},300);
+    hint('「'+name+'」已删除 — 拖入回收站删除条目(规格 R6)');}
+  dock.addEventListener('dragstart',function(e){
+    var b=e.target.closest?e.target.closest('.v-ic'):null;
+    if(b&&b.draggable){dragEl=b; dragNew=null; e.dataTransfer.setData('text/plain',b.dataset.app); e.dataTransfer.effectAllowed='move';}});
+
+  /* ── 交互接线 ── */
+  function wire(b){
+    var id=b.dataset.app;
+    b.addEventListener('click',function(){
+      if(id==='drawer'){hint('抽屉启动器 — M3 交付(M0 原型见 vitro-m0)'); return;}
+      if(id==='folder'){toggleSub(); return;}
+      if(b===cpuB){hint('CPU docklet — 插件观感与桌面图标同风格(§4.4)'); return;}
+      if(id==='browser'&&winMin){restoreWin(); return;}
+      var ico=b.querySelector('.v-ico'); ico.classList.remove('fx-boing'); void ico.offsetWidth; ico.classList.add('fx-boing');
+      ico.addEventListener('animationend',function h(){ico.removeEventListener('animationend',h); ico.classList.remove('fx-boing');});
+      b.classList.add('has-run');
+      hint('启动「'+NAMES[id]+'」— Launch Effect 弹跳(规格 R5)');
+    });
+    b.addEventListener('contextmenu',function(e){
+      if(b===ctlEl||b===drawerEl||b===trashEl)return;
+      e.preventDefault(); closePops();
+      var sr=stage.getBoundingClientRect(), r=b.getBoundingClientRect();
+      ctxFor=b; ctxEl.style.left=Math.max(10,r.left-sr.left)+'px';
+      ctxEl.style.bottom=(sr.height-(r.top-sr.top)+8)+'px';
+      ctxEl.classList.add('open'); ctxEl.setAttribute('aria-hidden','false');
+    });
+  }
+  /* 控制磁贴:单击 Preferences,双击折叠(规格 R1) */
+  var prefs=$('prefs'), subdock=$('subdock'), ctxEl=$('ctx'), ctxFor=null;
+  ctlEl.addEventListener('click',function(){
+    closePops(); var sr=stage.getBoundingClientRect(), r=ctlEl.getBoundingClientRect();
+    prefs.style.left=Math.max(10,r.left-sr.left-4)+'px';
+    prefs.style.bottom=(sr.height-(r.top-sr.top)+8)+'px';
+    prefs.classList.add('open'); prefs.setAttribute('aria-hidden','false');
+    hint('单击控制磁贴 → Preferences(规格 R1)');
+  });
+  ctlEl.addEventListener('dblclick',function(){
+    stage.classList.toggle('cl'); closePops();
+    hint(stage.classList.contains('cl')?'双击控制磁贴 → 折叠 Dock(规格 R1)':'双击控制磁贴 → 展开 Dock(规格 R1)');
+  });
+  ['folder','notes','calc','photos','calendar'].forEach(function(id){
+    var s=document.createElement('button'); s.type='button'; s.className='s-app'; s.setAttribute('role','menuitem');
+    s.innerHTML=icn(id)+'<span>'+NAMES[id]+'</span>';
+    s.addEventListener('click',function(){closePops(); hint('子码头「文件夹」→ 启动 '+NAMES[id]+'(规格 R8)');});
+    subdock.appendChild(s);
+  });
+  function toggleSub(){
+    if(subdock.classList.contains('open')){closePops(); return;}
+    closePops(); var sr=stage.getBoundingClientRect(), r=folderEl.getBoundingClientRect();
+    subdock.style.left=Math.max(10,r.left-sr.left-10)+'px';
+    subdock.style.bottom=(sr.height-(r.top-sr.top)+8)+'px';
+    subdock.classList.add('open'); subdock.setAttribute('aria-hidden','false');
+    hint('展开子码头 — 文件夹条目(规格 R8)');
+  }
+  $('ctxLaunch').addEventListener('click',function(){if(ctxFor){closePops(); ctxFor.click();}});
+  $('ctxRemove').addEventListener('click',function(){if(ctxFor){var el=ctxFor; closePops(); removePoof(el); ctxFor=null;}});
+  function closePops(){[prefs,subdock,ctxEl].forEach(function(p){p.classList.remove('open'); p.setAttribute('aria-hidden','true');});}
+  stage.addEventListener('pointerdown',function(e){
+    if(!e.target.closest('.pop')&&!e.target.closest('.ctl')&&!e.target.closest('.s-app'))closePops();
+  });
+  document.addEventListener('keydown',function(e){if(e.key==='Escape')closePops();});
+
+  /* ── 窗口最小化进 dock(macOS) ── */
+  var win=$('win'), winMin=false, minTimer=0;
+  $('wmin').addEventListener('click',function(){
+    var appB=dock.querySelector('[data-app="browser"]'); if(!appB)return;
+    var wr=win.getBoundingClientRect(), ir=appB.getBoundingClientRect();
+    win.style.setProperty('--dx',(ir.left+ir.width/2-(wr.left+wr.width/2))+'px');
+    win.style.setProperty('--dy',(ir.top+ir.height/2-(wr.top+wr.height/2))+'px');
+    win.classList.add('minning'); winMin=true;
+    appB.classList.add('has-run');
+    clearTimeout(minTimer);
+    minTimer=setTimeout(function(){win.classList.remove('minning'); win.classList.add('minned');},500);
+    hint('窗口最小化 → 收进 dock 图标(macOS);点浏览器图标恢复');
+  });
+  function restoreWin(){
+    clearTimeout(minTimer);
+    win.classList.remove('minning'); win.classList.remove('minned');
+    winMin=false; hint('从 dock 图标恢复窗口(macOS 最小化收纳)');
+  }
+
+  /* ── CPU 插件(与图标同风格的数据层) ── */
+  var hist=[30,34,28,36,40,32,26,38,44,36];
+  setInterval(function(){
+    var v=8+Math.floor(Math.random()*88); hist.push(v); hist.shift();
+    var pts=hist.map(function(y,i){return (14+i*6)+','+(42-y*0.28)}).join(' ');
+    var sp=document.getElementById('vSpark'); if(sp)sp.setAttribute('points',pts);
+    var tx=document.getElementById('vCpuT'); if(tx)tx.textContent=v;
+  },2400);
+
+  /* ── 放大联动 ── */
+  var raf=0;
+  dock.addEventListener('pointermove',function(e){
+    if(root.classList.contains('lp')||RM||!$('swMag').checked)return;
+    dock.classList.remove('settle');
+    if(raf)return; raf=requestAnimationFrame(function(){raf=0; mag(e.clientX);});
+  });
+  dock.addEventListener('pointerleave',function(){
+    dock.classList.add('settle');
+    dock.querySelectorAll('.v-ic').forEach(function(el){el.style.transform='';});
+    setTimeout(function(){dock.classList.remove('settle');},540);
+  });
+  function mag(px){
+    dock.querySelectorAll('.v-ic').forEach(function(el){
+      var r=el.getBoundingClientRect(), d=Math.abs(r.left+r.width/2-px);
+      var f=Math.max(0,1-d/120); f=Math.pow(f,1.6);
+      el.style.transform='translateY('+(-10*f)+'px) scale('+(1+0.6*f)+')';
+    });
+  }
+
+  /* ── 开关 ── */
+  $('swAh').addEventListener('change',function(e){stage.classList.toggle('ah',e.target.checked);
+    hint(e.target.checked?'自动隐藏开 — 鼠标碰屏幕底边唤出(规格 R9)':'自动隐藏关');});
+  $('swRefl').addEventListener('change',function(e){root.dataset.refl=e.target.checked?'on':'off';
+    hint(e.target.checked?'图标反射开(规格 R10)':'图标反射关');});
+  $('swLp').addEventListener('change',function(e){root.classList.toggle('lp',e.target.checked);
+    hint(e.target.checked?'省电动效 — 全部动画归零、关闭反射(电池感知 §4.5)':'恢复完整动效');});
+
+  /* ── 对标脚注 ── */
+  function chips(el,list){list.forEach(function(t){var i=document.createElement('i'); i.textContent=t; if(t.indexOf('★')===0){i.className='on'; t=t.slice(1); i.textContent=t;} el.appendChild(i);});}
+  chips($('srcNexus'),['★控制磁贴 R1','★放大 R2','★Boing R5','★拖入新建 R6','★回收站删除 R6','★菜单 R7','★子码头 R8','★自动隐藏 R9','★反射 R10']);
+  chips($('srcMac'),['★写实图标','★自带图标插入','★Stack 网格','★最小化收纳','★运行指示灯','★放大联动']);
+  chips($('srcMd'),['菜单栏(菜单条)','Launchpad','窗口实时预览','Genie 缩小','状态栏组件','模糊主题引擎']);
+  chips($('srcGb'),['全局热键','托盘','多显示器','签名更新器','单实例']);
+
+  function hint(t){hintEl.innerHTML='<b>最近动作</b>'+t;}
+  window.__vitro={insertApp:insertApp, dock:dock};
+})();
+</script>
+</div>

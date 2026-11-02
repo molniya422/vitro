@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-14 -14 148 68" width="560" height="257" role="img" aria-label="Reflection mask">
+  <title>Reflection mask</title>
+  <desc>Fade mask for the reflection band. Apply to a scaleY(-1) copy of the icon and cap the result at 25 percent opacity. 预览底仅用于单独打开时观察，接入时删除 id=preview-stage 的整组即可得到透明资产。</desc>
+  <!-- 预览底：单独打开时的观察背景，接入时删除本组 -->
+  <g id="preview-stage">
+    <defs>
+      <linearGradient id="preview-bg" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stop-color="#1b2434"/>
+        <stop offset="1" stop-color="#0d1119"/>
+      </linearGradient>
+      <radialGradient id="preview-glow" cx=".22" cy=".12" r=".85">
+        <stop offset="0" stop-color="#7c9be0" stop-opacity=".18"/>
+        <stop offset="1" stop-color="#7c9be0" stop-opacity="0"/>
+      </radialGradient>
+    </defs>
+    <rect x="-14" y="-14" width="148" height="68" fill="url(#preview-bg)"/>
+    <rect x="-14" y="-14" width="148" height="68" fill="url(#preview-glow)"/>
+  </g>
+  <g id="asset">
+    <style>:root { color: #e9edf7; }</style>
+
+  <defs>
+    <linearGradient id="fade" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="1"/>
+      <stop offset=".32" stop-color="#ffffff" stop-opacity=".3"/>
+      <stop offset=".66" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+    <mask id="reflection-fade" maskContentUnits="objectBoundingBox">
+      <rect width="1" height="1" fill="url(#fade)"/>
+    </mask>
+  </defs>
+  <rect width="120" height="40" fill="currentColor" opacity=".25" mask="url(#reflection-fade)"/>
+  </g>
+</svg>

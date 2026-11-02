@@ -1,0 +1,39 @@
+# Vitro Dock — motion tokens v0 (冻结于 M0)
+# 来源:transitions.dev 32 片段中的 4 个对口片段,参数原样提取
+# 用法:原生渲染器按本表驱动;HTML 原型直接引用 CSS 变量
+
+signature = "cubic-bezier(0.22, 1, 0.36, 1)"   # 全库共享的"材质"缓动(进)
+spring    = "cubic-bezier(0.34, 3.85, 0.64, 1)" # 带过冲的弹回(出)
+
+[magnify]        # ← 11-avatar-group-hover(dock 放大联动)
+falloff    = 0.45          # 邻接衰减系数:lift * falloff^distance
+dur        = 320           # ms,联动时长
+hovered_peak = 1.6         # dock 适配:悬停图标峰值倍率(源库头像场景 1.05)
+neighbor_lift = -4         # px,邻接抬升基数(按图标间距比例换算)
+ease_in    = "signature"   # 悬停跟随:干净缓入
+ease_out   = "spring"      # 离开复位:过冲弹簧(质感关键)
+
+[tooltip]        # ← 17-tooltip
+delay   = 80     # ms,出现延迟
+in_dur  = 150    # ms
+out_dur = 50     # ms
+scale_from = 0.98
+move_dur = 160   # ms,气泡在相邻触发器间移动的补间
+move_ease = "signature"
+
+[dropdown]       # ← 05-menu-dropdown(子码头/右键菜单/弹出)
+open_dur  = 250  # ms
+close_dur = 150  # ms
+pre_scale = 0.97     # 未开态缩放
+closing_scale = 0.99
+ease = "signature"
+
+[panel]          # ← 07-panel-reveal(抽屉启动器开合)
+open_dur   = 400  # ms
+close_dur  = 350  # ms
+translate  = 100  # px,Y 轴行程
+cross_blur = 2    # px,交叉模糊(短行程也读作完整开合的关键)
+ease = "signature"
+
+[guard]
+reduced_motion = "prefers-reduced-motion: reduce 时全部 transition/animation 归零(强制)"

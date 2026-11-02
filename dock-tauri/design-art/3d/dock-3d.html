@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dock · 三维层演示</title>
+  <link rel="stylesheet" href="../tokens/material.css">
+  <link rel="stylesheet" href="./dock-3d.css">
+</head>
+<body>
+  <div class="wall" aria-hidden="true"></div>
+
+  <header class="hud">
+    <p class="eyebrow">DOCK · 3D LAYER</p>
+    <h1>能放进 Dock 的三维层</h1>
+    <p class="lede">药丸、图标、运行点、角标全部由 WebGL 绘制。放大仍是 1.6 峰值与 0.45 衰减，图标沿底边生长并朝向观察者抬起。</p>
+  </header>
+
+  <main class="stage">
+    <div class="dock-wrap">
+      <canvas id="dock" aria-label="三维 Dock"></canvas>
+      <div id="tip" class="tip" role="status" hidden></div>
+    </div>
+  </main>
+
+  <div class="panel">
+    <label for="depth">3D 深度</label>
+    <input id="depth" type="range" min="0" max="100" value="100" aria-label="3D 深度">
+    <button id="reset" type="button">重置</button>
+  </div>
+
+  <footer class="meta">three.js r160 · 可挂载渲染层，非产品运行时</footer>
+
+  <script src="./dock-demo.bundle.js"></script>
+</body>
+</html>

@@ -1,0 +1,738 @@
+<div id="vitro-mc" class="dk" data-pos="bottom" data-profile="macos">
+<style>
+#vitro-mc{
+  --txt:#e9edf7; --mut:#98a1b6; --acc:#7fa4ff; --line:rgba(128,140,165,.25);
+  --sig:cubic-bezier(0.25,0.46,0.45,0.94);
+  font-family:system-ui,"Segoe UI","Microsoft YaHei",sans-serif; color:var(--txt); font-size:14px; line-height:1.45;
+}
+#vitro-mc *{box-sizing:border-box; margin:0}
+#vitro-mc button{font:inherit; color:inherit}
+#vitro-mc .app{border-radius:18px; overflow:hidden; background:#0b0e17}
+#vitro-mc.dk .app{box-shadow:0 24px 70px rgba(0,0,0,.5)}
+#vitro-mc.lt .app{background:#eef1f7; color:#20242e; box-shadow:0 24px 70px rgba(30,40,70,.25)}
+#vitro-mc.lt{--txt:#20242e; --mut:#5c6474; --line:rgba(60,70,95,.28)}
+#vitro-mc .head{display:flex; align-items:center; gap:14px; padding:11px 16px; flex-wrap:wrap; border-bottom:1px solid var(--line)}
+#vitro-mc .dots{display:flex; gap:6px} #vitro-mc .dots i{width:11px;height:11px;border-radius:50%}
+#vitro-mc .dots i:first-child{background:#ff5f57}#vitro-mc .dots i:nth-child(2){background:#febc2e}#vitro-mc .dots i:nth-child(3){background:#28c840}
+#vitro-mc .ttl{font-weight:500} #vitro-mc .ttl small{color:var(--mut); font-weight:400; margin-left:8px}
+#vitro-mc .head .sp{flex:1}
+#vitro-mc .sw{display:flex; align-items:center; gap:6px; font-size:12px; color:var(--mut); cursor:pointer; user-select:none}
+#vitro-mc .sw input{appearance:none; width:32px; height:18px; border-radius:9px; background:rgba(128,140,165,.4); position:relative; cursor:pointer; transition:background .2s; margin:0}
+#vitro-mc .sw input::after{content:""; position:absolute; top:2.5px; left:3px; width:13px; height:13px; border-radius:50%; background:#fff; transition:transform .2s}
+#vitro-mc .sw input:checked{background:#4a8df0} #vitro-mc .sw input:checked::after{transform:translateX(13px)}
+#vitro-mc .seg{display:flex; border:1px solid var(--line); border-radius:8px; overflow:hidden}
+#vitro-mc .seg button{border:0; background:none; padding:4px 11px; font-size:12px; color:var(--mut); cursor:pointer}
+#vitro-mc .seg button.on{background:var(--acc); color:#0d1220}
+#vitro-mc .hbtn{border:1px solid var(--line); background:rgba(128,140,165,.12); border-radius:8px; padding:4px 10px; font-size:12px; cursor:pointer}
+#vitro-mc .hbtn:hover{background:rgba(128,140,165,.22)}
+/* 舞台 */
+#vitro-mc .stage{position:relative; min-height:580px; overflow:hidden;
+  background:radial-gradient(60% 45% at 18% 8%, rgba(63,81,180,.4), transparent 70%),
+    radial-gradient(55% 50% at 85% 90%, rgba(122,59,143,.32), transparent 70%), linear-gradient(#0d1322,#080a12)}
+#vitro-mc.lt .stage{background:radial-gradient(60% 45% at 18% 8%, rgba(140,160,230,.5), transparent 70%),
+    radial-gradient(55% 50% at 85% 90%, rgba(210,150,190,.4), transparent 70%), linear-gradient(#dfe7f5,#c8d4e8)}
+#vitro-mc .win{position:absolute; left:50%; top:34px; transform:translateX(-50%); width:min(56%,380px); height:42%;
+  border-radius:12px; background:rgba(24,30,46,.85); border:1px solid rgba(255,255,255,.14); z-index:8; box-shadow:0 16px 44px rgba(0,0,0,.35)}
+#vitro-mc.lt .win{background:rgba(250,251,253,.92); border-color:rgba(40,50,80,.18)}
+#vitro-mc .win::before{content:""; position:absolute; inset:0 0 auto 0; height:28px; border-bottom:1px solid var(--line); border-radius:12px 12px 0 0; background:linear-gradient(rgba(255,255,255,.05),transparent)}
+#vitro-mc .wbtns{position:absolute; top:7px; left:12px; display:flex; gap:7px; z-index:2}
+#vitro-mc .wbtns button{border:0; background:none; padding:0; cursor:pointer}
+#vitro-mc .wbtns i{width:12px; height:12px; border-radius:50%; display:block; background:#febc2e}
+#vitro-mc .wcap{position:absolute; top:7px; left:50px; font-size:11px; color:var(--mut)}
+#vitro-mc .win.mg{animation:mcGenie .6s cubic-bezier(.45,0,.55,1) forwards}
+#vitro-mc .win.msc{animation:mcScale .5s cubic-bezier(.5,0,.9,.6) forwards}
+#vitro-mc .win.msk{animation:mcSuck .4s cubic-bezier(.7,0,1,.5) forwards}
+#vitro-mc .win.rev{animation-direction:reverse; animation-fill-mode:backwards}
+#vitro-mc .win.minned{display:none}
+@keyframes mcGenie{0%{transform:translateX(-50%) scaleY(1); filter:blur(0)}45%{transform:translateX(-50%) translateY(30%) scaleY(.32) skewX(10deg); filter:blur(1px)}100%{transform:translate(calc(-50% + var(--dx,0px))) translateY(var(--dy,300px)) scaleY(.05) skewX(0); filter:blur(3px); opacity:.15}}
+@keyframes mcScale{0%{transform:translateX(-50%) scale(1); opacity:1}100%{transform:translate(calc(-50% + var(--dx,0px))) translateY(var(--dy,300px)) scale(.04); opacity:0}}
+@keyframes mcSuck{0%{transform:translateX(-50%) scale(1) rotate(0); transform-origin:18% 100%}100%{transform:translate(calc(-50% + var(--dx,0px))) translateY(var(--dy,300px)) scale(.03) rotate(-14deg); transform-origin:18% 100%; opacity:0}}
+#vitro-mc .hint{position:absolute; right:14px; top:14px; z-index:15; max-width:320px; padding:7px 11px; border-radius:11px; font-size:12px; color:#cfe0ff;
+  background:rgba(20,26,40,.6); backdrop-filter:blur(12px); border:1px solid rgba(255,255,255,.12)}
+#vitro-mc.lt .hint{color:#26314a; background:rgba(255,255,255,.65); border-color:rgba(60,70,100,.2)}
+#vitro-mc .hint b{display:block; font-size:10.5px; color:var(--mut); font-weight:500}
+#vitro-mc .ezb{position:absolute; left:0; right:0; bottom:0; height:12px; z-index:24; opacity:0}
+#vitro-mc[data-pos="left"] .ezb{left:0; top:0; bottom:0; right:auto; width:12px; height:auto}
+#vitro-mc[data-pos="right"] .ezb{right:0; top:0; bottom:0; left:auto; width:12px; height:auto}
+/* Dock:四层材质,无外描边无外投影 */
+#vitro-mc .dockwrap{position:absolute; z-index:20; display:flex;
+  transition:transform calc(.2s*var(--ahmod,1)) cubic-bezier(.25,.46,.45,.94), opacity calc(.2s*var(--ahmod,1))}
+#vitro-mc[data-pos="bottom"] .dockwrap{left:0; right:0; bottom:14px; justify-content:center}
+#vitro-mc[data-pos="left"] .dockwrap{top:0; bottom:0; left:12px; align-items:center}
+#vitro-mc[data-pos="right"] .dockwrap{top:0; bottom:0; right:12px; align-items:center}
+#vitro-mc.ah[data-pos="bottom"] .dockwrap{transform:translateY(110%); opacity:0}
+#vitro-mc.ah[data-pos="left"] .dockwrap{transform:translateX(-110%); opacity:0}
+#vitro-mc.ah[data-pos="right"] .dockwrap{transform:translateX(110%); opacity:0}
+#vitro-mc .dock{display:flex; align-items:flex-end; gap:8px; padding:10px 16px; position:relative;
+  backdrop-filter:blur(20px) saturate(1.10);
+  background:rgba(255,255,255,.18)}
+#vitro-mc.dk .dock{backdrop-filter:blur(22px) saturate(1.08); background:rgba(0,0,0,.25)}
+#vitro-mc .dock::before{content:""; position:absolute; inset:0; border-radius:inherit; pointer-events:none; opacity:.003;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/></filter><rect width='120' height='120' filter='url(%23n)'/></svg>")}
+#vitro-mc .dock::after{content:""; position:absolute; inset:0; border-radius:inherit; pointer-events:none;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.30), inset 0 -1px 0 rgba(0,0,0,.10)}
+#vitro-mc.dk .dock::after{box-shadow:inset 0 1px 0 rgba(255,255,255,.15), inset 0 -1px 0 rgba(0,0,0,.15)}
+#vitro-mc[data-pos="left"] .dock,#vitro-mc[data-pos="right"] .dock{flex-direction:column; align-items:center; gap:8px; padding:10px 16px}
+#vitro-mc.no-blur .dock{backdrop-filter:none}
+#vitro-mc.no-fill .dock{background:none}
+#vitro-mc.no-grain .dock::before{display:none}
+#vitro-mc.no-hair .dock::after{display:none}
+#vitro-mc.hc .dock{background:rgba(255,255,255,.8)} #vitro-mc.dk.hc .dock{background:rgba(10,12,18,.86)}
+#vitro-mc .v-sep{width:1px; align-self:stretch; margin:6px 4px; background:rgba(128,140,165,.5)}
+#vitro-mc.hc .v-sep{width:2px}
+#vitro-mc[data-pos="left"] .v-sep,#vitro-mc[data-pos="right"] .v-sep{width:auto; height:1px; align-self:stretch; margin:4px 6px}
+#vitro-mc .spacer{width:22px; align-self:stretch}
+#vitro-mc .v-ic{appearance:none; border:0; background:none; padding:0; position:relative; width:var(--isz,48px); height:var(--isz,48px); cursor:pointer}
+#vitro-mc .v-ic .ico{display:block; width:100%; height:100%; transition:transform calc(var(--mo,200)*1ms) var(--sig), filter .2s}
+#vitro-mc .dock.settle .v-ic .ico{transition-duration:calc(var(--mo2,250)*1ms)}
+#vitro-mc .v-ic svg{width:100%; height:100%; display:block; border-radius:20%}
+#vitro-mc .v-ic:hover .ico{filter:brightness(1.05)}
+#vitro-mc .v-ic.launching .ico{filter:brightness(1.10)}
+#vitro-mc .v-ic.dis{filter:saturate(0); opacity:.7; pointer-events:none}
+#vitro-mc .ico.bounce{animation:mcBounce .8s cubic-bezier(.45,0,.55,1)}
+@keyframes mcBounce{0%,100%{transform:none}18%{transform:translateY(-12px)}42%{transform:translateY(0)}62%{transform:translateY(-6px)}82%{transform:translateY(0)}92%{transform:translateY(-1.5px)}}
+#vitro-mc .dot{position:absolute; left:50%; bottom:-6px; transform:translateX(-50%); width:4px; height:4px; border-radius:50%;
+  background:rgba(0,0,0,.4); opacity:0; transition:opacity .3s}
+#vitro-mc.dk .dot{background:rgba(255,255,255,.6)}
+#vitro-mc.hc .dot{width:6px; height:6px}
+#vitro-mc[data-pos="left"] .dot,#vitro-mc[data-pos="right"] .dot{left:auto; right:-6px; top:50%; bottom:auto; transform:translateY(-50%)}
+#vitro-mc .v-ic.run .dot{opacity:1}
+#vitro-mc .badge{position:absolute; top:-4px; right:-4px; min-width:16px; height:16px; padding:0 4px; border-radius:9px;
+  background:linear-gradient(180deg,#ff6a6a,#e8342e); color:#fff; font-size:11px; line-height:15px; font-weight:600; text-align:center;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.45); opacity:0; transform:scale(.5); transition:all .25s}
+#vitro-mc .v-ic.bd .badge{opacity:1; transform:scale(1)}
+#vitro-mc .stack-hot .ico{transform:scale(1.1); opacity:.75; filter:brightness(.92)}
+#vitro-mc .minthumb{width:56px; height:38px; border-radius:8px; border:1px solid var(--line); background:rgba(128,140,165,.25);
+  display:flex; align-items:center; justify-content:center; font-size:9.5px; color:var(--mut); cursor:pointer; align-self:center}
+#vitro-mc .minthumb:hover{background:rgba(128,140,165,.4)}
+/* 自定义 macOS Tooltip */
+#vitro-mc .tip{position:absolute; z-index:40; padding:4px 8px; border-radius:8px; font-size:13px; font-weight:500; white-space:nowrap;
+  background:rgba(28,34,50,.78); backdrop-filter:blur(16px); color:#f0f4fc; border:1px solid rgba(255,255,255,.14);
+  opacity:0; transform:translateY(6px); pointer-events:none;
+  transition:opacity .15s var(--sig), transform .15s var(--sig)}
+#vitro-mc.lt .tip{background:rgba(250,251,253,.85); color:#1d2333; border-color:rgba(40,50,80,.16)}
+#vitro-mc .tip.on{opacity:1; transform:translateY(0)}
+#vitro-mc[data-pos="left"] .tip,#vitro-mc[data-pos="right"] .tip{transform:translateX(6px)}
+#vitro-mc[data-pos="left"] .tip.on,#vitro-mc[data-pos="right"] .tip.on{transform:translateX(0)}
+/* 堆叠:扇/网/列 */
+#vitro-mc .stack{position:absolute; z-index:50}
+#vitro-mc .st-it{position:absolute; width:52px; height:52px; border:0; background:none; cursor:pointer;
+  transition:transform .3s var(--sig), opacity .3s var(--sig); opacity:0; transform:translate(0,0) scale(.3)}
+#vitro-mc .stack.open .st-it{opacity:1}
+#vitro-mc .st-it .lb{position:absolute; top:calc(100% + 4px); left:50%; transform:translateX(-50%); font-size:10.5px; color:#dbe5f5;
+  background:rgba(20,26,40,.85); padding:2px 6px; border-radius:6px; white-space:nowrap}
+#vitro-mc.lt .st-it .lb{color:#222b40; background:rgba(255,255,255,.9)}
+#vitro-mc .st-it:hover .lb{display:block} #vitro-mc .st-it .lb{display:none}
+#vitro-mc .stack.list .st-it{width:auto; height:auto; transform:translate(0,0) scale(1)!important; opacity:1;
+  position:relative; display:flex; align-items:center; gap:8px; padding:5px 9px; border-radius:8px}
+#vitro-mc .stack.list .st-it:hover{background:rgba(128,140,165,.2)}
+#vitro-mc .stack.list .st-it svg{width:22px; height:22px}
+#vitro-mc .stack.list .meta{font-size:11px; color:var(--mut)}
+#vitro-mc .stackwrap{position:absolute; z-index:50; padding:8px; border-radius:14px; background:rgba(24,30,46,.72);
+  backdrop-filter:blur(18px); border:1px solid rgba(255,255,255,.12); opacity:0; transform:translateY(8px); pointer-events:none;
+  transition:all .25s var(--sig)}
+#vitro-mc.lt .stackwrap{background:rgba(250,251,253,.8); border-color:rgba(40,50,80,.16)}
+#vitro-mc .stackwrap.open{opacity:1; transform:none; pointer-events:auto}
+#vitro-mc .fanbox{position:relative; width:0; height:0}
+#vitro-mc .fanbox .st-it{position:absolute; left:0; top:0}
+#vitro-mc .gridbox{display:grid; grid-template-columns:repeat(3,56px); gap:8px}
+#vitro-mc .gridbox .st-it{position:relative; width:56px; height:56px; opacity:0; transform:scale(.3)}
+#vitro-mc .listbox{display:flex; flex-direction:column; min-width:230px}
+/* 启动台 */
+#vitro-mc .lpad{position:absolute; inset:0; z-index:55; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:18px;
+  background:rgba(10,14,24,.55); backdrop-filter:blur(30px); opacity:0; visibility:hidden; transition:opacity .2s var(--sig), visibility 0s .2s}
+#vitro-mc.lt .lpad{background:rgba(235,240,250,.55)}
+#vitro-mc .lpad.open{opacity:1; visibility:visible; transition:opacity .2s var(--sig)}
+#vitro-mc .lpad input{font:inherit; font-size:13px; width:250px; padding:7px 13px; border-radius:10px; border:1px solid var(--line);
+  background:rgba(255,255,255,.14); color:inherit; outline:none; text-align:center}
+#vitro-mc .lpgrid{display:grid; grid-template-columns:repeat(4,86px); gap:18px}
+#vitro-mc .lp-it{border:0; background:none; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:7px}
+#vitro-mc .lp-it svg{width:58px; height:58px; transition:transform .2s var(--sig)}
+#vitro-mc .lp-it:hover svg{transform:scale(1.08)}
+#vitro-mc .lp-it span{font-size:12px; color:var(--txt)}
+/* 菜单/对话框 */
+#vitro-mc .menu{position:absolute; z-index:60; min-width:180px; padding:5px; border-radius:12px;
+  background:rgba(28,34,50,.78); backdrop-filter:blur(20px); border:1px solid rgba(255,255,255,.13);
+  box-shadow:0 18px 48px rgba(0,0,0,.45); opacity:0; visibility:hidden; pointer-events:none; transform:scale(.95); transform-origin:bottom left;
+  transition:all .18s var(--sig)}
+#vitro-mc.lt .menu{background:rgba(250,251,253,.85); border-color:rgba(40,50,80,.15)}
+#vitro-mc .menu.open{opacity:1; visibility:visible; pointer-events:auto; transform:none}
+#vitro-mc .mi{display:flex; align-items:center; gap:7px; width:100%; text-align:left; border:0; background:none; border-radius:7px; padding:6px 10px; cursor:pointer; font-size:12.5px; color:inherit}
+#vitro-mc .mi:hover{background:rgba(90,130,230,.55)}
+#vitro-mc .mi .chk{width:13px; color:var(--acc)}
+#vitro-mc .mi .sa{margin-left:auto; color:var(--mut); font-size:10px}
+#vitro-mc .msep{height:1px; background:var(--line); margin:4px 8px}
+#vitro-mc .thmb{display:flex; gap:8px; padding:6px}
+#vitro-mc .thmb .t{width:74px; height:48px; border-radius:6px; background:linear-gradient(150deg,#3d4a68,#222a3e); border:1px solid rgba(255,255,255,.14); cursor:pointer}
+#vitro-mc .thmb .t:hover{outline:2px solid var(--acc)}
+#vitro-mc .ovl{position:absolute; inset:0; z-index:70; display:flex; align-items:center; justify-content:center;
+  background:rgba(5,8,15,.4); opacity:0; visibility:hidden; transition:all .2s}
+#vitro-mc .ovl.open{opacity:1; visibility:visible}
+#vitro-mc .dlg{width:min(90%,450px); max-height:84%; overflow:auto; border-radius:16px; background:rgba(26,32,48,.95); border:1px solid rgba(255,255,255,.13); box-shadow:0 30px 80px rgba(0,0,0,.55)}
+#vitro-mc.lt .dlg{background:rgba(250,251,253,.96); border-color:rgba(40,50,80,.16)}
+#vitro-mc .dlg-h{display:flex; align-items:center; padding:12px 16px; border-bottom:1px solid var(--line)}
+#vitro-mc .dlg-h b{font-weight:500} #vitro-mc .dlg-h .x{margin-left:auto; border:0; background:none; cursor:pointer; color:var(--mut); font-size:15px; padding:2px 6px}
+#vitro-mc .tabs{display:flex; gap:4px; padding:8px 12px 0}
+#vitro-mc .tab{border:0; background:none; padding:6px 11px; border-radius:8px 8px 0 0; cursor:pointer; font-size:12.5px; color:var(--mut); border-bottom:2px solid transparent}
+#vitro-mc .tab.on{color:var(--txt); border-bottom-color:var(--acc)}
+#vitro-mc .dlg-b{padding:12px 16px 16px}
+#vitro-mc .row{display:flex; align-items:center; gap:10px; margin-bottom:10px; flex-wrap:wrap}
+#vitro-mc .row label{font-size:12.5px; min-width:130px; color:inherit}
+#vitro-mc .row output{font-size:12px; color:var(--mut); min-width:48px}
+#vitro-mc .row code{font-family:ui-monospace,Consolas,monospace; font-size:10.5px; color:#8fb7e8; background:rgba(90,130,230,.1); border-radius:5px; padding:1px 5px}
+#vitro-mc input[type=range]{appearance:none; width:160px; height:4px; border-radius:2px; background:rgba(128,140,165,.4); cursor:pointer}
+#vitro-mc input[type=range]::-webkit-slider-thumb{appearance:none; width:14px; height:14px; border-radius:50%; background:#4a8df0}
+#vitro-mc select{font:inherit; font-size:12.5px; color:inherit; background:rgba(128,140,165,.18); border:1px solid var(--line); border-radius:7px; padding:4px 8px}
+#vitro-mc .layrow{display:flex; align-items:center; gap:8px; padding:7px 0; border-bottom:1px dashed var(--line); font-size:12.5px}
+#vitro-mc .layrow b{font-weight:500; min-width:96px}
+#vitro-mc .layrow span{color:var(--mut); font-size:11.5px; flex:1}
+#vitro-mc .graindemo{width:54px; height:22px; border-radius:5px;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/></filter><rect width='120' height='120' filter='url(%23n)'/></svg>"); background-size:54px}
+/* Tahoe 悬浮材质(2025 Liquid Glass 官方化:更少填充、更强边缘、悬浮) */
+#vitro-mc.tahoe .dock{background:rgba(255,255,255,.09); backdrop-filter:blur(26px) saturate(1.15)}
+#vitro-mc.dk.tahoe .dock{background:rgba(0,0,0,.12); backdrop-filter:blur(28px) saturate(1.12)}
+#vitro-mc.tahoe .dock::after{box-shadow:inset 0 1px 0 rgba(255,255,255,.45), inset 0 -1px 0 rgba(0,0,0,.06), inset 0 0 0 .5px rgba(255,255,255,.09)}
+#vitro-mc.dk.tahoe .dock::after{box-shadow:inset 0 1px 0 rgba(255,255,255,.22), inset 0 -1px 0 rgba(0,0,0,.20), inset 0 0 0 .5px rgba(255,255,255,.06)}
+#vitro-mc.tahoe[data-pos="bottom"] .dockwrap{bottom:24px}
+/* 窗口实时预览(MyDockFinder 对标:悬停运行图标) */
+#vitro-mc .prev{position:absolute; z-index:45; width:var(--pw,180px); border-radius:10px; overflow:hidden;
+  background:rgba(26,32,48,.92); border:1px solid rgba(255,255,255,.14); box-shadow:0 14px 38px rgba(0,0,0,.45);
+  opacity:0; visibility:hidden; transform:translateY(6px); transition:all .18s var(--sig); pointer-events:none}
+#vitro-mc.lt .prev{background:rgba(250,251,253,.94); border-color:rgba(40,50,80,.16)}
+#vitro-mc .prev.on{opacity:1; visibility:visible; transform:none; pointer-events:auto}
+#vitro-mc .prev .ph{display:flex; gap:5px; padding:6px 8px; border-bottom:1px solid var(--line)}
+#vitro-mc .prev .ph i{width:8px; height:8px; border-radius:50%; background:#febc2e}
+#vitro-mc .prev .pc{height:calc(var(--pw,180px)*.55); background:linear-gradient(160deg,#31405f,#1c2436); position:relative; overflow:hidden}
+#vitro-mc.lt .prev .pc{background:linear-gradient(160deg,#e8eef9,#cdd9ec)}
+#vitro-mc .prev .pc::after{content:""; position:absolute; inset:14% 18%;
+  background:repeating-linear-gradient(0deg, rgba(255,255,255,.14) 0 8%, transparent 8% 18%)}
+#vitro-mc .prev .cap{font-size:11px; color:var(--mut); padding:5px 8px; cursor:pointer}
+#vitro-mc .prev .cap:hover{color:var(--txt)}
+/* 图标任务进度条(macOS 复制/下载进度;MyDockFinder 重仓项) */
+#vitro-mc .pbar{position:absolute; left:14%; right:14%; bottom:5%; height:7%; min-height:3px; border-radius:3px;
+  background:rgba(128,140,165,.45); overflow:hidden; opacity:0; transition:opacity .3s}
+#vitro-mc .pbar i{display:block; height:100%; width:0%; background:var(--acc); border-radius:3px; transition:width .24s linear}
+#vitro-mc .v-ic.prog .pbar{opacity:1}
+#vitro-mc .swatch{display:inline-block; width:14px; height:14px; border-radius:4px; background:var(--acc);
+  border:1px solid rgba(128,140,165,.5); vertical-align:-2px}
+/* 键盘焦点 */
+#vitro-mc .v-ic:focus-visible{outline:2px solid var(--acc); outline-offset:3px; border-radius:12px}
+@media (prefers-reduced-motion:reduce){
+  #vitro-mc *{animation-duration:.2s!important; animation-timing-function:ease!important}
+  #vitro-mc .v-ic .ico,#vitro-mc .dockwrap,#vitro-mc .tip{transition-duration:.2s!important}
+}
+</style>
+<div class="app">
+  <div class="head">
+    <div class="dots" aria-hidden="true"><i></i><i></i><i></i></div>
+    <div class="ttl">Vitro — macOS Sonoma 对标<small>材质/几何/状态照搬 · 动效双档案</small></div>
+    <div class="sp"></div>
+    <div class="seg" role="group" aria-label="外观"><button type="button" data-th="dk" class="on">深色</button><button type="button" data-th="lt">浅色</button></div>
+    <div class="seg" role="group" aria-label="材质"><button type="button" data-mat="sonoma" class="on">Sonoma</button><button type="button" data-mat="tahoe">Tahoe 悬浮</button></div>
+    <div class="seg" role="group" aria-label="动效档案"><button type="button" data-pf="macos" class="on">macOS(克制)</button><button type="button" data-pf="vitro">Vitro(弹性)</button></div>
+    <label class="sw"><input type="checkbox" id="swAh">自动隐藏</label>
+    <label class="sw"><input type="checkbox" id="swMag" checked>放大</label>
+    <button type="button" class="hbtn" id="btnMat">材质</button>
+    <button type="button" class="hbtn" id="btnProps">设置</button>
+  </div>
+  <div class="stage" id="stage">
+    <div class="win" id="win">
+      <div class="wbtns"><button type="button" id="wmin" aria-label="最小化"><i></i></button></div>
+      <div class="wcap">文稿 — 最小化试三种效果</div>
+    </div>
+    <div class="hint" id="hint"><b>最近动作</b>悬停图标:放大 0.2s/0.25s · Tooltip 延迟 0.2s</div>
+    <div class="ezb" id="ezb"></div>
+    <div class="dockwrap"><div class="dock" id="dock"></div></div>
+    <div class="tip" id="tip" role="tooltip"></div>
+    <div class="prev" id="prev"></div>
+    <div class="stackwrap" id="stackwrap"></div>
+    <div class="lpad" id="lpad">
+      <input type="text" id="lpsrch" placeholder="搜索" aria-label="搜索应用">
+      <div class="lpgrid" id="lpgrid"></div>
+    </div>
+    <div class="menu" id="menu" role="menu"></div>
+    <div class="menu" id="submenu" role="menu"></div>
+    <div class="ovl" id="ovl"><div class="dlg" id="dlg"></div></div>
+  </div>
+  <div class="head" style="border-top:1px solid var(--line); border-bottom:0; font-size:12px; color:var(--mut)">
+    <span>对标来源:macos-dock-spec.md(用户提供 Sonoma 拆解)+ macos-parity.toml 参数映射 — 绿=已按参数实现,黄=Web 近似(原生阶段),蓝=原生/硬件</span>
+  </div>
+</div>
+<script>
+(function(){
+  var $=function(i){return document.getElementById(i)};
+  var root=$('vitro-mc'), stage=$('stage'), dock=$('dock'), hintEl=$('hint');
+  var menu=$('menu'), submenu=$('submenu'), tip=$('tip'), ovl=$('ovl'), dlg=$('dlg');
+  var RM=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var S={theme:'dk', profile:'macos', material:'sonoma', pos:'bottom', mag:true, peak:1.2, iconSize:48,
+    bounce:true, mineffect:'genie', minToIcon:false, showRecents:true, recentsN:3,
+    ahDelay:0.3, ahMod:1.0, ah:false, hc:false, layers:{blur:true,fill:true,grain:true,hair:true},
+    stackMode:'fan', prevSize:180, prevDelay:300, progDemo:true, wallAccent:true};
+  try{var ws=window.zcode&&window.zcode.widgetState; if(ws&&ws.privateContent){var p=ws.privateContent; Object.keys(S).forEach(function(k){if(typeof S[k]==='object'?p[k]:p[k]!==undefined)S[k]=p[k];});}}catch(e){}
+  var saveT=0; function persist(){if(!(window.zcode&&window.zcode.setWidgetState))return; clearTimeout(saveT);
+    saveT=setTimeout(function(){window.zcode.setWidgetState({privateContent:S}).catch(function(){})},300);}
+  document.addEventListener('zcode:set_globals',function(ev){try{var p=ev.detail.globals.widgetState.privateContent;
+    if(p){Object.keys(S).forEach(function(k){if(typeof S[k]==='object'?p[k]:p[k]!==undefined)S[k]=p[k];});applyAll();}}catch(e){}});
+
+  /* 图标 */
+  function sq(g,body){return '<defs><linearGradient id="'+g.id+'" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="'+g.a+'"/><stop offset="1" stop-color="'+g.b+'"/></linearGradient></defs>'
+    +'<rect x="2" y="2" width="60" height="60" rx="12" fill="url(#'+g.id+')"/>'
+    +'<path d="M2 17 C2 8 8 2 17 2 H43 C52 2 58 8 58 17 V26 H2 Z" fill="#fff" opacity=".16"/>'
+    +'<rect x="2.5" y="2.5" width="55" height="55" rx="11.5" fill="none" stroke="rgba(255,255,255,.32)"/>'+body}
+  var SQ={
+    rocket:{raw:'<defs><linearGradient id="gRk" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#e8edf6"/><stop offset="1" stop-color="#9aa7bd"/></linearGradient></defs><path d="M32 8 C42 16 47 28 46 42 L38 50 H26 L18 42 C17 28 22 16 32 8 Z" fill="url(#gRk)" stroke="#7c8aa5" stroke-width="1.6"/><circle cx="32" cy="29" r="6.5" fill="#25314e"/><path d="M26 50 L21 57 L27 54 Z M38 50 L43 57 L37 54 Z" fill="#e05b4f"/><path d="M29 55 H35 L33.5 60 H30.5 Z" fill="#f2b23c"/>'},
+    finder:{g:{id:'gFd',a:'#3ea6ff',b:'#1273e8'},b:'<path d="M18 24 Q18 17 25 17 H29 V47 H25 Q18 47 18 40 Z" fill="#eaf5ff"/><path d="M35 17 H39 Q46 17 46 24 V40 Q46 47 39 47 H35 Z" fill="#eaf5ff"/><circle cx="26" cy="30" r="2.4" fill="#1273e8"/><circle cx="39" cy="30" r="2.4" fill="#1273e8"/><path d="M26 39 Q32 44 39 39" fill="none" stroke="#1273e8" stroke-width="2.2" stroke-linecap="round"/>'},
+    browser:{g:{id:'gBr',a:'#41d0f5',b:'#1f6df2'},b:'<circle cx="32" cy="32" r="15" fill="#eef7ff"/><ellipse cx="32" cy="32" rx="6.5" ry="15" fill="none" stroke="#2a7de1" stroke-width="1.6"/><path d="M17.5 28 H46.5 M17.5 36 H46.5 M32 17 V47" stroke="#2a7de1" stroke-width="1.6" fill="none"/>'},
+    mail:{g:{id:'gMa',a:'#54b4ff',b:'#1e63ea'},b:'<rect x="15" y="21" width="34" height="23" rx="4" fill="#f4faff"/><path d="M16.5 24 L32 35.5 L47.5 24" fill="none" stroke="#1e63ea" stroke-width="2.4" stroke-linecap="round"/>'},
+    music:{g:{id:'gMu',a:'#ff6f9d',b:'#e02f68'},b:'<circle cx="23.5" cy="42" r="5.2" fill="#fff"/><circle cx="40.5" cy="38" r="5.2" fill="#fff"/><path d="M28.7 42 V21.5 L45.7 17.5 V38" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round"/>'},
+    terminal:{g:{id:'gTe',a:'#454e63',b:'#141926'},b:'<path d="M17 24 L27 32 L17 40" fill="none" stroke="#7ef0b0" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/><rect x="31" y="38.4" width="15" height="3.6" rx="1.8" fill="#7ef0b0"/>'},
+    code:{g:{id:'gCd',a:'#3c4353',b:'#12151d'},b:'<path d="M20 22 L12 32 L20 42 M44 22 L52 32 L44 42" fill="none" stroke="#9fe8ff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M35 20 L29 44" stroke="#9fe8ff" stroke-width="3.2" stroke-linecap="round"/>'},
+    calendar:{g:{id:'gCa',a:'#fdfdff',b:'#e4e9f2'},b:'<path d="M2 15 C2 8 8 2 15 2 H45 C52 2 58 8 58 15 V19 H2 Z" fill="#ff5f6d"/><rect x="19" y="7" width="4" height="9" rx="2" fill="#c23b48"/><rect x="39" y="7" width="4" height="9" rx="2" fill="#c23b48"/><text x="30" y="46" text-anchor="middle" font-size="21" font-weight="500" fill="#3c4353" font-family="Segoe UI,sans-serif">24</text>'},
+    notes:{g:{id:'gNo',a:'#fdd968',b:'#f0b73e'},b:'<rect x="12" y="12" width="40" height="40" rx="6" fill="#fffdf4"/><path d="M12 18 C12 14.5 14.5 12 18 12 H46 C49.5 12 52 14.5 52 18 V24 H12 Z" fill="#f7c948"/><rect x="18" y="31" width="28" height="3" rx="1.5" fill="#d8cfa8"/><rect x="18" y="38" width="28" height="3" rx="1.5" fill="#d8cfa8"/><rect x="18" y="45" width="19" height="3" rx="1.5" fill="#d8cfa8"/>'},
+    weather:{g:{id:'gWe',a:'#63bcff',b:'#2f7fe0'},b:'<circle cx="24" cy="24" r="8.5" fill="#ffd76e"/><g fill="#fff"><circle cx="29" cy="39" r="7"/><circle cx="38" cy="36" r="8.5"/><circle cx="46" cy="40" r="6"/><rect x="23" y="39" width="29" height="8" rx="4"/></g>'},
+    gamepad:{g:{id:'gGa',a:'#8f66ff',b:'#5628d8'},b:'<rect x="13" y="23" width="38" height="19" rx="9.5" fill="#fff"/><circle cx="23" cy="32.5" r="2.4" fill="#5628d8"/><circle cx="41" cy="33.5" r="2.4" fill="#5628d8"/><circle cx="45.5" cy="29" r="2" fill="#ff8a5c"/><circle cx="36.5" cy="36" r="2" fill="#38d17c"/>'},
+    settings:{g:{id:'gSe',a:'#a3aec2',b:'#5b6a82'},b:'<circle cx="32" cy="32" r="12.5" fill="none" stroke="#fff" stroke-width="6" stroke-dasharray="5.4 4.5"/><circle cx="32" cy="32" r="5.6" fill="#fff"/>'},
+    dl:{g:{id:'gDl',a:'#7cc4ff',b:'#3d8bf5'},b:'<path d="M9 21 C9 18 11 16 14 16 H24 C26.5 16 27.5 17 29 19 L30.5 21 H50 C53 21 55 23 55 26 V44 C55 47 53 49 50 49 H14 C11 49 9 47 9 44 Z" fill="#eaf4ff"/><path d="M9 27 H55 V44 C55 47 53 49 50 49 H14 C11 49 9 47 9 44 Z" fill="url(#gDl)"/><path d="M32 30 V43 M26 37 L32 43 L38 37" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>'},
+    doc:{g:{id:'gDc',a:'#f4f7fc',b:'#ccd6e6'},b:'<path d="M18 8 H38 L48 18 V52 C48 54.2 46.2 56 44 56 H18 C15.8 56 14 54.2 14 52 V12 C14 9.8 15.8 8 18 8 Z" fill="url(#gDc)" stroke="#9aa8c0" stroke-width="1.6"/><path d="M38 8 V18 H48" fill="none" stroke="#9aa8c0" stroke-width="1.6"/><rect x="20" y="27" width="22" height="2.6" rx="1.3" fill="#8fa0bd"/><rect x="20" y="33" width="22" height="2.6" rx="1.3" fill="#8fa0bd"/><rect x="20" y="39" width="14" height="2.6" rx="1.3" fill="#8fa0bd"/>'},
+    img:{g:{id:'gIg',a:'#bfe3ff',b:'#6fb1ec'},b:'<rect x="12" y="16" width="40" height="32" rx="5" fill="#eef8ff" stroke="#5d9bd8" stroke-width="1.8"/><circle cx="23" cy="26" r="3.6" fill="#f2b23c"/><path d="M14 44 L26 32 L34 40 L42 30 L50 44 Z" fill="#67b07a"/>'},
+    zip:{g:{id:'gZp',a:'#e8d9b8',b:'#c4a86a'},b:'<rect x="22" y="8" width="20" height="48" rx="4" fill="url(#gZp)" stroke="#a08a55" stroke-width="1.6"/><rect x="28" y="14" width="8" height="4" fill="#8a7546"/><rect x="28" y="22" width="8" height="4" fill="#8a7546"/><rect x="28" y="30" width="8" height="4" fill="#8a7546"/><rect x="27" y="38" width="10" height="12" rx="2" fill="#6d5c38"/>'},
+    trash:{raw:'<defs><linearGradient id="gTr" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#c4ccd9"/><stop offset=".5" stop-color="#eef2f8"/><stop offset="1" stop-color="#b4bfce"/></linearGradient></defs><rect x="29" y="9" width="6" height="4" rx="2" fill="#aab4c4"/><rect x="19" y="12" width="26" height="5" rx="2.5" fill="url(#gTr)" stroke="#8b96a8"/><path d="M21.5 19 H42.5 L40.6 54 C40.5 56 38.7 57.5 36.6 57.5 H27.4 C25.3 57.5 23.5 56 23.4 54 Z" fill="url(#gTr)" stroke="#8b96a8"/><path d="M28 23 V52 M32 23 V52 M36 23 V52" stroke="#93a0b2" stroke-width="1.6" fill="none"/>'}
+  };
+  function icn(id){var s=SQ[id]; return '<svg viewBox="0 0 64 64" aria-hidden="true">'+(s.raw||sq(s.g,s.b))+'</svg>'}
+  var NM={rocket:'启动台',finder:'访达',browser:'浏览器',mail:'邮件',music:'音乐',terminal:'终端',code:'代码',calendar:'日历',notes:'笔记',weather:'天气',gamepad:'游戏',settings:'设置',dl:'下载',trash:'废纸篓',doc:'文档',img:'图片',zip:'压缩包'};
+
+  /* Dock 三区:常驻 | 最近 | 堆叠/系统 */
+  var sepA=document.createElement('span'); sepA.className='v-sep'; sepA.setAttribute('aria-hidden','true');
+  var sepB=document.createElement('span'); sepB.className='v-sep'; sepB.setAttribute('aria-hidden','true');
+  var trashEl=null, dlEl=null;
+  function mk(id,fixed){var b=document.createElement('button'); b.type='button'; b.className='v-ic';
+    b.dataset.app=id; b.dataset.name=NM[id]||id; b.dataset.fixed=fixed?'1':''; b.draggable=!fixed;
+    b.setAttribute('aria-label',b.dataset.name);
+    b.innerHTML='<span class="ico">'+icn(id)+'</span><span class="dot" aria-hidden="true"></span><span class="badge" aria-hidden="true">1</span><span class="pbar" aria-hidden="true"><i></i></span>';
+    return b}
+  function wire(b){
+    b.addEventListener('click',function(){
+      if(b.dataset.app==='rocket'){toggleLpad(); return;}
+      if(b.dataset.app==='dl'){openStack(); return;}
+      if(b.dataset.app==='finder'){hint('访达:常驻系统项(macOS 固定)'); return;}
+      if(b.dataset.app==='trash'){hint('废纸篓:不可移除的末端固定项(空/满两态在原生 M2)'); return;}
+      launchAnim(b);});
+    b.addEventListener('contextmenu',function(e){e.preventDefault(); itemMenu(b, e.altKey);});
+    b.addEventListener('pointerenter',function(){
+      if(b.dataset.app==='browser'&&typeof winMin!=='undefined'&&!winMin)prevShow(b); else tipShow(b);});
+    b.addEventListener('pointerleave',function(){tipHide(); prevGrace();});
+  }
+  function addFixed(id){var b=mk(id,true); dock.appendChild(b); wire(b); return b}
+  addFixed('rocket'); addFixed('finder'); addFixed('browser'); addFixed('mail'); addFixed('music'); addFixed('terminal');
+  dock.appendChild(sepA);
+  dock.appendChild(sepB);
+  dlEl=mk('dl',false); wire(dlEl); dock.insertBefore(dlEl, sepB.nextSibling);
+  trashEl=addFixed('trash');
+  /* 最近区初始为空 */
+
+  /* 启动弹跳(12/6pt) */
+  function launchAnim(b){
+    var ico=b.querySelector('.ico');
+    b.classList.add('launching','run');
+    if(S.bounce&&!RM){ico.classList.remove('bounce'); void ico.offsetWidth; ico.classList.add('bounce');
+      ico.addEventListener('animationend',function h(){ico.removeEventListener('animationend',h); ico.classList.remove('bounce'); b.classList.remove('launching');});}
+    else{setTimeout(function(){b.classList.remove('launching')},400);}
+    hint('启动「'+b.dataset.name+'」'+(S.bounce?'— 两跳 12/6pt · 0.8s 衰减弹簧':'— 弹跳已关,仅亮度 +10%'));
+  }
+
+  /* 自定义 macOS Tooltip(delay 200ms / rise 6px / in 150 / out 100) */
+  var tipT=0;
+  function tipShow(b){
+    clearTimeout(tipT);
+    var delay=(S.profile==='macos')?200:80;
+    tipT=setTimeout(function(){
+      tip.textContent=b.dataset.name;
+      var sr=stage.getBoundingClientRect(), r=b.getBoundingClientRect();
+      var vert=S.pos!=='bottom';
+      if(vert){tip.style.left=(S.pos==='left'? r.right-sr.left+10 : r.left-sr.left-tip.offsetWidth-10)+'px';
+        tip.style.top=(r.top+r.height/2-tip.offsetHeight/2)+'px';}
+      else{tip.style.top=(r.top-sr.top-tip.offsetHeight-10)+'px';
+        tip.style.left=(r.left-sr.left+r.width/2-tip.offsetWidth/2)+'px';}
+      tip.classList.add('on');},delay);}
+  function tipHide(){clearTimeout(tipT); tip.classList.remove('on');}
+
+  /* 窗口实时预览(MyDockFinder 对标:延迟/尺寸可调,悬停运行图标) */
+  var prev=$('prev'), prevT=0, prevGraceT=0;
+  function prevShow(b){
+    clearTimeout(prevT); clearTimeout(prevGraceT);
+    prevT=setTimeout(function(){
+      prev.innerHTML='<div class="ph" aria-hidden="true"><i></i></div><div class="pc" aria-hidden="true"></div>'
+        +'<div class="cap" role="button">文稿 — 实时预览 · 点击聚焦</div>';
+      prev.querySelector('.cap').addEventListener('click',function(){prevHide(); hint('聚焦窗口(原生 M1:SetForegroundWindow)')});
+      var sr=stage.getBoundingClientRect(), r=b.getBoundingClientRect();
+      prev.classList.add('on');
+      var w=prev.offsetWidth;
+      prev.style.left=Math.max(8,Math.min(r.left-sr.left+r.width/2-w/2, sr.width-w-8))+'px';
+      prev.style.top=(r.top-sr.top-prev.offsetHeight-12)+'px';
+    }, S.prevDelay);}
+  function prevGrace(){clearTimeout(prevT); clearTimeout(prevGraceT);
+    prevGraceT=setTimeout(function(){prev.classList.remove('on')},120);}
+  function prevHide(){clearTimeout(prevT); clearTimeout(prevGraceT); prev.classList.remove('on');}
+  prev.addEventListener('pointerenter',function(){clearTimeout(prevGraceT)});
+  prev.addEventListener('pointerleave',function(){prev.classList.remove('on')});
+
+  /* 图标任务进度条(下载演示,循环) */
+  var progV=0, progEl=null;
+  setInterval(function(){
+    if(root.classList.contains('lp')||!S.progDemo)return;
+    if(!progEl)progEl=dock.querySelector('[data-app=browser]');
+    if(!progEl)return;
+    progV+=1.5+Math.random()*2.5;
+    if(progV>=100){progV=0; progEl.classList.remove('prog');
+      setTimeout(function(){if(S.progDemo){progEl.classList.add('prog'); var bar=progEl.querySelector('.pbar i'); if(bar)bar.style.width='0%';}},2600);
+      var bar=progEl.querySelector('.pbar i'); if(bar)bar.style.width='100%';
+      hint('下载完成 — 图标任务进度条(证据链:复制/下载/播放进度)'); return;}
+    progEl.classList.add('prog');
+    var bar2=progEl.querySelector('.pbar i'); if(bar2)bar2.style.width=progV.toFixed(1)+'%';
+  },240);
+
+  /* 壁纸取色动态主题色(Seelen 借鉴:accent 从壁纸提取) */
+  function applyAccent(){
+    if(!S.wallAccent){root.style.removeProperty('--acc'); return;}
+    try{
+      var c=document.createElement('canvas'); c.width=80; c.height=45;
+      var x=c.getContext('2d'); var lt=S.theme==='lt';
+      var g=x.createLinearGradient(0,0,0,45);
+      g.addColorStop(0, lt?'#dfe7f5':'#0d1322'); g.addColorStop(1, lt?'#c8d4e8':'#080a12');
+      x.fillStyle=g; x.fillRect(0,0,80,45);
+      var r1=x.createRadialGradient(14,4,2,14,4,40); r1.addColorStop(0, lt?'rgba(140,160,230,.55)':'rgba(63,81,180,.45)'); r1.addColorStop(1,'rgba(0,0,0,0)');
+      x.fillStyle=r1; x.fillRect(0,0,80,45);
+      var r2=x.createRadialGradient(68,40,2,68,40,36); r2.addColorStop(0, lt?'rgba(210,150,190,.45)':'rgba(122,59,143,.36)'); r2.addColorStop(1,'rgba(0,0,0,0)');
+      x.fillStyle=r2; x.fillRect(0,0,80,45);
+      var d=x.getImageData(0,0,80,45).data, rs=0,gs=0,bs=0,ws=0;
+      for(var i=0;i<d.length;i+=16){
+        var r=d[i],gg=d[i+1],b=d[i+2];
+        var mx=Math.max(r,gg,b), mn=Math.min(r,gg,b), w=(mx-mn)+8;
+        rs+=r*w; gs+=gg*w; bs+=b*w; ws+=w;}
+      var rAvg=rs/ws, gAvg=gs/ws, bAvg=bs/ws;
+      var mx2=Math.max(rAvg,gAvg,bAvg), mn2=Math.min(rAvg,gAvg,bAvg), df=mx2-mn2;
+      var h=0; if(df>0){ if(mx2===rAvg)h=((gAvg-bAvg)/df)%6; else if(mx2===gAvg)h=(bAvg-rAvg)/df+2; else h=(rAvg-gAvg)/df+4; h*=60; if(h<0)h+=360;}
+      var l=lt?0.5:0.64, s2=Math.min(.85,Math.max(.45,(df/255)*1.5));
+      var c2=(1-Math.abs(2*l-1))*s2, xp=c2*(1-Math.abs((h/60)%2-1)), m=l-c2/2;
+      var rr,gg2,bb;
+      if(h<60){rr=c2;gg2=xp;bb=0}else if(h<120){rr=xp;gg2=c2;bb=0}else if(h<180){rr=0;gg2=c2;bb=xp}else if(h<240){rr=0;gg2=xp;bb=c2}else if(h<300){rr=xp;gg2=0;bb=c2}else{rr=c2;gg2=0;bb=xp}
+      var hex=function(v){return ('0'+Math.round((v+m)*255).toString(16)).slice(-2)};
+      root.style.setProperty('--acc','#'+hex(rr)+hex(gg2)+hex(bb));
+    }catch(e){root.style.removeProperty('--acc');}
+  }
+
+  /* 放大:profile 相关参数;lift=增量/2 */
+  var raf=0;
+  dock.addEventListener('pointermove',function(e){
+    if(!S.mag||RM)return; dock.classList.remove('settle');
+    if(raf)return; raf=requestAnimationFrame(function(){raf=0; mag(e)});});
+  dock.addEventListener('pointerleave',function(){dock.classList.add('settle');
+    dock.querySelectorAll('.ico').forEach(function(i){i.style.transform=''});
+    setTimeout(function(){dock.classList.remove('settle')},300); tipHide();});
+  function mag(e){var vert=S.pos!=='bottom'; var p=vert?e.clientY:e.clientX;
+    dock.querySelectorAll('.v-ic').forEach(function(el){
+      var r=el.getBoundingClientRect(); var c=vert?(r.top+r.height/2):(r.left+r.width/2);
+      var d=Math.abs(c-p); var R=vert?130:110; var f=Math.max(0,1-d/R);
+      var s=1+(S.peak-1)*Math.pow(f, S.profile==='macos'?2.2:1.6);
+      var inc=(s-1)*S.iconSize/2;
+      var t=vert?'translate('+(S.pos==='left'?inc:-inc)+'px,0) scale('+s+')':'translateY('+(-inc)+'px) scale('+s+')';
+      el.querySelector('.ico').style.transform=t;});}
+
+  /* 三种最小化 + 逆放还原 */
+  var win=$('win'), winMin=false;
+  $('wmin').addEventListener('click',function(){minimize('browser')});
+  function minimize(app){
+    var b=dock.querySelector('[data-app='+app+']'); if(!b||winMin)return;
+    var wr=win.getBoundingClientRect(), ir=b.getBoundingClientRect();
+    win.style.setProperty('--dx',(ir.left+ir.width/2-(wr.left+wr.width/2))+'px');
+    win.style.setProperty('--dy',(ir.top+ir.height/2-(wr.top+wr.height/2))+'px');
+    var fx={genie:'mg',scale:'msc',suck:'msk'}[S.mineffect];
+    win.classList.remove('mg','msc','msk','rev');
+    void win.offsetWidth;
+    win.classList.add(fx); winMin=true; b.classList.add('run');
+    setTimeout(function(){win.classList.remove(fx); win.classList.add('minned'); if(!S.minToIcon)addThumb(app);},
+      {genie:600,scale:500,suck:400}[S.mineffect]);
+    hint('最小化 · '+{genie:'精灵效果 0.6s(Web 近似,原生 D2D 16×12 网格变形)',scale:'缩放效果 0.5s ease-in',suck:'吸入效果 0.4s 强 ease-in(隐藏参数)'}[S.mineffect]);}
+  function restore(app){
+    var fx={genie:'mg',scale:'msc',suck:'msk'}[S.mineffect];
+    win.classList.remove('minned','mg','msc','msk','rev'); void win.offsetWidth;
+    win.classList.add('rev',fx);
+    setTimeout(function(){win.classList.remove(fx,'rev')},{genie:600,scale:500,suck:400}[S.mineffect]);
+    winMin=false; hint('还原 = 最小化完全逆放(路径/时长/缓动对称)');}
+  function addThumb(app){
+    var old=dock.querySelector('.minthumb'); if(old)old.remove();
+    var t=document.createElement('button'); t.type='button'; t.className='minthumb'; t.textContent='文稿';
+    t.setAttribute('aria-label','已最小化的窗口:文稿');
+    t.addEventListener('click',function(){t.remove(); restore(app)});
+    dock.insertBefore(t, trashEl);}
+  (function(){var orig=launchAnim; launchAnim=function(b){ if(winMin&&b.dataset.app==='browser'){var t=dock.querySelector('.minthumb'); if(t)t.remove(); restore('browser'); return;} orig(b);};})();
+
+  /* 堆叠:扇形/网格/列表 */
+  var FILES=[['doc','季度报告.docx','214 KB','今天 09:12'],['img','截图 2026-10-24.png','1.2 MB','今天 08:40'],['zip','源码.zip','8.6 MB','昨天 22:03'],['pdfx','演示.key','4.1 MB','昨天 16:20'],['doc','发票.pdf','96 KB','10-22'],['img','壁纸.jpg','3.4 MB','10-21'],['code','patch.diff','12 KB','10-20']];
+  var sw=$('stackwrap');
+  function openStack(mode){
+    mode=mode||S.stackMode; S.stackMode=mode; persist();
+    sw.textContent=''; sw.className='stackwrap open';
+    var box;
+    if(mode==='fan'){
+      box=document.createElement('div'); box.className='fanbox';
+      var n=Math.min(FILES.length,10);
+      FILES.slice(0,n).forEach(function(f,i){
+        var it=document.createElement('button'); it.type='button'; it.className='st-it';
+        it.innerHTML=icn(f[0]==='pdfx'?'doc':f[0])+'<span class="lb">'+f[1]+'</span>';
+        var ang=(-58+116*(i/(n-1||1)))*Math.PI/180, R=120;
+        var x=Math.sin(ang)*R, y=-Math.cos(ang)*R+18;
+        box.appendChild(it);
+        setTimeout(function(){it.style.transform='translate('+x+'px,'+y+'px) scale(1)'; it.style.transitionDelay=(i*30)+'ms';},20);
+        it.addEventListener('click',function(){closeStack(); hint('打开 '+f[1]+'(默认应用)')});
+        it.addEventListener('pointerenter',function(){var lb=it.querySelector('.lb'); lb.style.display='block'});
+        it.addEventListener('pointerleave',function(){it.querySelector('.lb').style.display='none'});});
+    } else if(mode==='grid'){
+      box=document.createElement('div'); box.className='gridbox';
+      FILES.forEach(function(f,i){
+        var it=document.createElement('button'); it.type='button'; it.className='st-it';
+        it.innerHTML=icn(f[0]==='pdfx'?'doc':f[0])+'<span class="lb">'+f[1]+'</span>';
+        box.appendChild(it);
+        setTimeout(function(){it.style.transform='scale(1)'; it.style.transitionDelay=(i*20)+'ms';},20);
+        it.addEventListener('click',function(){closeStack(); hint('打开 '+f[1])});});
+    } else {
+      box=document.createElement('div'); box.className='listbox';
+      FILES.forEach(function(f,i){
+        var it=document.createElement('button'); it.type='button'; it.className='st-it';
+        it.innerHTML=icn(f[0]==='pdfx'?'doc':f[0])+'<span>'+f[1]+'</span><span class="meta">'+f[2]+' · '+f[3]+'</span>';
+        it.addEventListener('click',function(){closeStack(); hint('打开 '+f[1])});
+        box.appendChild(it);});
+    }
+    sw.appendChild(box);
+    var sr=stage.getBoundingClientRect(), r=dlEl.getBoundingClientRect();
+    var w=sw.offsetWidth||180;
+    sw.style.left=Math.max(8,Math.min(r.left-sr.left+r.width/2-w/2, sr.width-w-10))+'px';
+    sw.style.top=(r.top-sr.top-(mode==='fan'?170:mode==='grid'?200:230))+'px';}
+  function closeStack(){sw.classList.remove('open')}
+  stage.addEventListener('pointerdown',function(e){
+    if(!e.target.closest('.stackwrap')&&!e.target.closest('[data-app=dl]'))closeStack();
+    if(!e.target.closest('.menu'))closeMenus();});
+
+  /* 启动台 */
+  var lpad=$('lpad'), LP=['code','calendar','notes','weather','gamepad','settings','browser','music','terminal','mail'];
+  LP.forEach(function(a){
+    var b=document.createElement('button'); b.type='button'; b.className='lp-it';
+    b.innerHTML=icn(a)+'<span>'+NM[a]+'</span>';
+    b.addEventListener('click',function(){
+      var db=dock.querySelector('[data-app='+a+']');
+      if(db){launchAnim(db);}
+      else{addRecent(a); launchAnim(dock.querySelector('[data-app='+a+']')); }
+      closeLpad();});
+    $('lpgrid').appendChild(b);});
+  $('lpsrch').addEventListener('input',function(){var q=this.value.trim();
+    $('lpgrid').querySelectorAll('.lp-it').forEach(function(t){t.hidden=q&&t.textContent.indexOf(q)<0;});});
+  function toggleLpad(){lpad.classList.contains('open')?closeLpad():openLpad()}
+  function openLpad(){closeMenus(); closeStack(); lpad.classList.add('open'); $('lpsrch').value=''; $('lpsrch').dispatchEvent(new Event('input')); setTimeout(function(){$('lpsrch').focus()},100);
+    hint('启动台:桌面淡出 → 网格淡入(Esc/空白退出)')}
+  function closeLpad(){lpad.classList.remove('open')}
+  lpad.addEventListener('click',function(e){if(e.target===lpad)closeLpad()});
+  document.addEventListener('keydown',function(e){if(e.key==='Escape'){closeLpad(); closeMenus(); closeStack(); ovl.classList.remove('open');}});
+
+  /* 最近应用区:插在 sepA 之后,超出数量移除最旧 */
+  function addRecent(app){
+    var ex=dock.querySelector('[data-app='+app+']'); if(ex)return;
+    var b=mk(app,false); wire(b);
+    dock.insertBefore(b, sepA.nextSibling);
+    var rec=recents();
+    if(rec.length>S.recentsN){rec[rec.length-1].remove();}
+    applyAll();}
+  function recents(){var out=[],n=sepA.nextSibling;
+    while(n&&n!==sepB){if(n.classList&&n.classList.contains('v-ic'))out.push(n); n=n.nextSibling;}
+    return out}
+  function renderRecents(){var rec=recents(); rec.forEach(function(b){b.hidden=!S.showRecents});}
+  dock.addEventListener('dragover',function(e){if(!e.dataTransfer)return;});
+  /* spacer 占位 */
+  function addSpacer(){var s=document.createElement('span'); s.className='spacer'; s.setAttribute('aria-hidden','true');
+    dock.insertBefore(s, sepA); hint('已插入空白占位符(隐藏参数 spacer-tile)')}
+
+  /* 条目菜单(macOS:缩略图区 + 退出/强制退出 + 选项) */
+  function closeMenus(){menu.classList.remove('open'); submenu.classList.remove('open');}
+  function anchor(el,items){build(menu,items);
+    var sr=stage.getBoundingClientRect(), r=el.getBoundingClientRect();
+    menu.classList.add('open');
+    var mw=menu.offsetWidth, mh=menu.offsetHeight;
+    menu.style.left=Math.max(8,Math.min(r.left-sr.left+r.width/2-mw/2, sr.width-mw-8))+'px';
+    menu.style.top=Math.max(8,r.top-sr.top-mh-8)+'px';}
+  function build(el,items){el.textContent='';
+    items.forEach(function(it){
+      if(it.sep){var s=document.createElement('div'); s.className='msep'; el.appendChild(s); return;}
+      var b=document.createElement('button'); b.type='button'; b.className='mi';
+      b.innerHTML=(it.chk?'<span class="chk">✓</span>':'<span class="chk"></span>')+'<span>'+it.t+'</span>'+(it.sub?'<span class="sa">▸</span>':'');
+      if(it.sub){b.addEventListener('pointerenter',function(){
+        var r2=b.getBoundingClientRect(), sr=stage.getBoundingClientRect();
+        build(submenu,it.sub);
+        submenu.style.left=(r2.right-sr.left+4)+'px'; submenu.style.top=(r2.top-sr.top-4)+'px';
+        submenu.classList.add('open');});}
+      else{b.addEventListener('pointerenter',function(){submenu.classList.remove('open')});
+        b.addEventListener('click',function(){closeMenus(); if(it.on)it.on();});}
+      el.appendChild(b);});}
+  function itemMenu(b,alt){
+    var list=[];
+    if(b.classList.contains('run')) list.push({t:(alt?'强制退出':'退出'),on:function(){
+      if(alt){b.classList.add('dis'); setTimeout(function(){b.classList.remove('dis')},1800);
+        hint('强制退出(Option+右键)→ 禁用态:去饱和 70% 透明,点击无响应');}
+      else{b.classList.remove('run'); hint('退出 — 运行指示器消失');}}});
+    if(b.dataset.app==='dl'){
+      list.push({t:'显示方式',sub:[{t:'扇形',chk:S.stackMode==='fan',on:function(){openStack('fan')}},{t:'网格',chk:S.stackMode==='grid',on:function(){openStack('grid')}},{t:'列表',chk:S.stackMode==='list',on:function(){openStack('list')}}]});
+      list.push({t:'排序方式',sub:[{t:'按添加日期',chk:true},{t:'按名称'},{t:'按修改日期'}]});
+    }
+    if(!b.dataset.fixed){
+      list.push({t:'选项',sub:[{t:'保留在 Dock',chk:b.dataset.kept==='1',on:function(){b.dataset.kept=b.dataset.kept==='1'?'0':'1';
+        hint('保留在 Dock:'+(b.dataset.kept==='1'?'常驻(退出后不消失)':'退出后随最近区回收'))}}]});
+      list.push({t:'从 Dock 中移除',on:function(){removeAnim(b)}});
+    }
+    var final=(list.length?[{sep:true}]:[]).concat(list);
+    if(!final.length)final=[{t:'打开',on:function(){launchAnim(b)}}];
+    anchor(b, final);
+    if(b.classList.contains('run')){
+      var tr=document.createElement('div'); tr.className='thmb';
+      var x1=document.createElement('div'); x1.className='t';
+      var x2=document.createElement('div'); x2.className='t';
+      x1.addEventListener('click',function(){closeMenus(); hint('窗口切换(缩略图顶置;原生 M2:DWM Thumbnail)')});
+      x2.addEventListener('click',function(){closeMenus(); hint('窗口切换(缩略图顶置;原生 M2:DWM Thumbnail)')});
+      tr.appendChild(x1); tr.appendChild(x2); menu.insertBefore(tr, menu.firstChild);}}
+
+  /* 移除动画(0.3s 上飘渐隐) */
+  function removeAnim(b){
+    b.style.transition='transform .3s cubic-bezier(.25,.46,.45,.94), opacity .3s';
+    b.style.transform='translateY(-40px) scale(.8)'; b.style.opacity='0';
+    var nm=b.dataset.name;
+    setTimeout(function(){b.remove(); dock.style.borderRadius=dockRadius()},320);
+    hint('移除「'+nm+'」— 上飘+渐隐+缩放 0.3s(拖出 Dock 同效)');}
+
+  /* 自动隐藏:show 0.3s / hide 0.5s / slide 0.2s*mod + 透明度 */
+  var showT=0, hideT=0;
+  $('ezb').addEventListener('pointerenter',function(){
+    if(!S.ah)return; clearTimeout(hideT);
+    clearTimeout(showT); showT=setTimeout(function(){root.classList.remove('ah')}, S.ahDelay*1000);});
+  $('ezb').addEventListener('pointerleave',function(){if(!S.ah)return; clearTimeout(showT); scheduleHide();});
+  function scheduleHide(){if(!S.ah)return; clearTimeout(hideT);
+    hideT=setTimeout(function(){root.classList.add('ah')}, S.profile==='macos'?500:700);}
+  dock.addEventListener('pointerenter',function(){if(S.ah){clearTimeout(hideT); root.classList.remove('ah');}});
+  dock.addEventListener('pointerleave',function(){if(S.ah)scheduleHide();});
+
+  /* 状态应用 */
+  function dockRadius(){var h=S.iconSize+20; return (h/2)+'px'}
+  function applyAll(){
+    root.className=(S.theme==='lt'?'lt':'dk')+(S.material==='tahoe'?' tahoe':'')+(S.hc?' hc':'')+(S.ah?' ah':'');
+    root.dataset.pos=S.pos; root.dataset.profile=S.profile;
+    ['blur','fill','grain','hair'].forEach(function(l){root.classList.toggle('no-'+l, !S.layers[l])});
+    dock.style.setProperty('--isz',S.iconSize+'px');
+    dock.style.borderRadius=dockRadius();
+    root.style.setProperty('--ahmod',S.ahMod);
+    root.style.setProperty('--mo',S.profile==='macos'?200:160);
+    root.style.setProperty('--mo2',S.profile==='macos'?250:480);
+    root.style.setProperty('--pw',S.prevSize+'px');
+    applyAccent();
+    $('swAh').checked=S.ah; $('swMag').checked=S.mag;
+    renderRecents(); persist();}
+  /* 头部控件 */
+  root.querySelectorAll('[data-th]').forEach(function(b){b.addEventListener('click',function(){
+    S.theme=b.dataset.th; root.querySelectorAll('[data-th]').forEach(function(x){x.classList.toggle('on',x===b)});
+    applyAll(); hint('外观 → '+(S.theme==='lt'?'浅色(模糊 20pt·饱和+10%·白 18%·噪点 0.3%)':'深色(22pt·+8%·黑 25%·0.25%)'));});});
+  root.querySelectorAll('[data-pf]').forEach(function(b){b.addEventListener('click',function(){
+    S.profile=b.dataset.pf; root.querySelectorAll('[data-pf]').forEach(function(x){x.classList.toggle('on',x===b)});
+    applyAll(); hint('动效档案 → '+(S.profile==='macos'?'macOS:放大 0.2/0.25s 无回弹 · Tooltip 200ms':'Vitro:弹性 settle 480ms · Tooltip 80ms'));});});
+  root.querySelectorAll('[data-mat]').forEach(function(b){b.addEventListener('click',function(){
+    S.material=b.dataset.mat; root.querySelectorAll('[data-mat]').forEach(function(x){x.classList.toggle('on',x===b)});
+    applyAll(); hint('材质 → '+(S.material==='tahoe'?'Tahoe 悬浮:填充 9%/12% · 模糊 26/28pt · 边缘高光增强 · 抬升悬浮':'Sonoma:填充 18%/25% · 模糊 20/22pt'));});});
+  $('swAh').addEventListener('change',function(){S.ah=this.checked; applyAll(); if(this.checked)scheduleHide();});
+  $('swMag').addEventListener('change',function(){S.mag=this.checked; persist();});
+
+  /* 材质检视 */
+  $('btnMat').addEventListener('click',function(){
+    var L=S.layers, v=S.theme==='lt', t=S.material==='tahoe';
+    var blur=t?(v?26:28):(v?20:22), sat=t?(v?15:12):(v?10:8);
+    var fillP=t?(v?9:12):(v?18:25), fillC=v?'白色':'黑色';
+    var hairT=t?(v?'白45%':'白22%'):(v?'白30%':'白15%'), hairB=t?(v?'黑6%':'黑20%'):(v?'黑10%':'黑15%');
+    var name=t?'Tahoe 悬浮(2025 Liquid Glass)':'Sonoma(四层基线)';
+    openDlg('<div class="dlg-h"><b>液态玻璃 · '+name+'</b><button type="button" class="x" aria-label="关闭">✕</button></div>'
+    +'<div class="dlg-b">'
+    +lay('背景模糊层','高斯模糊 '+blur+'pt · 饱和度 +'+sat+'%','blur')
+    +lay('基础填充层',fillC+' '+fillP+'% 透明度'+(t?'(悬浮:更少填充)':''),'fill')
+    +lay('颗粒纹理层','单色噪点 '+(v?0.3:0.25)+'% <span class="graindemo" style="display:inline-block;vertical-align:middle"></span>(样张已放大)','grain')
+    +lay('边缘光影层','1px 内高光 '+hairT+' + 1px 内阴影 '+hairB+(t?' + 0.5px 折射边':''),'hair')
+    +'<div class="row" style="margin-top:10px"><span style="font-size:11.5px;color:var(--mut)">无外描边、无外投影 — 层级全靠材质;圆角 = 总高/2 = '+dockRadius()+';主题色 <span class="swatch"></span>(取自壁纸:'+(S.wallAccent?'开':'关')+')</span></div>'
+    +'</div>');
+    dlg.querySelectorAll('[data-layer]').forEach(function(c){c.addEventListener('change',function(){
+      S.layers[this.dataset.layer]=this.checked; applyAll();});});});
+  function lay(n,spec,key){return '<div class="layrow"><b>'+n+'</b><span>'+spec+'</span><label class="sw"><input type="checkbox" data-layer="'+key+'"'+(S.layers[key]?' checked':'')+'></label></div>'}
+
+  /* 设置(一般/高级/无障碍) */
+  $('btnProps').addEventListener('click',function(){openProps('general')});
+  function openProps(tab){
+    tab=tab||'general';
+    var tabs=[['general','一般'],['adv','高级参数'],['a11y','无障碍']]; var body='';
+    if(tab==='general'){
+      body=rng('图标大小','pSize',16,128,1,S.iconSize,'pt')+rng('放大倍率','pPeak',1.0,2.0,0.05,S.peak,'×')
+      +'<div class="row"><label>放大</label><input type="checkbox" id="pMag"'+(S.mag?' checked':'')+'></div>'
+      +'<div class="row"><label>弹跳动画</label><input type="checkbox" id="pBounce"'+(S.bounce?' checked':'')+'></div>'
+      +'<div class="row"><label>最小化效果</label><select id="pMin"><option value="genie">精灵效果</option><option value="scale">缩放效果</option><option value="suck">吸入效果</option></select></div>'
+      +'<div class="row"><label>最小化为应用图标</label><input type="checkbox" id="pMi"'+(S.minToIcon?' checked':'')+'></div>'
+      +'<div class="row"><label>显示最近的应用</label><input type="checkbox" id="pRec"'+(S.showRecents?' checked':'')+'></div>'
+      +'<div class="row"><label>位置</label><select id="pPos"><option value="bottom">底部</option><option value="left">左侧</option><option value="right">右侧</option></select></div>'
+      +rng('窗口预览尺寸','pPw',140,240,10,S.prevSize,'px')
+      +'<div class="row"><label>窗口预览延迟</label><input type="range" id="pPd" min="0" max="800" step="50" value="'+S.prevDelay+'"><output id="opPd">'+S.prevDelay+'ms</output></div>'
+      +'<div class="row"><label>图标任务进度(演示)</label><input type="checkbox" id="pProg"'+(S.progDemo?' checked':'')+'></div>'
+      +'<div class="row"><label>动态主题色(取自壁纸)</label><input type="checkbox" id="pWa"'+(S.wallAccent?' checked':'')+'><span class="swatch" id="pWaSw"></span></div>';}
+    else if(tab==='adv'){
+      body='<div class="row"><span style="font-size:11.5px;color:var(--mut)">终端等效参数(defaults write com.apple.dock …;killall Dock 生效)</span></div>'
+      +'<div class="row"><label>显示延迟 <code>autohide-delay</code></label><input type="range" id="pAd" min="0" max="1" step="0.05" value="'+S.ahDelay+'"><output id="oAd">'+S.ahDelay+'s</output></div>'
+      +'<div class="row"><label>动画速度 <code>autohide-time-modifier</code></label><input type="range" id="pAt" min="0" max="2" step="0.1" value="'+S.ahMod+'"><output id="oAt">×'+S.ahMod+'</output></div>'
+      +'<div class="row"><label>最小化 <code>mineffect</code></label><select id="pMine"><option value="genie">genie</option><option value="scale">scale</option><option value="suck">suck</option></select></div>'
+      +'<div class="row"><label>最近数量 <code>show-recents-count</code></label><input type="range" id="pRc" min="0" max="5" step="1" value="'+S.recentsN+'"><output id="oRc">'+S.recentsN+'</output></div>'
+      +'<div class="row"><label>占位符 <code>spacer-tile</code></label><button type="button" class="hbtn" id="pSp">添加</button></div>';}
+    else{
+      body='<div class="row"><label>增强对比度</label><input type="checkbox" id="pHc"'+(S.hc?' checked':'')+'><span style="font-size:11.5px;color:var(--mut)">背景不透明度→80%,分隔线加粗,指示器增大</span></div>'
+      +'<div class="row"><label>减弱动态效果</label><span style="font-size:11.5px;color:var(--mut)">跟随系统 prefers-reduced-motion:弹跳/变形/缩放 → 0.2s 淡入淡出</span></div>'
+      +'<div class="row"><label>全键盘控制</label><span style="font-size:11.5px;color:var(--mut)">Tab 聚焦 · Enter 打开 · ←→ 移动</span></div>';}
+    openDlg('<div class="dlg-h"><b>桌面与程序坞</b><button type="button" class="x" aria-label="关闭">✕</button></div>'
+      +'<div class="tabs">'+tabs.map(function(t){return '<button type="button" class="tab'+(t[0]===tab?' on':'')+'" data-tab="'+t[0]+'">'+t[1]+'</button>'}).join('')+'</div><div class="dlg-b">'+body+'</div>');
+    dlg.querySelectorAll('.tab').forEach(function(t){t.addEventListener('click',function(){openProps(t.dataset.tab)})});
+    var q=function(i){return dlg.querySelector(i)};
+    if(tab==='general'){
+      q('#pSize').addEventListener('input',function(){S.iconSize=+this.value; q('#oSize').textContent=S.iconSize+'pt'; applyAll();});
+      q('#pPeak').addEventListener('input',function(){S.peak=+this.value; persist();});
+      q('#pMag').addEventListener('change',function(){S.mag=this.checked; applyAll();});
+      q('#pBounce').addEventListener('change',function(){S.bounce=this.checked; persist();});
+      q('#pMin').value=S.mineffect; q('#pMin').addEventListener('change',function(){S.mineffect=this.value; persist();});
+      q('#pMi').addEventListener('change',function(){S.minToIcon=this.checked; persist();});
+      q('#pRec').addEventListener('change',function(){S.showRecents=this.checked; applyAll();});
+      q('#pPos').value=S.pos; q('#pPos').addEventListener('change',function(){S.pos=this.value; applyAll();
+        hint('位置 → '+this.value+'(侧边时图标向屏幕外侧偏移)');});
+      q('#pPw').addEventListener('input',function(){S.prevSize=+this.value; q('#opPw').textContent=S.prevSize+'px'; applyAll();});
+      q('#pPd').addEventListener('input',function(){S.prevDelay=+this.value; q('#opPd').textContent=S.prevDelay+'ms'; persist();});
+      q('#pProg').addEventListener('change',function(){S.progDemo=this.checked;
+        if(!this.checked&&progEl){progEl.classList.remove('prog'); progV=0;} persist();});
+      q('#pWa').addEventListener('change',function(){S.wallAccent=this.checked; applyAll();
+        hint('动态主题色 '+(this.checked?'开:accent 已从壁纸提取':'关:恢复默认蓝'));});}
+    else if(tab==='adv'){
+      q('#pAd').addEventListener('input',function(){S.ahDelay=+this.value; q('#oAd').textContent=S.ahDelay+'s'; persist();});
+      q('#pAt').addEventListener('input',function(){S.ahMod=+this.value; q('#oAt').textContent='×'+S.ahMod; applyAll();});
+      q('#pMine').value=S.mineffect; q('#pMine').addEventListener('change',function(){S.mineffect=this.value; persist();});
+      q('#pRc').addEventListener('input',function(){S.recentsN=+this.value; q('#oRc').textContent=S.recentsN;
+        var rec=recents(); if(rec.length>S.recentsN)rec[rec.length-1].remove(); persist();});
+      q('#pSp').addEventListener('click',function(){addSpacer();});}
+    else{q('#pHc').addEventListener('change',function(){S.hc=this.checked; applyAll();});}}
+  function rng(l,id,min,max,step,val,unit){return '<div class="row"><label>'+l+'</label><input type="range" id="'+id+'" min="'+min+'" max="'+max+'" step="'+step+'" value="'+val+'"><output id="o'+id.slice(1)+'">'+val+unit+'</output></div>'}
+  function openDlg(html){dlg.innerHTML=html; ovl.classList.add('open');}
+  ovl.addEventListener('pointerdown',function(e){if(e.target===ovl)ovl.classList.remove('open');});
+  dlg.addEventListener('click',function(e){if(e.target.classList.contains('x'))ovl.classList.remove('open');});
+
+  /* 键盘:←→ 移动焦点 */
+  dock.addEventListener('keydown',function(e){
+    if(e.key!=='ArrowLeft'&&e.key!=='ArrowRight')return;
+    var btns=Array.from(dock.querySelectorAll('.v-ic:not([hidden])')); var i=btns.indexOf(document.activeElement);
+    if(i<0)return; var j=(i+(e.key==='ArrowRight'?1:-1)+btns.length)%btns.length; btns[j].focus(); e.preventDefault();});
+
+  function hint(t){hintEl.innerHTML='<b>最近动作</b>'+t;}
+  applyAll();
+  window.__mc={S:S, dock:dock, applyAll:applyAll, openProps:openProps, openStack:openStack, addRecent:addRecent, minimize:minimize, lpad:lpad};
+})();
+</script>
+</div>

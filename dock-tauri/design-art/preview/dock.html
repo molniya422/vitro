@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="dark" data-style="glass" data-motion="full" data-zones="off" data-chrome="on">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dock 预览 · 美术验收</title>
+  <link rel="stylesheet" href="../tokens/material.css">
+  <link rel="stylesheet" href="../tokens/motion.css">
+  <link rel="stylesheet" href="../tokens/icon.css">
+  <link rel="stylesheet" href="dock.css">
+</head>
+<body>
+
+<svg class="sprite" aria-hidden="true" focusable="false">
+  <defs>
+    <symbol id="g-sliders" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8.4h8.4M17.2 8.4H20"/><circle cx="14.6" cy="8.4" r="2.2"/><path d="M4 15.6h2.8M11.6 15.6H20"/><circle cx="9.4" cy="15.6" r="2.2"/></g></symbol>
+    <symbol id="g-grid" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="6.5" height="6.5" rx="1.6"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.6"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.6"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.6"/></g></symbol>
+    <symbol id="g-folder" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7.5A2.5 2.5 0 0 1 5.5 5h3.2c.5 0 1 .2 1.4.6l1.1 1.1c.3.3.8.5 1.2.5h5.9A2.5 2.5 0 0 1 21 9.7v7.8A2.5 2.5 0 0 1 18.5 20h-13A2.5 2.5 0 0 1 3 17.5z"/></g></symbol>
+    <symbol id="g-trash" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4.4 7.2h15.2"/><path d="M9.6 7.2V5.6A1.6 1.6 0 0 1 11.2 4h1.6a1.6 1.6 0 0 1 1.6 1.6v1.6"/><path d="M6.4 7.2l.8 11.1a2.2 2.2 0 0 0 2.2 2.05h5.2a2.2 2.2 0 0 0 2.2-2.05l.8-11.1"/><path d="M10.4 10.8v5.6M13.6 10.8v5.6"/></g></symbol>
+    <symbol id="g-check" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.6 9.6 17.2 19 7.8"/></g></symbol>
+  </defs>
+</svg>
+
+<header class="bar">
+  <div class="brand">
+    <svg viewBox="0 0 32 32" width="26" height="26" aria-hidden="true">
+      <rect x="1" y="1" width="30" height="30" rx="9" fill="#1b2233" stroke="rgba(255,255,255,0.1)"/>
+      <rect x="5" y="20" width="22" height="7" rx="3.5" fill="#fff" fill-opacity="0.09"/>
+      <rect x="12" y="11" width="8" height="8" rx="2.6" fill="#7c9be0"/>
+    </svg>
+    <div>
+      <strong>Dock Preview</strong>
+      <span>真实放大曲线 · 非产品代码</span>
+    </div>
+  </div>
+
+  <div class="controls">
+    <div class="seg" role="group" aria-label="主题">
+      <button type="button" data-set="theme" data-value="dark" class="is-on">Dark</button>
+      <button type="button" data-set="theme" data-value="light">Light</button>
+    </div>
+    <div class="seg" role="group" aria-label="风格">
+      <button type="button" data-set="style" data-value="glass" class="is-on">A Glass</button>
+      <button type="button" data-set="style" data-value="bare">B Bare</button>
+      <button type="button" data-set="style" data-value="frost">C Frost</button>
+    </div>
+    <div class="seg" role="group" aria-label="动效">
+      <button type="button" data-set="motion" data-value="full" class="is-on">Motion</button>
+      <button type="button" data-set="motion" data-value="reduced">Reduced</button>
+    </div>
+    <button type="button" class="toggle" data-toggle="zones" aria-pressed="false">Hit zones</button>
+    <a class="back" href="../sheet/index.html">规范页</a>
+  </div>
+</header>
+
+<main class="stage">
+  <p class="hint">移动鼠标触发放大 · 悬停 500 ms 出名称 · 右键打开菜单 · 左右方向键在图标间移动</p>
+
+  <div class="dock-frame">
+    <span class="zone-label zone-top">headroom · 点击穿透</span>
+
+    <div class="dock" id="dock" role="toolbar" aria-label="Dock">
+      <button class="tile sys" type="button" data-name="Dock settings" data-glyph="sliders" tabindex="0">
+        <span class="tile-art"><svg viewBox="0 0 24 24"><use href="#g-sliders"/></svg></span>
+      </button>
+
+      <button class="tile sys" type="button" data-name="Launchpad" data-glyph="grid" tabindex="-1">
+        <span class="tile-art"><svg viewBox="0 0 24 24"><use href="#g-grid"/></svg></span>
+      </button>
+
+      <span class="sep" aria-hidden="true"></span>
+
+      <button class="tile app" type="button" data-name="File Explorer" data-app="explorer" tabindex="-1">
+        <span class="tile-art"><svg viewBox="0 0 24 24"><use href="#g-folder"/></svg></span>
+      </button>
+
+      <button class="tile app" type="button" data-name="Slate" data-app="slate" tabindex="-1">
+        <span class="tile-art"><i class="mk mk-slate"></i></span>
+      </button>
+
+      <button class="tile app" type="button" data-name="Orbit" data-app="orbit" data-running="true" tabindex="-1">
+        <span class="tile-art"><i class="mk mk-orbit"></i></span>
+        <span class="dot" aria-hidden="true"></span>
+      </button>
+
+      <button class="tile app" type="button" data-name="Fold" data-app="fold" data-badge="3" tabindex="-1">
+        <span class="tile-art"><i class="mk mk-fold"></i></span>
+        <span class="badge" aria-hidden="true">3</span>
+      </button>
+
+      <button class="tile app" type="button" data-name="Prism" data-app="prism" data-running="true" tabindex="-1">
+        <span class="tile-art"><i class="mk mk-prism"></i></span>
+        <span class="dot" aria-hidden="true"></span>
+      </button>
+
+      <button class="tile app" type="button" data-name="Ledger" data-app="ledger" tabindex="-1">
+        <span class="tile-art"><i class="mk mk-ledger"></i></span>
+      </button>
+
+      <span class="sep" aria-hidden="true"></span>
+
+      <button class="tile sys" type="button" data-name="Recycle Bin" data-glyph="trash" tabindex="-1">
+        <span class="tile-art"><svg viewBox="0 0 24 24"><use href="#g-trash"/></svg></span>
+      </button>
+
+      <span class="tooltip" id="tooltip" role="status" hidden></span>
+    </div>
+
+    <span class="zone-label zone-bottom">reflection · 点击穿透</span>
+  </div>
+</main>
+
+<div class="ctx" id="ctx" role="menu" hidden>
+  <button type="button" role="menuitem" data-action="open">Open</button>
+  <button type="button" role="menuitem" data-action="reveal">Show in Explorer</button>
+  <button type="button" role="menuitem" data-action="options">Options</button>
+  <hr>
+  <button type="button" role="menuitem" class="danger" data-action="remove">Remove from Dock</button>
+</div>
+
+<script src="dock.js"></script>
+</body>
+</html>

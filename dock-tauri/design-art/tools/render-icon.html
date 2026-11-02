@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <title>Icon render surface</title>
+  <style>
+    html, body { margin: 0; padding: 0; background: transparent; overflow: hidden; }
+    img { display: block; width: 100vw; height: 100vh; object-fit: contain; }
+  </style>
+</head>
+<body>
+  <!-- 由无头浏览器渲染成 PNG。src 通过 ?src= 指定，例如 ?src=mark-small.svg -->
+  <img id="art" src="../art/mark.svg" alt="">
+  <script>
+    var q = new URLSearchParams(location.search);
+    var name = q.get("src");
+    if (name) document.getElementById("art").src = "../art/" + name;
+  </script>
+</body>
+</html>

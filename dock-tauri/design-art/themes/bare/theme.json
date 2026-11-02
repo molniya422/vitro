@@ -1,0 +1,44 @@
+{
+  "id": "bare",
+  "name": "Bare",
+  "nameZh": "裸排版",
+  "appearance": "dark",
+  "default": false,
+  "color": {
+    "plate": "transparent",
+    "plateAlpha": 0,
+    "text": "#e9edf7",
+    "muted": "#98a1b6",
+    "accent": "#7c9be0",
+    "badgeTop": "#e2605a",
+    "badgeBottom": "#c8433d"
+  },
+  "shape": {
+    "iconRadius": 0.2237,
+    "pillRadius": 0,
+    "panelRadius": 18,
+    "menuRadius": 10,
+    "iconSize": 48,
+    "iconGap": 12,
+    "paddingH": 12,
+    "paddingV": 8
+  },
+  "material": {
+    "mode": "none",
+    "blur": 0,
+    "saturate": 1,
+    "grain": 0,
+    "topHighlight": 0,
+    "bottomShadow": 0,
+    "ambient": 0,
+    "reflection": 0,
+    "halo": 0.3,
+    "haloLight": 0.28,
+    "glow": 0
+  },
+  "motion": {
+    "magnifyPeak": 1.6,
+    "followMs": 160,
+    "settleMs": 320
+  }
+}

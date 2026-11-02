@@ -1,0 +1,139 @@
+[package]
+name = "dock-tauri"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.89"
+default-run = "dock-tauri"
+
+[lib]
+name = "dock_tauri_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+path = "src/lib.rs"
+
+[[bin]]
+name = "dock-tauri"
+path = "src/main.rs"
+
+[[bin]]
+name = "fake_sidecar"
+path = "src/bin/fake_sidecar.rs"
+
+[dependencies]
+tauri = { version = "2.12", features = [] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+thiserror = "2"
+uuid = { version = "1", features = ["serde", "v4"] }
+image = { version = "0.25", default-features = false, features = ["png"] }
+window-vibrancy = "0.8"
+sha2 = "0.10"
+base64 = "0.22"
+
+[target.'cfg(windows)'.dependencies]
+windows = { version = "0.61", features = [
+    "Win32_Foundation",
+    "Win32_UI_Shell",
+    "Win32_UI_Controls",
+    "Win32_UI_WindowsAndMessaging",
+    "Win32_System_Com",
+    "Win32_Graphics_Gdi",
+    "Win32_UI_HiDpi",
+    "Win32_Storage_FileSystem",
+    "Win32_System_Threading",
+] }
+
+[build-dependencies]
+tauri-build = { version = "2.7", features = [] }
+
+[dev-dependencies]
+tempfile = "3"
+toml = "0.8"
+
+[[test]]
+name = "workspace_smoke"
+path = "tests/unit/workspace_smoke.rs"
+
+[[test]]
+name = "test_registration"
+path = "tests/unit/test_registration.rs"
+
+[[test]]
+name = "geometry"
+path = "tests/unit/geometry.rs"
+
+[[test]]
+name = "autohide"
+path = "tests/unit/autohide.rs"
+
+[[test]]
+name = "settings"
+path = "tests/unit/settings.rs"
+
+[[test]]
+name = "appearance"
+path = "tests/unit/appearance.rs"
+
+[[test]]
+name = "settings_view"
+path = "tests/unit/settings_view.rs"
+
+[[test]]
+name = "hit_test"
+path = "tests/unit/hit_test.rs"
+
+[[test]]
+name = "foreground"
+path = "tests/unit/foreground.rs"
+
+[[test]]
+name = "pins"
+path = "tests/unit/pins.rs"
+
+[[test]]
+name = "shelf"
+path = "tests/unit/shelf.rs"
+
+[[test]]
+name = "platform_monitor"
+path = "tests/unit/platform_monitor.rs"
+
+[[test]]
+name = "dpi_manifest"
+path = "tests/unit/dpi_manifest.rs"
+
+[[test]]
+name = "apps_catalog"
+path = "tests/unit/apps_catalog.rs"
+
+[[test]]
+name = "icon_cache"
+path = "tests/unit/icon_cache.rs"
+
+[[test]]
+name = "icon_extract"
+path = "tests/unit/icon_extract.rs"
+
+[[test]]
+name = "metrics_supervisor"
+path = "tests/unit/metrics_supervisor.rs"
+
+[[test]]
+name = "dock_state_view"
+path = "tests/unit/dock_state_view.rs"
+
+[[test]]
+name = "window_geom"
+path = "tests/unit/window_geom.rs"
+
+[[test]]
+name = "sidecar_path"
+path = "tests/unit/sidecar_path.rs"
+
+[workspace]
+
+[profile.release]
+lto = true
+codegen-units = 1
+strip = true
+opt-level = "s"
+panic = "abort"

@@ -1,0 +1,438 @@
+/* Settings: a scrollable, tabbed panel inside the dock window. */
+.settings-panel {
+  /* The settings surface is a full-window panel, not translucent glass: an
+     alpha here lets the app behind bleed through the controls. */
+  --panel-fill: #141826;
+  --panel-highlight: rgba(255, 255, 255, 0.15);
+  --text: #e9edf7;
+  --muted: #98a1b6;
+  --accent: #7fa4ff;
+  --line: rgba(255, 255, 255, 0.08);
+  --radius-panel: 18px;
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+
+  box-sizing: border-box;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 18px 24px 20px;
+  background:
+    radial-gradient(120% 80% at 50% 0%, rgba(127, 164, 255, 0.08), transparent 55%),
+    var(--panel-fill);
+  box-shadow: inset 0 1px 0 var(--panel-highlight);
+  border-radius: var(--radius-panel);
+  color: var(--text);
+  font-family: "Segoe UI Variable", "Segoe UI", system-ui, sans-serif;
+  font-size: 13px;
+  line-height: 18px;
+  user-select: none;
+  overflow: hidden;
+}
+
+.settings-panel * {
+  box-sizing: border-box;
+}
+
+.settings-panel header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 0 0 auto;
+}
+
+.settings-panel h2 {
+  margin: 0 auto 0 0;
+  font-size: 26px;
+  line-height: 32px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.settings-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.settings-status {
+  min-width: 58px;
+  text-align: right;
+  color: var(--muted);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.settings-panel button {
+  height: 32px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+  transition: background 120ms var(--ease);
+}
+
+.settings-panel button:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.settings-panel button:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.settings-panel button:focus-visible,
+.settings-panel input:focus-visible,
+.settings-panel select:focus-visible {
+  outline: none;
+  box-shadow:
+    inset 0 1px 0 var(--panel-highlight),
+    0 0 0 2px rgba(127, 164, 255, 0.65);
+}
+
+.settings-panel .settings-save {
+  height: 36px;
+  padding: 0 20px;
+  background: var(--accent);
+  color: #101522;
+  font-weight: 600;
+}
+
+.settings-panel .settings-save:hover:not(:disabled) {
+  filter: brightness(1.08);
+  background: var(--accent);
+}
+
+.settings-tabs {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  flex: 0 0 auto;
+}
+
+.settings-tabs button {
+  flex: 1;
+  height: 32px;
+  background: transparent;
+  box-shadow: none;
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.settings-tabs button:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.07);
+  color: var(--text);
+}
+
+.settings-tabs button.is-active {
+  background: rgba(255, 255, 255, 0.13);
+  color: var(--text);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.16);
+}
+
+.settings-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 8px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.18) transparent;
+}
+
+.settings-tab-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-bottom: 8px;
+}
+
+.settings-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 24px;
+}
+
+.settings-field {
+  display: grid;
+  grid-template-columns: 124px minmax(0, 1fr) 62px;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.settings-field-label {
+  color: var(--text);
+  white-space: nowrap;
+}
+
+.settings-panel input[type="range"] {
+  width: 100%;
+  min-width: 0;
+  height: 18px;
+  margin: 0;
+  accent-color: var(--accent);
+}
+
+.settings-panel input[type="color"] {
+  width: 100%;
+  height: 26px;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  cursor: pointer;
+}
+
+.settings-panel output {
+  min-width: 0;
+  text-align: right;
+  color: var(--muted);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.settings-panel select {
+  width: 100%;
+  height: 30px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 9px;
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+}
+
+.settings-panel select option {
+  background: #161a26;
+  color: var(--text);
+}
+
+.settings-checks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 22px;
+}
+
+.settings-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.settings-panel input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  accent-color: var(--accent);
+}
+
+.settings-section-title {
+  margin: 4px 0 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: 0.01em;
+}
+
+.settings-hint {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.settings-errors {
+  margin: 0;
+  padding: 8px 12px 8px 28px;
+  border-radius: 10px;
+  background: rgba(232, 52, 46, 0.14);
+  color: #ffb4b4;
+  font-size: 12px;
+  line-height: 18px;
+  flex: 0 0 auto;
+}
+
+.settings-loading {
+  margin: 24px 0;
+  color: var(--muted);
+  text-align: center;
+}
+
+.settings-apps {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+  align-items: start;
+}
+
+.settings-app-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  max-height: 340px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+.settings-app-list li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 32px;
+  padding: 3px 8px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.045);
+}
+
+.settings-app-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.settings-app-actions {
+  display: flex;
+  gap: 3px;
+}
+
+.settings-app-list button {
+  height: 25px;
+  padding: 0 7px;
+  border-radius: 7px;
+  font-size: 12px;
+}
+
+.settings-search {
+  width: 100%;
+  height: 32px;
+  padding: 0 12px;
+  margin-bottom: 8px;
+  border: 0;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.07);
+  color: var(--text);
+  font: inherit;
+}
+
+.settings-search::placeholder {
+  color: var(--muted);
+}
+
+.settings-apps-error {
+  margin: 0;
+  color: #ffb4b4;
+  font-size: 12px;
+}
+
+.settings-reset-actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* --- live dock preview -------------------------------------------------- */
+.dock-preview {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 22px 16px 10px;
+  border-radius: 14px;
+  background:
+    radial-gradient(120% 100% at 50% 0%, rgba(127, 164, 255, 0.08), transparent 60%),
+    rgba(255, 255, 255, 0.03);
+  box-shadow: inset 0 1px 0 var(--line);
+  overflow: hidden;
+}
+
+.dock-preview-pill {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--icon-gap);
+  max-width: 100%;
+  height: calc(var(--icon-size) + var(--pad-v) * 2);
+  padding: 0 var(--pad-h);
+  border-radius: var(--pill-radius);
+  background: var(--glass-fill);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.15),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.18);
+}
+
+.dock-preview-tile {
+  position: relative;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: var(--icon-size);
+  height: var(--icon-size);
+  margin-bottom: var(--pad-v);
+  border-radius: var(--icon-radius);
+  background: linear-gradient(160deg, #ff9f6b, #e2553d);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.35),
+    0 3px 6px rgba(0, 0, 0, 0.28);
+  color: #fff;
+  font-size: calc(var(--icon-size) * 0.38);
+  font-weight: 600;
+}
+
+.dock-preview-tile:nth-child(3n + 2) {
+  background: linear-gradient(160deg, #6fb1ff, #2f6fd6);
+}
+
+.dock-preview-tile:nth-child(3n + 3) {
+  background: linear-gradient(160deg, #7ee0b1, #26946a);
+}
+
+.dock-preview-tile.is-control {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.2),
+    rgba(255, 255, 255, 0.08)
+  );
+  color: var(--text);
+}
+
+.dock-preview-tile .running-dot {
+  position: absolute;
+  left: 50%;
+  bottom: -7px;
+  width: 4px;
+  height: 4px;
+  margin-left: -2px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.65);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35);
+}
+
+.dock-preview-reflection {
+  width: 60%;
+  height: 12px;
+  border-radius: 50%;
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 0.22), transparent);
+  filter: blur(1px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .settings-panel *,
+  .settings-panel *::before,
+  .settings-panel *::after {
+    transition: none;
+    animation: none;
+  }
+}

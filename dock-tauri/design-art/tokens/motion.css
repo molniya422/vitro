@@ -1,0 +1,119 @@
+/* ==========================================================================
+   Dock 美术资源包 · 动效令牌 v1
+   与 docs/specs/motion-tokens.toml、effects-catalog.toml 同源。
+   命名：--dur-* 时长 / --ease-* 曲线 / --m-* 语义动画（可直接用于 transition）。
+   纪律：只动 transform 与 opacity；不动物理布局属性（width/height/top/left）。
+   ========================================================================== */
+
+:root {
+  /* ---- 时长刻度（4 的倍数，避免无意义精度） ---- */
+  --dur-0: 0ms;
+  --dur-50: 50ms;
+  --dur-90: 90ms;
+  --dur-120: 120ms;
+  --dur-160: 160ms;
+  --dur-200: 200ms;
+  --dur-250: 250ms;
+  --dur-320: 320ms;
+  --dur-400: 400ms;
+  --dur-500: 500ms;
+  --dur-600: 600ms;
+
+  /* ---- 缓动曲线 ----
+     signature：全库共享的「材质」曲线，用于进入与跟随。
+     spring   ：带过冲的回弹，只用于离开/落定，过冲不超过 3%。
+     macos    ：克制档（放大移入移出），无回弹。
+     ------------------------------------------------------------------ */
+  --ease-signature: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-spring: cubic-bezier(0.34, 1.36, 0.64, 1);
+  --ease-macos: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in: cubic-bezier(0.4, 0, 1, 1);
+
+  /* ---- 兼容现有 dock.css 的旧名 ---- */
+  --signature: var(--ease-signature);
+  --spring: var(--ease-spring);
+
+  /* ---- 语义动画：直接把整组值塞进 transition ---- */
+  --m-magnify: transform var(--dur-160) var(--ease-signature);
+  --m-magnify-settle: transform var(--dur-320) var(--ease-spring);
+  --m-press: transform var(--dur-90) var(--ease-signature);
+  --m-press-release: transform var(--dur-120) var(--ease-spring);
+  --m-tooltip-in: opacity var(--dur-150, 150ms) var(--ease-signature),
+    transform var(--dur-150, 150ms) var(--ease-signature);
+  --m-tooltip-out: opacity var(--dur-50) linear;
+  --m-menu-in: opacity var(--dur-250) var(--ease-signature),
+    transform var(--dur-250) var(--ease-signature);
+  --m-menu-out: opacity var(--dur-150) var(--ease-signature);
+  --m-autohide-in: transform var(--dur-200) var(--ease-out),
+    opacity var(--dur-200) var(--ease-out);
+  --m-autohide-out: transform var(--dur-200) var(--ease-in-out),
+    opacity var(--dur-200) var(--ease-in-out);
+  --m-badge-pop: transform var(--dur-500) var(--ease-spring),
+    opacity var(--dur-160) linear;
+  --m-running-dot: opacity var(--dur-180, 180ms) var(--ease-signature),
+    transform var(--dur-180, 180ms) var(--ease-spring);
+  --m-launch-boing: transform var(--dur-600) var(--ease-spring);
+  --m-drag-lift: transform var(--dur-160) var(--ease-signature);
+  --m-drag-settle: transform var(--dur-320) var(--ease-spring);
+  --m-reorder-shift: transform var(--dur-200) var(--ease-signature);
+  --m-remove: opacity var(--dur-160) var(--ease-in),
+    transform var(--dur-160) var(--ease-in);
+  --m-panel-in: opacity var(--dur-220, 220ms) var(--ease-signature),
+    transform var(--dur-220, 220ms) var(--ease-signature);
+  --m-panel-out: opacity var(--dur-160) var(--ease-signature),
+    transform var(--dur-160) var(--ease-signature);
+
+  /* ---- 周期动画时长 ---- */
+  --m-attention-cycle: 480ms;
+  --m-attention-count: 2;
+  --m-pulse-period: 2400ms;
+}
+
+/* ==========================================================================
+   降级：reduced motion
+   全部替换为 0ms 或纯 opacity；放大关闭；启动弹跳改为亮度脉冲。
+   这是最高优先级守卫，任何新动画都必须被这里覆盖。
+   ========================================================================== */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --m-magnify: none;
+    --m-magnify-settle: none;
+    --m-press: none;
+    --m-press-release: none;
+    --m-tooltip-in: opacity var(--dur-50) linear;
+    --m-tooltip-out: opacity var(--dur-50) linear;
+    --m-menu-in: opacity var(--dur-120) linear;
+    --m-menu-out: opacity var(--dur-120) linear;
+    --m-autohide-in: none;
+    --m-autohide-out: none;
+    --m-badge-pop: opacity var(--dur-120) linear;
+    --m-running-dot: opacity var(--dur-120) linear;
+    --m-launch-boing: none;
+    --m-drag-lift: none;
+    --m-drag-settle: none;
+    --m-reorder-shift: none;
+    --m-remove: opacity var(--dur-90) linear;
+    --m-panel-in: opacity var(--dur-120) linear;
+    --m-panel-out: opacity var(--dur-120) linear;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ==========================================================================
+   放大传播曲线（文档用，非可执行 CSS）
+   scale(i) = 1 + (peak - 1) * exp( -( (d_i / radius) / falloff )^4 )
+   d_i       = |center_i - pointerX|
+   radius    = magnifyRadiusIcons * (iconSize + iconGap)   // 默认 2.2 格
+   falloff   = 0.45                                          // 影响宽度占比
+   峰值 1.6 时，各距离上的实际倍率：
+     0.0 格 1.600 | 0.5 格 1.562 | 1.0 格 1.212 | 1.5 格 1.003 | 2.2 格 1.000
+   变换原点：transform-origin: bottom center（侧边停靠改为指向屏幕内侧）
+   ========================================================================== */

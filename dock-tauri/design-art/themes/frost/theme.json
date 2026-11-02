@@ -1,0 +1,52 @@
+{
+  "id": "frost",
+  "name": "Frost",
+  "nameZh": "磨砂亚克力",
+  "appearance": "dark",
+  "default": false,
+  "fallback": "cool-glass",
+  "requires": "pill-shaped native blur region",
+  "color": {
+    "plate": "#07090e",
+    "plateAlpha": 0.25,
+    "text": "#e9edf7",
+    "muted": "#98a1b6",
+    "accent": "#7c9be0",
+    "badgeTop": "#e2605a",
+    "badgeBottom": "#c8433d"
+  },
+  "shape": {
+    "iconRadius": 0.2237,
+    "pillRadius": "half",
+    "panelRadius": 18,
+    "menuRadius": 10,
+    "iconSize": 48,
+    "iconGap": 8,
+    "paddingH": 16,
+    "paddingV": 10
+  },
+  "material": {
+    "mode": "acrylic",
+    "blur": 22,
+    "saturate": 1.08,
+    "grain": 0.0025,
+    "topHighlight": 0.15,
+    "bottomShadow": 0.15,
+    "ring": 0.08,
+    "reflection": 0.25,
+    "halo": 0,
+    "glow": 0,
+    "light": {
+      "plate": "#ffffff",
+      "plateAlpha": 0.18,
+      "blur": 20,
+      "saturate": 1.04,
+      "ring": 0.08
+    }
+  },
+  "motion": {
+    "magnifyPeak": 1.6,
+    "followMs": 160,
+    "settleMs": 320
+  }
+}

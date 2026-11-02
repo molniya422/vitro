@@ -1,0 +1,14 @@
+/* 风格对照页只覆盖少量排版，其余复用展厅的 HUD 与控件样式。 */
+
+.hud {
+  max-width: 520px;
+}
+
+.hud h1 {
+  font-size: clamp(28px, 3.2vw, 42px);
+  max-width: 20ch;
+}
+
+.lede {
+  max-width: 42ch;
+}

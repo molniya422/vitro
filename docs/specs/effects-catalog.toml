@@ -1,0 +1,327 @@
+# Vitro Dock — 效果目录 v1(用户可选)
+# 与 motion-tokens.toml v0 的关系:tokens 定义"材质常数"(signature/spring 缓动),
+# 本目录定义"效果槽 × 命名预设":设置面板里每个槽单选一个预设,原生引擎按预设参数驱动。
+#
+# 字段说明
+#   label     展示名(设置面板)
+#   default   出厂预设
+#   source    参数出处:t.dev#NN = transitions.dev 片段原样提取;nexus R# = 行为规格实证同款;vitro = 自创
+#   tier      性能层级:gpu = 纯合成器 transform/opacity(免费);raster = 涉及模糊/遮罩重绘;js = 需逐帧 JS
+#   params    运动学参数(ms / cubic-bezier / px / deg),原生渲染器照此实现
+#   low_power = 拔电降级目标(PLAN §4.4 电池感知;全部槽降级后即为"省电动效模式")
+
+# ─────────────────────────────────────────────
+# 槽 1 · 图标放大联动(悬停)
+# ─────────────────────────────────────────────
+[slots.magnify]
+label   = "图标放大联动"
+default = "falloff"
+low_power = "off"          # nexus R2 parity:原版即支持整体关闭("not using the magnify effect")
+
+[slots.magnify.presets.falloff]        # 出厂:邻接衰减(本项目签名曲线)
+source = "t.dev#11"
+tier   = "gpu"
+params = { falloff = 0.45, radius = 120, peak = 1.6, neighbor_lift = "10px", follow = "160ms signature", settle = "480ms spring" }
+
+[slots.magnify.presets.spring]         # 宽域弹簧:联动范围更大,进出都带过冲
+source = "t.dev#11(变体)"
+tier   = "gpu"
+params = { falloff = 0.7, radius = 170, peak = 1.45, neighbor_lift = "8px", follow = "240ms spring", settle = "520ms spring" }
+
+[slots.magnify.presets.flat]           # 仅单图标放大,无邻接联动
+source = "nexus R2"
+tier   = "gpu"
+params = { peak = 1.35, dur = "200ms signature" }
+
+[slots.magnify.presets.off]
+source = "nexus R2"
+tier   = "gpu"
+params = {}
+
+# ─────────────────────────────────────────────
+# 槽 2 · 启动效果(点击图标)
+# ─────────────────────────────────────────────
+[slots.launch]
+label   = "启动效果"
+default = "boing"
+low_power = "none"
+
+[slots.launch.presets.boing]           # nexus R5:Launch Effect 弹跳,原版有 "Disable Boing" 开关 → 证明该槽可选
+source = "nexus R5"
+tier   = "gpu"
+params = { hops = 2, rise = "34px", dur = "600ms", ease = "spring" }
+
+[slots.launch.presets.teleport]        # 模糊溶解离去再回(materialize)
+source = "t.dev#13(模糊家族)"
+tier   = "raster"                      # blur 滤镜需栅格化
+params = { blur = "8px", scale = 0.90, out = "220ms", back = "260ms", ease = "signature" }
+
+[slots.launch.presets.swirl]           # 旋涡吸入(genie 式)
+source = "vitro"
+tier   = "gpu"
+params = { rotate = "160deg", scale = 0.35, sink = "18px", dur = "450ms", ease = "signature" }
+
+[slots.launch.presets.liquid]          # 液态玻璃流光(2025 Liquid Glass 趋势, specular sweep)
+source = "Liquid Glass(Apple 2025)+ LogRocket/CSS-Tricks 社区实现"
+tier   = "gpu"
+params = { sweep = "55% 宽高光 115° 扫过", dur = "550ms signature", sat = 1.25, brighten = 1.12 }
+
+[slots.launch.presets.pulse]           # 轻量脉冲闪光
+source = "vitro"
+tier   = "gpu"
+params = { peak = 1.25, flash = "120ms", dur = "300ms" }
+
+[slots.launch.presets.none]
+source = "nexus R5(可关)"
+tier   = "gpu"
+params = {}
+
+# ─────────────────────────────────────────────
+# 槽 3 · 注意力效果(图标索引用户注意:通知/下载完成/崩溃)
+# ─────────────────────────────────────────────
+[slots.attention]
+label   = "注意力效果"
+default = "bounce"
+low_power = "glow"            # 降级到纯 opacity 辉光(仍 gpu)
+
+[slots.attention.presets.bounce]       # 垂直小跳 ×3
+source = "t.dev#22(toast 上升参数)"
+tier   = "gpu"
+params = { rise = "16px", cycles = 3, dur = "350ms", ease = "signature" }
+
+[slots.attention.presets.wiggle]       # 横向抖动(带过冲)
+source = "t.dev#12"
+tier   = "gpu"
+params = { distance = "6px", overshoot = "4px", dur_a = "80ms", dur_b = "60ms", repeat = 3 }
+
+[slots.attention.presets.glow]         # 呼吸底光(呼吸图标 Bio-dock 的静态前驱)
+source = "vitro(创新#1 前驱)"
+tier   = "gpu"
+params = { period = "2.4s", cycles = 2, color = "accent" }
+
+[slots.attention.presets.jelly]        # 果冻挤压拉伸(squash & stretch)
+source = "vitro(2025 jelly 趋势)"
+tier   = "gpu"
+params = { keyframes = "1.28,.72 → .78,1.22 → 1.14,.9 → .96,1.05", dur = "700ms cubic-bezier(0.34,1.4,0.64,1)" }
+
+[slots.attention.presets.ping]         # 角标对角弹入
+source = "t.dev#03"
+tier   = "gpu"
+params = { slide = "260ms signature", pop = "500ms cubic-bezier(0.34,1.36,0.64,1)", close = "180ms" }
+
+[slots.attention.presets.none]
+source = "vitro"
+tier   = "gpu"
+params = {}
+
+# ─────────────────────────────────────────────
+# 槽 4 · 抽屉启动器开合(GNOME 式应用网格)
+# ─────────────────────────────────────────────
+[slots.drawer]
+label   = "抽屉开合"
+default = "cross_blur"
+low_power = "instant"
+
+[slots.drawer.presets.cross_blur]      # 短行程 + 交叉模糊仍读作完整开合(M0 已冻结)
+source = "t.dev#07"
+tier   = "raster"
+params = { open = "400ms", close = "350ms", translate = "40px", blur = "6px", ease = "signature" }
+
+[slots.drawer.presets.scale_center]    # 居中缩放(概念上"盖在上面"的表面)
+source = "t.dev#06"
+tier   = "gpu"
+params = { open = "250ms", close = "150ms", scale_from = 0.94, ease = "signature" }
+
+[slots.drawer.presets.morph]           # 从抽屉磁贴本身"生长"成面板
+source = "t.dev#20"
+tier   = "gpu"
+params = { open = "350ms cubic-bezier(0.34,1.25,0.64,1)", close = "250ms", radius = "40px->20px", origin = "磁贴" }
+
+[slots.drawer.presets.instant]
+source = "vitro"
+tier   = "gpu"
+params = {}
+
+# ─────────────────────────────────────────────
+# 槽 5 · 菜单 / 子码头弹出
+# ─────────────────────────────────────────────
+[slots.menu]
+label   = "菜单弹出"
+default = "origin_grow"
+low_power = "instant"
+
+[slots.menu.presets.origin_grow]       # 从触发器原点感知生长(M0 已冻结)
+source = "t.dev#05"
+tier   = "gpu"
+params = { open = "250ms", close = "150ms", pre_scale = 0.97, origin = "感知触发角" }
+
+[slots.menu.presets.morph]             # 触发器与面板为同一元素时使用
+source = "t.dev#20"
+tier   = "gpu"
+params = { open = "350ms cubic-bezier(0.34,1.25,0.64,1)", close = "250ms", slide = "40px" }
+
+[slots.menu.presets.slide]             # 轻量上滑
+source = "vitro"
+tier   = "gpu"
+params = { translate_y = "12px", open = "200ms", ease = "signature" }
+
+[slots.menu.presets.instant]
+source = "vitro"
+tier   = "gpu"
+params = {}
+
+# ─────────────────────────────────────────────
+# 槽 6 · 提示气泡(Tooltip)
+# ─────────────────────────────────────────────
+[slots.tooltip]
+label   = "提示气泡"
+default = "shared_bubble"
+low_power = "shared_bubble"
+
+[slots.tooltip.presets.shared_bubble]  # 单气泡在相邻图标间补间滑动(M0 已冻结)
+source = "t.dev#17"
+tier   = "gpu"
+params = { delay = "80ms", in_dur = "150ms", out_dur = "50ms", move = "160ms" }
+
+[slots.tooltip.presets.per_icon]       # 每图标独立气泡(经典)
+source = "vitro"
+tier   = "gpu"
+params = { delay = "300ms", in_dur = "120ms", scale_from = 0.96 }
+
+[slots.tooltip.presets.off]            # nexus R3 parity:标签/Tooltip 均可关
+source = "nexus R3"
+tier   = "gpu"
+params = {}
+
+# ─────────────────────────────────────────────
+# 槽 7 · 图标倒影
+# ─────────────────────────────────────────────
+[slots.reflection]
+label   = "图标倒影"
+default = "static"
+low_power = "off"             # nexus 原版:放大时不重建反射(性能先例,R2)
+
+[slots.reflection.presets.static]      # nexus R10 "Icon Reflection" 同款行为
+source = "nexus R10"
+tier   = "gpu"                # DComp 翻转副本,合成器免费
+params = { opacity = 0.28, gap = "4px", fade = "60%" }
+
+[slots.reflection.presets.fluid]       # nexus R10 "Fluid Reflection" 同款:反射随动微漾
+source = "nexus R10"
+tier   = "raster"
+params = { opacity = 0.3, wobble_period = "3s", wobble = "1.5px" }
+
+[slots.reflection.presets.off]
+source = "nexus R10"
+tier   = "gpu"
+params = {}
+
+# ─────────────────────────────────────────────
+# 槽 8 · 悬停 3D 倾斜
+# ─────────────────────────────────────────────
+[slots.icon_tilt]
+label   = "3D 倾斜"
+default = "glare"
+low_power = "off"
+
+[slots.icon_tilt.presets.glare]        # 倾斜 + 跟随光斑
+source = "t.dev#19"
+tier   = "gpu"
+params = { perspective = "1000px", follow = "400ms", return = "1000ms", glare = 0.32 }
+
+[slots.icon_tilt.presets.subtle]       # 仅轻倾斜,无光斑
+source = "t.dev#19(减配)"
+tier   = "gpu"
+params = { perspective = "1000px", tilt_max = "4deg", follow = "300ms" }
+
+[slots.icon_tilt.presets.off]
+source = "vitro"
+tier   = "gpu"
+params = {}
+
+# ─────────────────────────────────────────────
+# 槽 9 · 操作确认反馈(建项/删除/拖入完成)
+# ─────────────────────────────────────────────
+[slots.confirm]
+label   = "确认反馈"
+default = "check_draw"
+low_power = "none"
+
+[slots.confirm.presets.check_draw]     # 图标转正 + 描勾 + 落定(motion tokens 已冻结 500ms 家族)
+source = "t.dev#10"
+tier   = "gpu"
+params = { path = "500ms", path_delay = "80ms", bob = "500ms cubic-bezier(0.34,1.35,0.64,1)" }
+
+[slots.confirm.presets.pop]            # 过冲弹放 + 8 粒子礼花
+source = "t.dev#23"
+tier   = "gpu"
+params = { pop = "350ms cubic-bezier(0.34,1.96,0.64,1)", particles = 8, dist = "20px", dur = "600ms" }
+
+[slots.confirm.presets.toast]          # 右下角 Toast 升起
+source = "t.dev#22"
+tier   = "gpu"
+params = { open = "350ms", close = "250ms", rise = "16px", blur = "2px" }
+
+[slots.confirm.presets.none]
+source = "vitro"
+tier   = "gpu"
+params = {}
+
+# ─────────────────────────────────────────────
+# 槽 10 · 插件数值徽章(CPU/内存/网速等 docklet)
+# ─────────────────────────────────────────────
+[slots.badge_counter]
+label   = "数值徽章"
+default = "pop_in"
+low_power = "plain"
+
+[slots.badge_counter.presets.pop_in]   # 逐字符弹入 + 尾部交错
+source = "t.dev#02"
+tier   = "gpu"
+params = { per_char = true, stagger_tail = 2, blur = "4px" }
+
+[slots.badge_counter.presets.reel]     # 数字滚轮(事件感强)
+source = "t.dev#26"
+tier   = "js"                 # 需逐列构建滚轮
+params = { spins = 2, per_column_stagger = true, blur_y = true }
+
+[slots.badge_counter.presets.plain]
+source = "vitro"
+tier   = "gpu"
+params = {}
+
+# ─────────────────────────────────────────────
+# 槽 11 · Dock 入场(开机/唤醒/重开)
+# ─────────────────────────────────────────────
+[slots.dock_enter]
+label   = "Dock 入场"
+default = "rise_stagger"
+low_power = "fade"
+
+[slots.dock_enter.presets.rise_stagger]  # 交错上升 + 消 blur(18 texts-reveal 的 dock 版)
+source = "t.dev#18"
+tier   = "raster"
+params = { stagger = "40ms", rise = "12px", blur = "2px", ease = "signature" }
+
+[slots.dock_enter.presets.zoom_blur]   # 中心缩放 + 消 blur,交错进入
+source = "t.dev#18(变体)"
+tier   = "raster"
+params = { stagger = "40ms", scale_from = 0.45, blur = "6px", dur = "420ms" }
+
+[slots.dock_enter.presets.fade]
+source = "vitro"
+tier   = "gpu"
+params = { dur = "300ms" }
+
+[slots.dock_enter.presets.none]
+source = "vitro"
+tier   = "gpu"
+params = {}
+
+# ─────────────────────────────────────────────
+# 全局守卫(与 motion-tokens.toml [guard] 一致,此处为效果目录的执行规则)
+# ─────────────────────────────────────────────
+[guard]
+reduced_motion = "prefers-reduced-motion: reduce → 全槽强制 instant/off/fade(最高优先级)"
+battery        = "拔电 → 每槽回落 low_power;用户可在设置锁定不降级"
+conflict       = "同一元素同时只跑一个槽效果(如 launch 动画期间挂起 magnify 写入)"

@@ -1,0 +1,37 @@
+# Product build output
+/dock-tauri/node_modules/
+/dock-tauri/dist/
+/dock-tauri/target/
+/dock-tauri/src-tauri/target/
+/dock-tauri/src-tauri/gen/
+/dock-tauri/src-tauri/binaries/monitor-*.exe
+/dock-tauri/build/
+__pycache__/
+*.pyc
+
+# Logs and temporary files
+*.log
+*.tmp
+*.rs.bk
+
+# Editor
+.vscode/
+.idea/
+
+# Legacy prototypes kept on disk; preserved on the backup branches instead
+/vitro/
+/dock-app/
+
+# Read-only reference material (licenses are independent; not part of the product)
+/cedro-modern-dock-main/
+/macos-dock-for-windows-master/
+/macos-dock-for-windows-master.zip
+/Glassboard-main/
+/transitions.dev-main/
+/ui-ux-pro-max-skill-main/
+*.zip
+
+# Stray captures
+/vitro-*.png
+/sqgrid.png
+/dockyhdock-*.png

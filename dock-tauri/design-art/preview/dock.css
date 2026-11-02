@@ -1,0 +1,536 @@
+/* ==========================================================================
+   Dock 预览页
+   仅用于美术验收；产品实现仍以 src/dock/* 为准。
+   ========================================================================== */
+
+:root {
+  --icon-size: 56px;
+  --icon-gap: 9px;
+  --pad-h: 18px;
+  --pad-v: 11px;
+  --pill-radius: 39px;
+  --reflection-space: 44px;
+  --dock-bar: calc(var(--icon-size) + var(--pad-v) * 2);
+}
+
+* { box-sizing: border-box; }
+
+html, body { height: 100%; }
+
+body {
+  margin: 0;
+  min-height: 100dvh;
+  overflow: hidden;
+  font-family: "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
+  color: var(--text);
+  background: #0f131c;
+  -webkit-font-smoothing: antialiased;
+  user-select: none;
+}
+
+.sprite { position: absolute; width: 0; height: 0; overflow: hidden; }
+
+/* ---------------- wallpaper ---------------- */
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  transition: opacity 320ms var(--ease-signature);
+  background:
+    radial-gradient(58% 48% at 16% 10%, rgba(124, 155, 224, 0.30), transparent 62%),
+    radial-gradient(46% 42% at 84% 20%, rgba(111, 168, 150, 0.16), transparent 64%),
+    radial-gradient(70% 55% at 50% 102%, rgba(217, 164, 92, 0.12), transparent 62%),
+    linear-gradient(165deg, #1b2434 0%, #0f131c 55%, #121826 100%);
+}
+
+[data-theme="light"] body::before {
+  background:
+    radial-gradient(58% 48% at 16% 10%, rgba(255, 226, 196, 0.95), transparent 62%),
+    radial-gradient(46% 42% at 84% 20%, rgba(206, 221, 245, 0.9), transparent 64%),
+    radial-gradient(70% 55% at 50% 102%, rgba(196, 206, 226, 0.6), transparent 62%),
+    linear-gradient(165deg, #f6f8fc 0%, #e4e9f3 60%, #eef1f8 100%);
+}
+
+/* ---------------- top bar ---------------- */
+
+.bar {
+  position: relative;
+  z-index: 10;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 0 20px;
+  border-bottom: 1px solid var(--line-2);
+  background: color-mix(in srgb, var(--panel-fill) 72%, transparent);
+  backdrop-filter: blur(18px) saturate(1.05);
+  -webkit-backdrop-filter: blur(18px) saturate(1.05);
+}
+
+.brand { display: flex; align-items: center; gap: 10px; }
+.brand strong { display: block; font-size: 13px; font-weight: 600; letter-spacing: -0.01em; }
+.brand span { display: block; font-size: 10.5px; color: var(--muted); }
+
+.controls { display: flex; align-items: center; gap: 8px; }
+
+.seg {
+  display: flex;
+  gap: 2px;
+  padding: 2px;
+  border-radius: 9px;
+  background: var(--line-3);
+}
+.seg button {
+  height: 26px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 11.5px;
+  cursor: pointer;
+  transition: background 140ms var(--ease-signature), color 140ms var(--ease-signature);
+}
+.seg button:hover { color: var(--text); background: var(--line-3); }
+.seg button.is-on {
+  background: var(--line-1);
+  color: var(--text);
+  box-shadow: inset 0 1px 0 var(--glass-top-highlight);
+}
+
+.toggle {
+  height: 30px;
+  padding: 0 12px;
+  border: 1px solid var(--line-2);
+  border-radius: 9px;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 11.5px;
+  cursor: pointer;
+  transition: background 140ms var(--ease-signature), color 140ms var(--ease-signature);
+}
+.toggle:hover { color: var(--text); }
+.toggle[aria-pressed="true"] {
+  background: rgba(124, 155, 224, 0.16);
+  border-color: rgba(124, 155, 224, 0.5);
+  color: var(--accent-300);
+}
+[data-theme="light"] .toggle[aria-pressed="true"] { color: var(--accent-text); }
+
+.back {
+  font-size: 11.5px;
+  color: var(--muted);
+  text-decoration: none;
+  padding: 0 4px;
+}
+.back:hover { color: var(--text); }
+
+/* ---------------- stage ---------------- */
+
+.stage {
+  position: relative;
+  height: calc(100dvh - 60px);
+  display: grid;
+  place-items: end center;
+  padding-bottom: 52px;
+}
+
+/* 出图模式：去掉工具条与提示，只留桌面与 Dock，用于主题包 preview.png */
+[data-chrome="off"] .bar,
+[data-chrome="off"] .hint { display: none; }
+[data-chrome="off"] .stage {
+  height: 100dvh;
+  padding-bottom: 64px;
+}
+
+.hint {
+  position: absolute;
+  top: 20px;
+  left: 24px;
+  margin: 0;
+  font-size: 11.5px;
+  color: var(--muted);
+  opacity: 0.85;
+}
+
+/* ---------------- dock ---------------- */
+
+.dock-frame {
+  position: relative;
+  display: grid;
+  place-items: center;
+  padding: 34px 0 var(--reflection-space);
+}
+
+.zone-label {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: "Cascadia Mono", Consolas, monospace;
+  font-size: 10px;
+  color: var(--accent-300);
+  background: rgba(124, 155, 224, 0.14);
+  border: 1px solid rgba(124, 155, 224, 0.35);
+  padding: 2px 8px;
+  border-radius: 5px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 160ms var(--ease-signature);
+  white-space: nowrap;
+}
+[data-theme="light"] .zone-label { color: var(--accent-text); }
+.zone-top { top: 8px; }
+.zone-bottom { bottom: 10px; }
+
+[data-zones="on"] .dock-frame::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border: 1px dashed rgba(124, 155, 224, 0.35);
+  border-radius: 14px;
+  pointer-events: none;
+}
+[data-zones="on"] .zone-label { opacity: 1; }
+[data-zones="on"] .dock {
+  outline: 1px solid rgba(124, 155, 224, 0.75);
+  outline-offset: 0;
+}
+
+.dock {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  gap: var(--icon-gap);
+  height: var(--dock-bar);
+  padding: 0 var(--pad-h);
+  border-radius: var(--pill-radius);
+  background:
+    linear-gradient(180deg, var(--glass-sheen), transparent 46%),
+    var(--glass-fill);
+  box-shadow:
+    inset 0 1px 0 var(--glass-top-highlight),
+    inset 0 -1px 0 var(--glass-bottom-shadow),
+    inset 0 -10px 18px var(--glass-bottom-inner);
+}
+
+/* C 磨砂亚克力：模糊只作用于药丸，外加 1 px 勾边 */
+[data-style="frost"] .dock {
+  background: var(--frost-fill);
+  box-shadow:
+    0 0 0 1px var(--frost-ring),
+    inset 0 1px 0 var(--frost-top),
+    inset 0 -1px 0 var(--glass-bottom-shadow);
+  backdrop-filter: blur(var(--frost-blur)) saturate(var(--frost-sat));
+  -webkit-backdrop-filter: blur(var(--frost-blur)) saturate(var(--frost-sat));
+}
+
+/* B 裸排版：无底板、无倒影、无药丸，间距放大 */
+[data-style="bare"] .dock {
+  background: none;
+  box-shadow: none;
+  border-radius: 0;
+}
+
+html[data-style="bare"] {
+  --icon-gap: 13px;
+  --pad-h: 14px;
+  --pad-v: 8px;
+  --pill-radius: 0px;
+  --dock-bar: calc(var(--icon-size) + var(--pad-v) * 2);
+}
+
+[data-style="bare"] .tile {
+  filter: drop-shadow(var(--icon-shadow)) drop-shadow(0 0 1px var(--halo-color));
+}
+
+.dock::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: var(--plate-grain, var(--glass-grain-opacity));
+  background-image: var(--grain-dots);
+  background-size: 3px 3px;
+}
+
+/* ---------------- tiles ---------------- */
+
+.tile {
+  position: relative;
+  flex: 0 0 auto;
+  width: var(--icon-size);
+  height: var(--icon-size);
+  margin-bottom: var(--pad-v);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  transform-origin: bottom center;
+  transition: transform var(--dur-160) var(--ease-signature);
+  filter: drop-shadow(var(--icon-shadow));
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.dock.is-idle .tile { transition: transform var(--dur-320) var(--ease-spring); }
+[data-motion="reduced"] .tile,
+[data-motion="reduced"] .dock { transition: none !important; }
+
+.tile.is-magnifying { will-change: transform; }
+
+.tile:focus-visible { outline: none; }
+.tile:focus-visible .tile-art {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.22),
+    0 0 0 2px var(--focus-ring);
+}
+
+.tile-art {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  clip-path: var(--squircle-clip);
+  background: var(--tile-bg);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  transition: transform 90ms var(--ease-signature), filter 120ms ease;
+}
+
+.tile:active .tile-art {
+  transform: scale(0.9);
+  filter: brightness(0.92);
+}
+
+.tile-art svg {
+  width: 58%;
+  height: 58%;
+  color: rgba(255, 255, 255, 0.92);
+}
+
+[data-theme="light"] .tile.sys .tile-art svg { color: rgba(20, 24, 38, 0.82); }
+
+/* reflections：占位在图标下方 38%，原地上下翻转；
+   遮罩写 to top，翻转后才是「靠近图标处实、越远越淡」。
+   必须 z-index 低于运行点，否则 ::after 会盖住状态件。 */
+.tile::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 100%;
+  width: 100%;
+  height: 38%;
+  border-radius: var(--icon-radius);
+  background: var(--tile-bg);
+  transform: scaleY(-1);
+  transform-origin: center;
+  opacity: var(--reflection-opacity);
+  -webkit-mask-image: linear-gradient(to top, rgba(0, 0, 0, 0.85), rgba(0, 0, 0, 0.28) 34%, transparent 72%);
+  mask-image: linear-gradient(to top, rgba(0, 0, 0, 0.85), rgba(0, 0, 0, 0.28) 34%, transparent 72%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* system tile body */
+.sys { --tile-bg: linear-gradient(180deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.07)); }
+[data-theme="light"] .sys { --tile-bg: linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.5)); }
+
+/* app tile bodies */
+[data-app="explorer"] { --tile-bg: linear-gradient(160deg, #ffd479, #d99a2b); }
+[data-app="slate"]    { --tile-bg: linear-gradient(160deg, #ffb27a, #d9603f); }
+[data-app="orbit"]    { --tile-bg: linear-gradient(160deg, #8fb4f2, #3d63b4); }
+[data-app="fold"]     { --tile-bg: linear-gradient(160deg, #86d7b4, #2f8a68); }
+[data-app="prism"]    { --tile-bg: linear-gradient(160deg, #eba7a7, #a34c4c); }
+[data-app="ledger"]   { --tile-bg: linear-gradient(160deg, #9aa6bd, #4d5773); }
+
+/* ---------------- app marks ---------------- */
+
+.mk { display: block; position: relative; }
+
+.mk-slate {
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgba(255, 255, 255, 0.92);
+  border-radius: 5px;
+  transform: rotate(45deg);
+}
+
+.mk-orbit {
+  width: 26px;
+  height: 26px;
+  border: 2px solid rgba(255, 255, 255, 0.9);
+  border-radius: 50%;
+}
+.mk-orbit::after {
+  content: "";
+  position: absolute;
+  inset: 7px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.92);
+}
+
+.mk-fold { width: 26px; height: 20px; }
+.mk-fold::before,
+.mk-fold::after {
+  content: "";
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  border: 2px solid rgba(255, 255, 255, 0.9);
+}
+.mk-fold::before { left: 0; top: 0; }
+.mk-fold::after { right: 0; bottom: 0; background: rgba(255, 255, 255, 0.92); }
+
+.mk-prism {
+  width: 24px;
+  height: 22px;
+  background: rgba(255, 255, 255, 0.92);
+  clip-path: polygon(50% 0%, 100% 100%, 0% 100%);
+}
+
+.mk-ledger {
+  width: 24px;
+  height: 18px;
+  background:
+    linear-gradient(rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.92)) 0 0 / 100% 3px no-repeat,
+    linear-gradient(rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.92)) 0 7px / 72% 3px no-repeat,
+    linear-gradient(rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.92)) 0 14px / 88% 3px no-repeat;
+}
+
+/* ---------------- separator / indicators ---------------- */
+
+.sep {
+  flex: 0 0 auto;
+  width: 1px;
+  height: calc(var(--icon-size) * 0.72);
+  margin-bottom: calc(var(--pad-v) + var(--icon-size) * 0.14);
+  background: var(--sep-color);
+  border-radius: 1px;
+}
+
+/* 裸排版下没有底板衬托，分隔线要更淡一点才不抢图标 */
+[data-style="bare"] .sep { background: var(--line-2); }
+
+.dot {
+  position: absolute;
+  left: 50%;
+  bottom: -8px;
+  width: var(--dot-size);
+  height: var(--dot-size);
+  margin-left: calc(var(--dot-size) / -2);
+  border-radius: 50%;
+  background: var(--running-dot);
+  box-shadow: 0 0 0 var(--dot-ring) var(--running-dot-ring);
+  z-index: 2;
+}
+
+.badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: var(--badge-min);
+  height: var(--badge-min);
+  padding: 0 var(--badge-pad-x);
+  border-radius: var(--badge-radius);
+  background: linear-gradient(180deg, var(--badge-top), var(--badge-bottom));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45);
+  color: #fff;
+  font-family: "Cascadia Mono", Consolas, monospace;
+  font-size: var(--badge-font);
+  font-weight: var(--badge-weight);
+  line-height: var(--badge-min);
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  z-index: 2;
+}
+
+/* ---------------- tooltip ---------------- */
+
+.tooltip {
+  position: absolute;
+  bottom: calc(100% + 14px);
+  transform: translateX(-50%);
+  padding: 4px 9px;
+  border: 1px solid var(--tooltip-line);
+  border-radius: 8px;
+  background: var(--tooltip-bg);
+  box-shadow: var(--shadow-tooltip), inset 0 1px 0 var(--glass-top-highlight);
+  color: var(--text);
+  font-size: 12.5px;
+  font-weight: 500;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 5;
+  animation: tooltip-in 150ms var(--ease-signature);
+}
+
+@keyframes tooltip-in {
+  from { opacity: 0; transform: translateX(-50%) translateY(6px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+[data-motion="reduced"] .tooltip { animation: none; }
+
+/* ---------------- context menu ---------------- */
+
+.ctx {
+  position: fixed;
+  z-index: 30;
+  min-width: 196px;
+  padding: 4px;
+  border-radius: 10px;
+  background: var(--menu-bg);
+  box-shadow: var(--shadow-menu), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  animation: menu-in 250ms var(--ease-signature);
+}
+
+.ctx[hidden] { display: none; }
+
+@keyframes menu-in {
+  from { opacity: 0; transform: scale(0.97) translateY(2px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.ctx button {
+  display: block;
+  width: 100%;
+  padding: 7px 10px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 12.5px;
+  text-align: left;
+  cursor: pointer;
+}
+.ctx button:hover,
+.ctx button:focus-visible {
+  outline: none;
+  background: var(--menu-hover);
+}
+.ctx button.danger { color: var(--menu-danger); }
+.ctx button.danger:hover { background: var(--menu-danger-bg); }
+.ctx hr {
+  height: 1px;
+  margin: 4px 6px;
+  border: 0;
+  background: var(--menu-line);
+}
+
+/* ---------------- reduced motion guard ---------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; }
+  .tile, .tile-art { transition: none !important; }
+}
