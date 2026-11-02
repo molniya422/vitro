@@ -1,98 +1,74 @@
 # Vitro Dock
 
-原生 Windows 的 macOS 风格 Dock —— Rust + DirectComposition,零轮询事件驱动。
+一个 Windows 底部 Dock，使用 **Tauri 2 + React** 构建，系统指标由一个 **Python
+`psutil` sidecar** 通过 stdio JSON-RPC 提供。
 
-![screenshot](docs/screenshot.png)
+产品代码位于 [`dock-tauri/`](dock-tauri/)。当前 `main` 只包含产品树（代码、文档、美术源）；
+早期原型（`vitro/`、`dock-app/`）不在此树中，保留在
+`backup/main-pre-reshape`、`backup/main-local` 和 `codex/vitro-appruntime` 分支里。
 
-**硬预算**:RAM ≤ 30MB(实测 ~7MB)· 空闲 CPU ≈ 0%(实测 0.3–0.6%)· 单文件原生 exe,无 WebView。
+## 功能
 
-## 是什么
+- **Dock**：真实 Start Menu 图标（按 DPI 提取）、可调放大/倒影/提示、运行点/最小化角标、
+  右键菜单、拖动重排、启动脉冲、点击运行中应用聚焦/还原。
+- **点击穿透**：透明 headroom 与反射带不拦截点击；拖动时临时接管整窗。
+- **自动隐藏**：按 pill 判定，延迟可调；全屏应用前台时让位。
+- **Launchpad**：全量应用搜索；拖到投放条可插入 Dock 的指定位置。
+- **Shelf**：拖文件到窗口即可暂存（会话级、最多 12 项），点击打开、删除、清空。
+- **系统监控**：CPU / 内存 / 磁盘 / 网络；sidecar 启动预热，45 s 无采样自动退出，
+  打开 monitor 时重新预热。
+- **设置**：外观（尺寸/间距/内边距/圆角/颜色/透明度/倒影）、行为、自动隐藏、入口显隐、
+  应用增删排序，实时预览并原子持久化（schema 3，`.bak` 恢复）。
+- **性能**（release，先展开一次再收起）：5.9 MB host / 186.6 MB 全树 / 0.03% 空闲 CPU。
 
-Vitro 是一个 Windows 桌面 Dock:
-
-- **玻璃药丸**:DWM 系统亚克力(Win11 22H2+,旧系统自动回退)+ 1px 描边 + 内高光/内影,Tahoe 材质参数
-- **falloff 弹簧放大**:鼠标邻近图标按衰减曲线放大,松手弹簧回落(峰值/半径可在主题里调)
-- **真实图标**:应用磁贴用 Shell 三档提取(IShellItemImageFactory@96 → SHGetFileInfoW@32 → 内置图标兜底)
-- **SQ 图标库**:25 枚内置图标(时钟/天气/CPU/电池/网速…)从设计原型栅格化内嵌,插件磁贴 = 图标 + 数值徽章
-- **倒影**:PushLayer + 渐变遮罩镜像,随弹簧缩放联动
-- **呼吸指示**:运行中程序的指示点呼吸频率 = 该进程实时 CPU 占用(创新点)
-- **启动器**:Ctrl+Alt+D 全屏抽屉(搜索 / `>` 命令 / `=` 计算三模式)
-- **插件**:boa_engine(纯 Rust JS 引擎)沙箱,记事本写代码存进 TOML 即装
-- **零轮询**:WH_MOUSE_LL 钩子 → 邻域门控 → 事件驱动;光标离开 ±200px 邻域 = 0 消息 0 渲染 0 定时器
-- **底边召唤**(可选):自动隐藏后鼠标移到屏幕底边 3px 唤出,全程消息驱动
-- **主题热重载**:记事本改 `theme.toml`,Ctrl+Alt+R 生效
-
-## 性能
-
-| 指标 | 预算 | 实测 | 对照 |
-|---|---|---|---|
-| RAM(工作集) | ≤30MB | **7.09MB** | WebView 方案 70–120MB |
-| 空闲 CPU(8s 采样) | ≈0% | **0.59%** | 同类轮询架构 8–17% |
-| 空闲系统调用 | 0 | GetCursorPos/SetTimer/EnumWindows = **0 次/10s**(Frida 自证) | — |
-
-自证方法与证据:`vitro/selftest/`(用逆向 NeXuS 的同一套 Frida 钩子对拍自己)。
-
-## 构建
+## 目录
 
 ```
-cargo build --release        # 在 vitro/ 下
-./target/release/vitro.exe
+dock-tauri/             产品：Tauri 宿主、React 前端、Python sidecar、E2E、脚本
+dock-tauri/design-art/  美术资源包（图标、字形、主题、3D 样张）
+docs/                   设计规范、阶段计划、研究资料、历史文档
 ```
 
-依赖:Rust stable、Windows 10/11。无其他运行时。
+## 快速开始
 
-## 配置
-
-| 文件 | 作用 |
-|---|---|
-| `~/.vitro/dock.toml` | 应用列表([[items]])、插件([[plugins]])、autohide |
-| `~/.vitro/theme.toml` | 玻璃 alpha/tint、accent、放大 peak/radius |
-
-操作:左键启动 · 右键菜单(移除/启动器/主题/退出) · 拖放文件加磁贴 · Ctrl+Alt+D 启动器 · Ctrl+Alt+R 重载主题 · 托盘图标管自动隐藏。
-
-写一个插件:
-
-```toml
-[[plugins]]
-name = "时钟"
-code = "api.set('12:34')"
-# icon = "clock"        # 可选:SQ 图标键,缺省按名称猜
+```bash
+export CARGO_HOME='D:\rust\cargo' RUSTUP_HOME='D:\rust\rustup'
+export PATH="/d/rust/cargo/bin:$PATH"
+cd dock-tauri
+npm install
+npm run tauri dev
 ```
 
-## 架构
+要求 Windows 11 + WebView2、Rust 1.89+、Node 20+、Python 3.11 + `psutil`。
+详细说明见 [`dock-tauri/README.md`](dock-tauri/README.md)。
 
-```
-vitro/src/
-├── main.rs     入口/装配(固定 1024×124 透明画布,永不 Resize)
-├── gpu.rs      D3D11→D2D→DComp 管线一次成型(布局自适应全在绘制层)
-├── state.rs    唯一状态 + 药丸几何(局部/屏幕两套坐标)
-├── dockwin.rs  窗口过程 + 渲染(玻璃/放大/呼吸/倒影/徽章)+ 交互
-├── input.rs    WH_MOUSE_LL 零轮询输入 + R9 底边召唤
-├── config.rs   TOML 自愈读写 + Tahoe 主题
-├── icons.rs    Shell 三档图标 + SQ 库(png 解码→预乘 BGRA→D2D)
-├── tray.rs     托盘
-├── lpad.rs     启动器抽屉
-└── plugin.rs   boa JS 沙箱(api.set/every/log)
-```
+## 测试
 
-关键设计:窗口是**固定尺寸透明画布**,玻璃药丸按磁贴数在绘制层自适应宽度居中,药丸外像素由 DComp 透明点击穿透 —— 不存在运行期交换链 resize 这一 bug 类。
+```bash
+cd dock-tauri
+npm test                 # Vitest（80）
+npm run test:e2e         # Playwright（20，mock Tauri IPC）
+cargo test --manifest-path src-tauri/Cargo.toml   # Rust（132）
+cd backend && python -m pytest tests -q           # Python（9）
+```
 
 ## 文档
 
-| 文档 | 内容 |
-|---|---|
-| [HANDOVER.md](HANDOVER.md) | ★ 接手文档:上手清单/架构决策/踩坑/验证手段/协作偏好 |
-| [docs/INTEGRATION.md](docs/INTEGRATION.md) | 资源整合权威表(NeXuS/Glassboard/macOS 规格/HTML 原型四方取舍) |
-| [docs/PLAN.md](docs/PLAN.md) | M0–M7 里程碑日志(含每步性能数字与技术笔记) |
-| [docs/research/](docs/research/) | NeXuS 行为逆向规格(Frida 证据)、macOS Dock 设计规格、竞品调研 |
-| [docs/specs/](docs/specs/) | 动效令牌、效果目录、macOS 对拍参数 |
-| [docs/prototypes/](docs/prototypes/) | 交互式 HTML 设计原型(浏览器直接打开,视觉验收基准) |
-| [vitro/tools/gen_sq_icons.py](vitro/tools/gen_sq_icons.py) | SQ 图标库再生成管线 |
+- 产品说明：[`dock-tauri/README.md`](dock-tauri/README.md)
+- 接手文档（中文，当前状态/调试/约束）：[`dock-tauri/HANDOVER.md`](dock-tauri/HANDOVER.md)
+- 设计规范：[`docs/superpowers/specs/2026-10-26-tauri-python-dock-design.md`](docs/superpowers/specs/2026-10-26-tauri-python-dock-design.md)
+- 阶段计划：[Phase 1](docs/superpowers/plans/2026-10-26-tauri-python-dock-implementation.md) ·
+  [Phase 2](docs/superpowers/plans/2026-10-26-dock-tauri-phase2.md) ·
+  [Phase 3](docs/superpowers/plans/2026-10-26-dock-tauri-phase3.md) ·
+  [Phase 4](docs/superpowers/plans/2026-10-28-dock-tauri-phase4-drag.md) ·
+  [Phase 5](docs/superpowers/plans/2026-10-29-dock-tauri-phase5-shelf.md)
+- 历史文档：`docs/legacy/`、`docs/research/`、`docs/prototypes/`
 
-## 许可与致谢
+## 发布
 
-- 本仓库代码:MIT(见 LICENSE)
-- 行为参考:对 Winstep NeXuS 的**独立行为观察与文档**(未复制其任何代码/资源)
-- 结构参考:[Glassboard](https://github.com/ImNallen/Glassboard)(AGPL-3.0,仅学习其 Win32 模块化组织方式,未引入代码,故不入库)
-- 动效参数:transitions.dev 片段库(参数级参考)
-- SQ 图标库为本项目自绘 SVG 栅格化产物
+sidecar 冻结与 MSI 构建步骤见 [`dock-tauri/README.md`](dock-tauri/README.md)。
+当前 MSI 已构建（9.48 MiB），未安装。
+
+## 许可
+
+见 [`LICENSE`](LICENSE)。`dock-tauri/design-art/vendor/` 中的 Three.js 自带 MIT 许可。
